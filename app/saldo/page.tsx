@@ -55,7 +55,18 @@ export default function SaldoPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Check the last transaction in the database for this user
+      // 1. Tentar verificar DIRETAMENTE no Mercado Pago via nossa nova API
+      if (pixData?.id) {
+        const checkRes = await fetch(`/api/pix/check?id=${pixData.id}&userId=${session.user.id}`);
+        const checkData = await checkRes.json();
+        
+        if (checkData.status === 'approved' || checkData.status === 'already_processed') {
+          router.push('/saldo/sucesso?amount=' + amount);
+          return;
+        }
+      }
+
+      // 2. Fallback: Verificar se a transação já foi registrada no Banco de Dados (pelo webhook)
       const { data: transaction } = await supabase
         .from('transactions')
         .select('*')
@@ -65,14 +76,13 @@ export default function SaldoPage() {
         .limit(1)
         .single();
 
-      // If the last transaction is a success and matches our amount (simple check)
-      if (transaction && transaction.status === 'success' && parseFloat(transaction.amount) === parseFloat(amount)) {
+      if (transaction && transaction.status === 'success') {
         router.push('/saldo/sucesso?amount=' + amount);
       } else {
-        alert("Pagamento ainda não detectado. Aguarde um momento ou tente novamente em instantes.");
+        alert("Pagamento ainda não detectado. Se você já pagou, aguarde 30 segundos e tente novamente. Se o problema persistir, entre em contato com o suporte.");
       }
     } catch (error) {
-      console.error(error);
+      console.error('Erro ao verificar status:', error);
     } finally {
       setLoading(false);
     }
