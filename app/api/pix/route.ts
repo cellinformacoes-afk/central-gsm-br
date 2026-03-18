@@ -25,14 +25,15 @@ export async function POST(request: Request) {
 
     const payment = new Payment(client);
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://centralgsm.com.br';
     const body = {
       transaction_amount: parseFloat(amount),
       description: description || 'Recarga de Saldo - Central GSM',
       payment_method_id: 'pix',
       payer: {
-        email: 'cliente@centralgsm.com.br', // Generic or from body if available
+        email: 'cliente@centralgsm.com.br',
       },
-      notification_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/webhooks/mercadopago`,
+      notification_url: `${siteUrl}/api/webhooks/mercadopago`,
       metadata: {
         user_id: userId
       }
