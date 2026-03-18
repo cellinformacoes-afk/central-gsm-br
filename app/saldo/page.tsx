@@ -17,12 +17,19 @@ export default function SaldoPage() {
     }
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("Sessão expirada. Por favor, faça login novamente.");
+        return;
+      }
+
       const response = await fetch('/api/pix', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           amount, 
-          description: `Recarga Central GSM - R$ ${amount}` 
+          description: `Recarga Central GSM - R$ ${amount}`,
+          userId: session.user.id
         }),
       });
       

@@ -9,11 +9,10 @@ const client = new MercadoPagoConfig({
 
 export async function POST(request: Request) {
   try {
-    const { amount, description } = await request.json();
+    const { amount, description, userId } = await request.json();
     
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: 'ID do usuário não fornecido' }, { status: 400 });
     }
 
     const payment = new Payment(client);
@@ -23,11 +22,11 @@ export async function POST(request: Request) {
       description: description || 'Recarga de Saldo - Central GSM',
       payment_method_id: 'pix',
       payer: {
-        email: session.user.email,
+        email: 'cliente@centralgsm.com.br', // Generic or from body if available
       },
       notification_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/webhooks/mercadopago`,
       metadata: {
-        user_id: session.user.id
+        user_id: userId
       }
     };
 
