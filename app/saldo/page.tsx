@@ -8,6 +8,7 @@ export default function SaldoPage() {
   const [step, setStep] = useState(1); // 1: Choose amount, 2: PIX QR Code
   const [loading, setLoading] = useState(false);
   const [pixData, setPixData] = useState<any>(null);
+  const [paymentStartTime, setPaymentStartTime] = useState<string | null>(null);
   const router = useRouter();
 
   const handleGeneratePix = async () => {
@@ -37,6 +38,7 @@ export default function SaldoPage() {
       if (data.error) throw new Error(data.error);
       
       setPixData(data);
+      setPaymentStartTime(new Date().toISOString());
       setStep(2);
       
     } catch (error: any) {
@@ -58,6 +60,7 @@ export default function SaldoPage() {
         .from('transactions')
         .select('*')
         .eq('user_id', session.user.id)
+        .gt('created_at', paymentStartTime || new Date(0).toISOString())
         .order('created_at', { ascending: false })
         .limit(1)
         .single();

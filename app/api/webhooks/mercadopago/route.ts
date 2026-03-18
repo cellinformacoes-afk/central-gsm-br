@@ -16,9 +16,9 @@ export async function POST(request: Request) {
     const bodyJson = await request.json().catch(() => ({}));
 
     const id = searchParams.get('data.id') || searchParams.get('id') || bodyJson.data?.id || bodyJson.id;
-    const type = searchParams.get('type') || bodyJson.type;
+    const type = searchParams.get('type') || bodyJson.type || searchParams.get('topic');
 
-    console.log('Webhook MP recebido:', { id, type, body: bodyJson });
+    console.log('Webhook MP recebido:', { id, type, body: bodyJson, params: Object.fromEntries(searchParams) });
 
     if (type === 'payment' && id) {
       const payment = new Payment(client);
