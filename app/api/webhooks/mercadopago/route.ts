@@ -56,25 +56,29 @@ export async function POST(request: Request) {
 
         console.log('Processando pagamento aprovado:', { userId, amount });
 
-        // 1. Get current balance (gracefully)
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('balance')
-          .eq('id', userId)
-          .maybeSingle();
+        // 1. Call RPC for atomic update
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('handle_payment_success', {
+          p_user_id: userId,
+          p_amount: amount,
+          p_payment_id: id
+        });
 
-        const newBalance = (profile?.balance || 0) + amount;
+        if (rpcError) {
+          await supabase.from('webhook_logs').insert({
+            payload: { 
+              source: 'webhook_error', 
+              step: 'rpc_call',
+              paymentId: id, 
+              userId,
+              error: rpcError 
+            }
+          });
+          throw rpcError;
+        }
 
-        // 2. Update profile
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ 
-            balance: newBalance,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', userId);
-
-        if (updateError) throw updateError;
+        if (rpcResult.status === 'already_processed') {
+           return NextResponse.json({ received: true, status: 'already_processed' });
+        }
 
         // Debug Log Success
         await supabase.from('webhook_logs').insert({
@@ -82,17 +86,10 @@ export async function POST(request: Request) {
             source: 'webhook_success', 
             paymentId: id, 
             userId,
-            newBalance 
+            amount,
+            previousBalance: rpcResult.oldBalance,
+            newBalance: rpcResult.newBalance 
           }
-        });
-
-        // 3. Record transaction
-        await supabase.from('transactions').insert({
-          user_id: userId,
-          amount: amount,
-          type: 'deposit',
-          description: `Recarga via PIX - MP #${id}`,
-          status: 'success'
         });
       }
     }
@@ -100,6 +97,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   } catch (error: any) {
     console.error('Erro no Webhook:', error);
+    await supabase.from('webhook_logs').insert({
+      payload: { 
+        source: 'webhook_error', 
+        error: error.message,
+        stack: error.stack
+      }
+    });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

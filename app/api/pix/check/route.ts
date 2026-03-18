@@ -32,36 +32,29 @@ export async function GET(request: Request) {
     if (paymentData.status === 'approved') {
       const amount = parseFloat(String(paymentData.transaction_amount || '0'));
 
-      // 1. Check if already processed
-      const { data: existingTx } = await supabase
-        .from('transactions')
-        .select('id')
-        .eq('description', `Recarga via PIX - MP #${paymentId}`)
-        .maybeSingle();
+      // 1. Call RPC for atomic update
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('handle_payment_success', {
+        p_user_id: userId,
+        p_amount: amount,
+        p_payment_id: paymentId
+      });
 
-      if (existingTx) {
-        return NextResponse.json({ status: 'already_processed', balance: null });
+      if (rpcError) {
+        await supabase.from('webhook_logs').insert({
+          payload: { 
+            source: 'check_route_error', 
+            step: 'rpc_call',
+            paymentId, 
+            userId,
+            error: rpcError 
+          }
+        });
+        throw rpcError;
       }
 
-      // 2. Get current balance
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('balance')
-        .eq('id', userId)
-        .maybeSingle();
-
-      const newBalance = (profile?.balance || 0) + amount;
-
-      // 3. Update profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          balance: newBalance,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
-
-      if (updateError) throw updateError;
+      if (rpcResult.status === 'already_processed') {
+        return NextResponse.json({ status: 'already_processed', balance: null });
+      }
 
       // Debug Log Success
       await supabase.from('webhook_logs').insert({
@@ -69,25 +62,30 @@ export async function GET(request: Request) {
           source: 'check_route_success', 
           paymentId, 
           userId,
-          newBalance 
+          amount,
+          previousBalance: rpcResult.oldBalance,
+          newBalance: rpcResult.newBalance 
         }
       });
 
-      // 4. Record transaction
-      await supabase.from('transactions').insert({
-        user_id: userId,
-        amount: amount,
-        type: 'deposit',
-        description: `Recarga via PIX - MP #${paymentId}`,
-        status: 'success'
+      return NextResponse.json({ 
+        status: 'approved', 
+        amount, 
+        newBalance: rpcResult.newBalance 
       });
-
-      return NextResponse.json({ status: 'approved', amount, newBalance });
     }
 
     return NextResponse.json({ status: paymentData.status });
   } catch (error: any) {
     console.error('Erro ao verificar pagamento:', error);
+    await supabase.from('webhook_logs').insert({
+      payload: { 
+        source: 'check_route_error', 
+        paymentId: new URL(request.url).searchParams.get('id'),
+        error: error.message,
+        stack: error.stack
+      }
+    });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
