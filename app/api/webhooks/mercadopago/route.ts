@@ -26,24 +26,29 @@ export async function POST(request: Request) {
 
       if (paymentData.status === 'approved') {
         const userId = paymentData.metadata.user_id;
-        const amount = paymentData.transaction_amount;
+        const amount = parseFloat(String(paymentData.transaction_amount || '0'));
 
-        // 1. Get current balance
+        console.log('Processando pagamento aprovado:', { userId, amount });
+
+        // 1. Get current balance (gracefully)
         const { data: profile } = await supabase
           .from('profiles')
           .select('balance')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
-        const newBalance = (profile?.balance || 0) + (amount || 0);
+        const newBalance = (profile?.balance || 0) + amount;
 
-        // 2. Update profile
-        const { error: updateError } = await supabase
+        // 2. Update or Create profile
+        const { error: upsertError } = await supabase
           .from('profiles')
-          .update({ balance: newBalance })
-          .eq('id', userId);
+          .upsert({ 
+            id: userId, 
+            balance: newBalance,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'id' });
 
-        if (updateError) throw updateError;
+        if (upsertError) throw upsertError;
 
         // 3. Record transaction
         await supabase.from('transactions').insert({
