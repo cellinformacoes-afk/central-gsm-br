@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
-const inter = Inter({ subsets: ['latin'] });
 
 export default function ClientLayout({
   children,
@@ -54,7 +53,7 @@ export default function ClientLayout({
   };
 
   return (
-    <body className={`${inter.className} min-h-screen flex flex-col bg-[#0f172a]`}>
+    <div className="min-h-screen flex flex-col bg-[#0f172a]">
         {/* Sticky Navbar */}
         <header className="sticky top-0 z-50 w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-[#334155] shadow-lg">
           <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -125,6 +124,6 @@ export default function ClientLayout({
         <footer className="w-full border-t border-[#334155] p-8 text-center text-gray-500 text-sm mt-12 bg-[#0f172a]">
            <p>© 2026 JACKSON & ISRAEL GSM - Todos os direitos reservados.</p>
         </footer>
-    </body>
+    </div>
   );
 }

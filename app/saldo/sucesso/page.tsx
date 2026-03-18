@@ -2,7 +2,9 @@
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function SucessoSaldoPage() {
+import { Suspense } from 'react';
+
+function SucessoContent() {
   const searchParams = useSearchParams();
   const amount = searchParams.get('amount');
 
@@ -41,5 +43,13 @@ export default function SucessoSaldoPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SucessoSaldoPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0f172a]" />}>
+      <SucessoContent />
+    </Suspense>
   );
 }

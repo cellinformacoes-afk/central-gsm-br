@@ -1,6 +1,9 @@
 import './globals.css';
+import { Inter } from 'next/font/google';
 import { Metadata } from 'next';
 import ClientLayout from '@/components/layout/ClientLayout';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'JACKSON & ISRAEL GSM | Aluguel de Box Digital e Ferramentas Unlock',
@@ -30,9 +33,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className="dark">
-      <ClientLayout>
-        {children}
-      </ClientLayout>
+      <body className={`${inter.className} min-h-screen bg-[#0f172a]`}>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
+      </body>
     </html>
   );
 }
