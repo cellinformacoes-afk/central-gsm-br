@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     const payment = new Payment(client);
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://centralgsm.com.br';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.centralgsm.com.br';
     const body = {
       transaction_amount: parseFloat(amount),
       description: description || 'Recarga de Saldo - Central GSM',
