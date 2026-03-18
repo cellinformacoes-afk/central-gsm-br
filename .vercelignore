@@ -1,0 +1,11 @@
+.gemini/
+brain/
+*.md
+tasks/
+/tmp/
+node_modules/
+.next/
+out/
+build/
+.env*
+!.env.example
