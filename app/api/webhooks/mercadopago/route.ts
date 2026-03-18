@@ -23,8 +23,8 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString()
     });
 
-    const id = searchParams.get('data.id') || searchParams.get('id') || bodyJson.data?.id || bodyJson.id;
-    const type = searchParams.get('type') || bodyJson.type || searchParams.get('topic');
+    const id = searchParams.get('data.id') || searchParams.get('id') || bodyJson.data?.id || bodyJson.id || bodyJson.resource;
+    const type = searchParams.get('type') || bodyJson.type || searchParams.get('topic') || bodyJson.topic;
 
     console.log('Webhook MP recebido:', { id, type, body: bodyJson, params: Object.fromEntries(searchParams) });
 
