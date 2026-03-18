@@ -2,15 +2,20 @@ import { NextResponse } from 'next/server';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { supabase } from '@/lib/supabase';
 
-const client = new MercadoPagoConfig({ 
-  accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN || '',
-  options: { timeout: 5000 }
-});
-
 export async function POST(request: Request) {
   try {
     const { amount, description, userId } = await request.json();
     
+    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+    if (!accessToken) {
+      return NextResponse.json({ error: 'Configuração do Mercado Pago ausente (Token não encontrado)' }, { status: 500 });
+    }
+
+    const client = new MercadoPagoConfig({ 
+      accessToken: accessToken,
+      options: { timeout: 5000 }
+    });
+
     if (!userId) {
       return NextResponse.json({ error: 'ID do usuário não fornecido' }, { status: 400 });
     }

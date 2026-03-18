@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { supabase } from '@/lib/supabase';
 
-const client = new MercadoPagoConfig({ 
-  accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN || '' 
-});
-
 export async function POST(request: Request) {
   try {
+    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+    if (!accessToken) {
+       return NextResponse.json({ error: 'Token não encontrado' }, { status: 500 });
+    }
+
+    const client = new MercadoPagoConfig({ 
+      accessToken: accessToken 
+    });
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('data.id') || searchParams.get('id');
     const type = searchParams.get('type');
