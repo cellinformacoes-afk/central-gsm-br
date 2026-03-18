@@ -7,6 +7,7 @@ export default function SaldoPage() {
   const [amount, setAmount] = useState('');
   const [step, setStep] = useState(1); // 1: Choose amount, 2: PIX QR Code
   const [loading, setLoading] = useState(false);
+  const [pixData, setPixData] = useState<any>(null);
   const router = useRouter();
 
   const handleGeneratePix = async () => {
@@ -15,54 +16,53 @@ export default function SaldoPage() {
       return;
     }
     setLoading(true);
-    // Simulating API call for PIX generation
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/pix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          amount, 
+          description: `Recarga Central GSM - R$ ${amount}` 
+        }),
+      });
+      
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      
+      setPixData(data);
       setStep(2);
+      
+    } catch (error: any) {
+      console.error(error);
+      alert("Erro ao gerar Pix: " + error.message);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
-  const simulatePaymentSuccess = async () => {
+  const checkPaymentStatus = async () => {
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        alert("Você precisa estar logado!");
-        return;
-      }
+      if (!session) return;
 
-      const rechargeAmount = parseFloat(amount);
-
-      // 1. Get current balance
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('balance')
-        .eq('id', session.user.id)
+      // Check the last transaction in the database for this user
+      const { data: transaction } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single();
 
-      const newBalance = (profile?.balance || 0) + rechargeAmount;
-
-      // 2. Update profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ balance: newBalance })
-        .eq('id', session.user.id);
-
-      if (updateError) throw updateError;
-
-      // 3. Record transaction
-      await supabase.from('transactions').insert({
-        user_id: session.user.id,
-        amount: rechargeAmount,
-        type: 'deposit',
-        description: 'Recarga via PIX (Simulada)',
-        status: 'success'
-      });
-
-      router.push('/saldo/sucesso?amount=' + amount);
+      // If the last transaction is a success and matches our amount (simple check)
+      if (transaction && transaction.status === 'success' && parseFloat(transaction.amount) === parseFloat(amount)) {
+        router.push('/saldo/sucesso?amount=' + amount);
+      } else {
+        alert("Pagamento ainda não detectado. Aguarde um momento ou tente novamente em instantes.");
+      }
     } catch (error) {
       console.error(error);
-      alert("Erro ao confirmar pagamento.");
     } finally {
       setLoading(false);
     }
@@ -119,13 +119,16 @@ export default function SaldoPage() {
         ) : (
           <div className="text-center space-y-8 animate-in fade-in zoom-in duration-300 relative z-10">
             <div className="bg-white p-4 rounded-3xl w-64 h-64 mx-auto shadow-[0_0_40px_rgba(255,255,255,0.1)] flex items-center justify-center border-4 border-[#00D2AD]">
-               {/* Mock QR Code */}
-               <div className="w-full h-full bg-[#1e293b] rounded-xl flex items-center justify-center relative overflow-hidden">
-                  <span className="text-white font-black text-center text-xs opacity-20 uppercase tracking-[0.5em] rotate-12 absolute">PIX PIX PIX PIX PIX PIX</span>
-                  <div className="w-16 h-16 bg-[#00D2AD] rounded-lg shadow-[0_0_20px_#00D2AD] flex items-center justify-center animate-pulse">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20 M2 12h20"/></svg>
-                  </div>
-               </div>
+               {pixData?.qr_code_base64 ? (
+                 <img src={`data:image/png;base64,${pixData.qr_code_base64}`} alt="QR Code Pix" className="w-full h-full object-contain" />
+               ) : (
+                 <div className="w-full h-full bg-[#1e293b] rounded-xl flex items-center justify-center relative overflow-hidden">
+                    <span className="text-white font-black text-center text-xs opacity-20 uppercase tracking-[0.5em] rotate-12 absolute">PIX PIX PIX PIX PIX PIX</span>
+                    <div className="w-16 h-16 bg-[#00D2AD] rounded-lg shadow-[0_0_20px_#00D2AD] flex items-center justify-center animate-pulse">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20 M2 12h20"/></svg>
+                    </div>
+                 </div>
+               )}
             </div>
 
             <div className="space-y-4">
@@ -133,18 +136,28 @@ export default function SaldoPage() {
                <p className="text-gray-400 text-sm max-w-xs mx-auto">Ou utilize o código Copia e Cola abaixo para realizar o pagamento no seu banco.</p>
                
                <div className="bg-[#0f172a] border border-[#334155] p-4 rounded-xl flex items-center justify-between gap-4">
-                  <code className="text-[#00D2AD] text-xs font-mono truncate">00020126580014BR.GOV.BCB.PIX0136jacksonisraelgsm...</code>
-                  <button className="bg-[#00D2AD] text-[#0f172a] px-4 py-2 rounded-lg font-black text-xs uppercase whitespace-nowrap">Copiar</button>
+                  <code className="text-[#00D2AD] text-[10px] font-mono truncate">{pixData?.copy_paste || 'Gerando código...'}</code>
+                  <button 
+                    onClick={() => {
+                        if (pixData?.copy_paste) {
+                          navigator.clipboard.writeText(pixData.copy_paste);
+                          alert("Código Copiado!");
+                        }
+                    }}
+                    className="bg-[#00D2AD] text-[#0f172a] px-4 py-2 rounded-lg font-black text-xs uppercase whitespace-nowrap"
+                  >
+                    Copiar
+                  </button>
                </div>
             </div>
 
             <div className="pt-4 flex flex-col gap-3">
                <button 
-                onClick={simulatePaymentSuccess}
+                onClick={checkPaymentStatus}
                 disabled={loading}
-                className="w-full bg-[#25D366] hover:bg-[#1fb356] text-white py-4 rounded-2xl font-black uppercase text-sm shadow-[0_10px_20px_rgba(37,211,102,0.2)] transition-all"
+                className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-4 rounded-2xl font-black uppercase text-sm shadow-[0_10px_20px_rgba(0,210,173,0.2)] transition-all"
                >
-                 {loading ? 'PROCESSANDO...' : 'JÁ PAGUEI (SIMULAR)'}
+                 {loading ? 'VERIFICANDO...' : 'JÁ PAGUEI / VERIFICAR AGORA'}
                </button>
                <button 
                 onClick={() => setStep(1)}
