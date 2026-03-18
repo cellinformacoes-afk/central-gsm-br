@@ -14,6 +14,14 @@ export async function POST(request: Request) {
     });
     const { searchParams } = new URL(request.url);
     const bodyJson = await request.json().catch(() => ({}));
+    const headersObj = Object.fromEntries(request.headers.entries());
+
+    // Debug Log to Supabase
+    await supabase.from('webhook_logs').insert({
+      payload: bodyJson,
+      headers: headersObj,
+      created_at: new Date().toISOString()
+    });
 
     const id = searchParams.get('data.id') || searchParams.get('id') || bodyJson.data?.id || bodyJson.id;
     const type = searchParams.get('type') || bodyJson.type || searchParams.get('topic');
