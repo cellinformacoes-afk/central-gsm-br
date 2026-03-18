@@ -13,6 +13,7 @@ export default function ClientLayout({
 }) {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export default function ClientLayout({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setIsMenuOpen(false);
     router.push('/login');
   };
 
@@ -57,23 +59,35 @@ export default function ClientLayout({
         {/* Sticky Navbar */}
         <header className="sticky top-0 z-50 w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-[#334155] shadow-lg">
           <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            {/* Mobile Menu Button */}
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 text-gray-400 hover:text-white"
+            >
+              {isMenuOpen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+              )}
+            </button>
+
             {/* Logo */}
-            <Link href="/" className="flex flex-col justify-center">
+            <Link href="/" className="flex flex-col justify-center flex-1 md:flex-none ml-2 md:ml-0">
               <div className="flex items-center gap-2">
-                 <div className="w-10 h-10 bg-[#00D2AD]/20 rounded-md border-2 border-[#00D2AD] flex items-center justify-center relative overflow-hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="relative z-10"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                 <div className="w-8 h-8 md:w-10 md:h-10 bg-[#00D2AD]/20 rounded-md border-2 border-[#00D2AD] flex items-center justify-center relative overflow-hidden shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="relative z-10 w-4 h-4 md:w-5 md:h-5"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
                  </div>
-                 <div className="flex flex-col">
-                    <div className="flex flex-wrap items-baseline">
-                      <span className="text-white font-black text-xl italic tracking-tight uppercase">JACKSON & ISRAEL</span>
-                      <span className="text-[#00D2AD] font-black text-xl italic ml-1 drop-shadow-[0_0_5px_rgba(0,210,173,0.5)]">GSM</span>
+                 <div className="flex flex-col overflow-hidden">
+                    <div className="flex items-baseline overflow-hidden">
+                      <span className="text-white font-black text-sm md:text-xl italic tracking-tight uppercase truncate">JACKSON & ISRAEL</span>
+                      <span className="text-[#00D2AD] font-black text-sm md:text-xl italic ml-1 drop-shadow-[0_0_5px_rgba(0,210,173,0.5)]">GSM</span>
                     </div>
-                    <span className="text-[#00D2AD] text-[10px] font-bold tracking-[0.2em] mt-0.5 text-center w-full">ALUGUEL DE BOX DIGITAL</span>
+                    <span className="text-[#00D2AD] text-[8px] md:text-[10px] font-bold tracking-[0.1em] md:tracking-[0.2em] mt-0.5 truncate uppercase">ALUGUEL DE BOX DIGITAL</span>
                  </div>
               </div>
             </Link>
 
-            {/* Navigation */}
+            {/* Navigation Desktop */}
             <nav className="hidden md:flex items-center gap-6">
                <Link href="/" className="text-sm font-medium text-white hover:text-[#00D2AD] transition-colors">Início</Link>
                <Link href="/pedidos" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Meus Pedidos</Link>
@@ -82,33 +96,66 @@ export default function ClientLayout({
             </nav>
 
             {/* Right Buttons */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               {session ? (
                 <>
-                  <div className="hidden sm:flex items-center gap-2 bg-[#0f172a] border border-[#334155] px-3 py-1.5 rounded-lg text-sm font-medium">
-                     <span className="text-gray-400">Saldo:</span>
-                     <span className="text-[#00D2AD] font-black">
+                  <div className="flex items-center gap-1.5 md:gap-2 bg-[#00D2AD]/10 border border-[#00D2AD]/20 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-[10px] md:text-sm font-bold">
+                     <span className="hidden xs:inline text-gray-400">Saldo:</span>
+                     <span className="text-[#00D2AD]">
                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile?.balance || 0)}
                      </span>
                   </div>
                   <button 
                     onClick={handleLogout}
-                    className="text-gray-400 hover:text-white text-sm font-medium transition-colors"
+                    className="hidden md:block text-gray-400 hover:text-white text-sm font-medium transition-colors"
                   >
                     Sair
                   </button>
-                  <Link href="/perfil" className="w-8 h-8 rounded-full bg-[#00D2AD] flex items-center justify-center text-[#0f172a] font-black text-xs">
+                  <Link href="/perfil" className="w-8 h-8 rounded-full bg-[#00D2AD] flex items-center justify-center text-[#0f172a] font-black text-xs shrink-0 shadow-[0_0_10px_rgba(0,210,173,0.3)]">
                     {profile?.username?.charAt(0).toUpperCase() || 'U'}
                   </Link>
                 </>
               ) : (
-                <Link href="/login" className="bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] px-5 py-2 rounded-md font-bold text-sm shadow-[0_0_15px_rgba(0,210,173,0.3)] transition-all uppercase">
+                <Link href="/login" className="bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] px-3 md:px-5 py-1.5 md:py-2 rounded-md font-bold text-xs md:text-sm shadow-[0_0_15px_rgba(0,210,173,0.3)] transition-all uppercase">
                   Entrar
                 </Link>
               )}
             </div>
           </div>
+
+          {/* Mobile Menu Overlay */}
+          {isMenuOpen && (
+            <div className="md:hidden bg-[#1e293b] border-t border-[#334155] p-4 absolute w-full left-0 top-16 shadow-2xl animate-in slide-in-from-top duration-200">
+               <nav className="flex flex-col gap-4">
+                  <Link href="/" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-white flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Início
+                  </Link>
+                  <Link href="/pedidos" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    Meus Pedidos
+                  </Link>
+                  <Link href="/saldo" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    Adicionar Saldo
+                  </Link>
+                  <Link href="/suporte" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Suporte
+                  </Link>
+                  <div className="h-px bg-[#334155] my-2" />
+                  <button 
+                    onClick={handleLogout}
+                    className="text-base font-bold text-red-400 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Sair da Conta
+                  </button>
+               </nav>
+            </div>
+          )}
         </header>
+
 
         {/* WhatsApp Float */}
         <div className="fixed right-4 bottom-4 z-40">

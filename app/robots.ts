@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/perfil', '/pedidos/'], // Don't index private pages
     },
-    sitemap: 'https://central-gsm.vercel.app/sitemap.xml',
+    sitemap: 'https://centralgsm.com.br/sitemap.xml',
   };
 }

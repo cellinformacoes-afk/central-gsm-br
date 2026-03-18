@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'JACKSON & ISRAEL GSM | Aluguel de Ferramentas e Desbloqueio',
     description: 'Sua solução completa para desbloqueio e aluguel de ferramentas GSM online.',
-    url: 'https://central-gsm.vercel.app', // Substitua pela URL final se souber
+    url: 'https://centralgsm.com.br',
     siteName: 'Jackson & Israel GSM',
     locale: 'pt_BR',
     type: 'website',

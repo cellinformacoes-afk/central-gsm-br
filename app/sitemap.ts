@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://central-gsm.vercel.app'; // Substitua pela URL final
+  const baseUrl = 'https://centralgsm.com.br';
   
   return [
     {
