@@ -13,8 +13,12 @@ export async function POST(request: Request) {
       accessToken: accessToken 
     });
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('data.id') || searchParams.get('id');
-    const type = searchParams.get('type');
+    const bodyJson = await request.json().catch(() => ({}));
+
+    const id = searchParams.get('data.id') || searchParams.get('id') || bodyJson.data?.id || bodyJson.id;
+    const type = searchParams.get('type') || bodyJson.type;
+
+    console.log('Webhook MP recebido:', { id, type, body: bodyJson });
 
     if (type === 'payment' && id) {
       const payment = new Payment(client);
