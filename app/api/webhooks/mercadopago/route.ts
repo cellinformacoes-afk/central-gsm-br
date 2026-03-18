@@ -65,16 +65,26 @@ export async function POST(request: Request) {
 
         const newBalance = (profile?.balance || 0) + amount;
 
-        // 2. Update or Create profile
-        const { error: upsertError } = await supabase
+        // 2. Update profile
+        const { error: updateError } = await supabase
           .from('profiles')
-          .upsert({ 
-            id: userId, 
+          .update({ 
             balance: newBalance,
             updated_at: new Date().toISOString()
-          }, { onConflict: 'id' });
+          })
+          .eq('id', userId);
 
-        if (upsertError) throw upsertError;
+        if (updateError) throw updateError;
+
+        // Debug Log Success
+        await supabase.from('webhook_logs').insert({
+          payload: { 
+            source: 'webhook_success', 
+            paymentId: id, 
+            userId,
+            newBalance 
+          }
+        });
 
         // 3. Record transaction
         await supabase.from('transactions').insert({

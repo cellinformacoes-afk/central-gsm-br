@@ -53,15 +53,25 @@ export async function GET(request: Request) {
       const newBalance = (profile?.balance || 0) + amount;
 
       // 3. Update profile
-      const { error: upsertError } = await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
-        .upsert({ 
-          id: userId, 
+        .update({ 
           balance: newBalance,
           updated_at: new Date().toISOString()
-        });
+        })
+        .eq('id', userId);
 
-      if (upsertError) throw upsertError;
+      if (updateError) throw updateError;
+
+      // Debug Log Success
+      await supabase.from('webhook_logs').insert({
+        payload: { 
+          source: 'check_route_success', 
+          paymentId, 
+          userId,
+          newBalance 
+        }
+      });
 
       // 4. Record transaction
       await supabase.from('transactions').insert({
