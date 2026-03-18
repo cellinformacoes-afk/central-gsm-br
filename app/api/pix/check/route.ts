@@ -18,6 +18,17 @@ export async function GET(request: Request) {
 
     const paymentData = await payment.get({ id: paymentId });
 
+    // Debug Log
+    await supabase.from('webhook_logs').insert({
+      payload: { 
+        source: 'check_route', 
+        paymentId, 
+        status: paymentData.status,
+        full_data: paymentData 
+      },
+      created_at: new Date().toISOString()
+    });
+
     if (paymentData.status === 'approved') {
       const amount = parseFloat(String(paymentData.transaction_amount || '0'));
 
