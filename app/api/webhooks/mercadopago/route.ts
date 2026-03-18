@@ -32,8 +32,26 @@ export async function POST(request: Request) {
       const payment = new Payment(client);
       const paymentData = await payment.get({ id });
 
+      // Log full payment data for debugging
+      await supabase.from('webhook_logs').insert({
+        payload: { 
+          source: 'webhook_internal', 
+          paymentId: id, 
+          status: paymentData.status,
+          metadata: paymentData.metadata,
+          paymentData: paymentData 
+        },
+        created_at: new Date().toISOString()
+      });
+
       if (paymentData.status === 'approved') {
-        const userId = paymentData.metadata.user_id;
+        const userId = paymentData.metadata?.user_id;
+        
+        if (!userId) {
+          console.error('UserId não encontrado no metadata do pagamento:', id);
+          return NextResponse.json({ error: 'UserId missing in metadata' });
+        }
+
         const amount = parseFloat(String(paymentData.transaction_amount || '0'));
 
         console.log('Processando pagamento aprovado:', { userId, amount });

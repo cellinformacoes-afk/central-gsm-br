@@ -1,5 +1,4 @@
-"use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
@@ -10,6 +9,18 @@ export default function SaldoPage() {
   const [pixData, setPixData] = useState<any>(null);
   const [paymentStartTime, setPaymentStartTime] = useState<string | null>(null);
   const router = useRouter();
+
+  // Polling automático a cada 10 segundos quando o QR Code está visível
+  useEffect(() => {
+    let interval: any;
+    if (step === 2 && pixData?.id) {
+      interval = setInterval(() => {
+        console.log("Polling automático para o pagamento:", pixData.id);
+        checkPaymentStatus(true); // pass true to avoid alert on fail
+      }, 10000);
+    }
+    return () => clearInterval(interval);
+  }, [step, pixData]);
 
   const handleGeneratePix = async () => {
     if (!amount || parseFloat(amount) < 5) {
@@ -49,21 +60,26 @@ export default function SaldoPage() {
     }
   };
 
-  const checkPaymentStatus = async () => {
-    setLoading(true);
+  const checkPaymentStatus = async (isAuto = false) => {
+    if (!isAuto) setLoading(true);
+    console.log("Iniciando verificação de pagamento. pixData:", pixData);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
       // 1. Tentar verificar DIRETAMENTE no Mercado Pago via nossa nova API
       if (pixData?.id) {
+        console.log("Chamando /api/pix/check para ID:", pixData.id);
         const checkRes = await fetch(`/api/pix/check?id=${pixData.id}&userId=${session.user.id}`);
         const checkData = await checkRes.json();
+        console.log("Resultado do /api/pix/check:", checkData);
         
         if (checkData.status === 'approved' || checkData.status === 'already_processed') {
-          router.push('/saldo/sucesso?amount=' + amount);
+          router.push('/saldo/sucesso?amount=' + (checkData.amount || amount));
           return;
         }
+      } else {
+        console.warn("pixData.id não encontrado, pulando verificação direta.");
       }
 
       // 2. Fallback: Verificar se a transação já foi registrada no Banco de Dados (pelo webhook)
@@ -77,14 +93,15 @@ export default function SaldoPage() {
         .single();
 
       if (transaction && transaction.status === 'success') {
-        router.push('/saldo/sucesso?amount=' + amount);
-      } else {
+        console.log("Pagamento detectado no DB!");
+        router.push('/saldo/sucesso?amount=' + (transaction.amount || amount));
+      } else if (!isAuto) {
         alert("Pagamento ainda não detectado. Se você já pagou, aguarde 30 segundos e tente novamente. Se o problema persistir, entre em contato com o suporte.");
       }
     } catch (error) {
       console.error('Erro ao verificar status:', error);
     } finally {
-      setLoading(false);
+      if (!isAuto) setLoading(false);
     }
   };
 
@@ -173,7 +190,7 @@ export default function SaldoPage() {
 
             <div className="pt-4 flex flex-col gap-3">
                <button 
-                onClick={checkPaymentStatus}
+                onClick={() => checkPaymentStatus()}
                 disabled={loading}
                 className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-4 rounded-2xl font-black uppercase text-sm shadow-[0_10px_20px_rgba(0,210,173,0.2)] transition-all"
                >
