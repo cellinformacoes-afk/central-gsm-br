@@ -4,9 +4,9 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
-    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
     if (!accessToken) {
-       return NextResponse.json({ error: 'Token não encontrado' }, { status: 500 });
+       return NextResponse.json({ error: 'Token não encontrado no servidor' }, { status: 500 });
     }
 
     const client = new MercadoPagoConfig({ 

@@ -6,9 +6,12 @@ export async function POST(request: Request) {
   try {
     const { amount, description, userId } = await request.json();
     
-    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
     if (!accessToken) {
-      return NextResponse.json({ error: 'Configuração do Mercado Pago ausente (Token não encontrado)' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Chave do Mercado Pago não encontrada no servidor.',
+        debug: 'Verifique se a variável MERCADO_PAGO_ACCESS_TOKEN foi adicionada corretamente na Vercel.'
+      }, { status: 500 });
     }
 
     const client = new MercadoPagoConfig({ 
