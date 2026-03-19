@@ -66,6 +66,7 @@ export default function AdminServicosPage() {
       description: formData.get('description'),
       time_estimate: formData.get('time_estimate'),
       letter: formData.get('letter'),
+      logo_url: formData.get('logo_url'),
       icon_color: formData.get('icon_color'),
       is_rental: formData.get('is_rental') === 'on',
       duration_hours: parseInt(formData.get('duration_hours') as string || '0'),
@@ -126,8 +127,12 @@ export default function AdminServicosPage() {
                   {services.filter(s => s.category_id === cat.id).map(service => (
                     <div key={service.id} className={`bg-[#1e293b] p-6 rounded-2xl border ${service.active ? 'border-[#334155]' : 'border-red-900/50 opacity-60'} group relative`}>
                        <div className="flex justify-between items-start mb-4">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-black ${service.icon_color || 'bg-[#0f172a]'}`}>
-                             {service.letter || 'S'}
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-black overflow-hidden ${service.icon_color || 'bg-[#0f172a]'}`}>
+                             {service.logo_url ? (
+                               <img src={service.logo_url} alt="" className="w-full h-full object-cover" />
+                             ) : (
+                               service.letter || 'S'
+                             )}
                           </div>
                           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                              <button onClick={() => { setEditingService(service); setIsModalOpen(true); }} className="p-2 bg-[#334155] rounded-md text-white hover:bg-[#00D2AD] hover:text-black">
@@ -206,6 +211,10 @@ export default function AdminServicosPage() {
                  </div>
 
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-2 col-span-2 md:col-span-2">
+                       <label className="text-[10px] font-black text-gray-500 uppercase">URL do Logo (Imagem)</label>
+                       <input name="logo_url" placeholder="https://exemplo.com/logo.png" defaultValue={editingService?.logo_url} className="w-full bg-[#0f172a] border border-[#334155] rounded-xl p-3 text-white text-xs outline-none focus:border-[#00D2AD]" />
+                    </div>
                     <div className="space-y-2">
                        <label className="text-[10px] font-black text-gray-500 uppercase">Letra Ícone</label>
                        <input name="letter" maxLength={1} defaultValue={editingService?.letter || 'S'} className="w-full bg-[#0f172a] border border-[#334155] rounded-xl p-3 text-white text-center font-black uppercase" />

@@ -243,8 +243,12 @@ export default function Home() {
             >
               <div className="absolute top-0 right-0 w-40 h-40 bg-[#00D2AD]/5 blur-[70px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
               
-              <div className={`w-24 h-24 shrink-0 rounded-2xl flex items-center justify-center mr-6 ${service.icon_color || 'bg-[#0f172a]'} text-white text-5xl font-black shadow-2xl border-2 border-white/5 relative z-10 group-hover:scale-110 transition-transform`}>
-                {service.letter || 'S'}
+              <div className={`w-24 h-24 shrink-0 rounded-2xl flex items-center justify-center mr-6 overflow-hidden ${service.icon_color || 'bg-[#0f172a]'} text-white text-5xl font-black shadow-2xl border-2 border-white/5 relative z-10 group-hover:scale-110 transition-transform`}>
+                {service.logo_url ? (
+                  <img src={service.logo_url} alt="" className="w-full h-full object-contain p-2" />
+                ) : (
+                  service.letter || 'S'
+                )}
               </div>
 
               <div className="flex-1 min-w-0 relative z-10">
