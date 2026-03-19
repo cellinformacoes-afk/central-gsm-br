@@ -11,6 +11,7 @@ export default function AdminEstoquePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<any>(null);
   const [newPass, setNewPass] = useState('');
+  const [filter, setFilter] = useState<'all' | 'available' | 'rented' | 'pending_reset'>('all');
   
   // New Account Form
   const [showAddForm, setShowAddForm] = useState(false);
@@ -109,17 +110,45 @@ export default function AdminEstoquePage() {
          <Link href="/admin/servicos" className="text-gray-500 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2">🛠️ Gerenciar Serviços</Link>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">GESTÃO DE <span className="text-[#00D2AD]">ESTOQUE</span></h1>
            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-2">Controle de contas e troca de senhas</p>
         </div>
-        <button 
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-[#00D2AD] text-[#0f172a] px-6 py-3 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg hover:-translate-y-1 transition-all"
-        >
-          {showAddForm ? 'CANCELAR' : '+ NOVA CONTA'}
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="flex bg-[#0f172a] p-1 rounded-xl border border-[#334155]">
+            <button 
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${filter === 'all' ? 'bg-[#334155] text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+            >
+              Todas
+            </button>
+            <button 
+              onClick={() => setFilter('available')}
+              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${filter === 'available' ? 'bg-[#00D2AD] text-[#0f172a] shadow-lg shadow-[#00D2AD]/20' : 'text-gray-500 hover:text-[#00D2AD]'}`}
+            >
+              Disponíveis
+            </button>
+            <button 
+              onClick={() => setFilter('rented')}
+              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${filter === 'rented' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-gray-500 hover:text-blue-400'}`}
+            >
+              Em Uso
+            </button>
+            <button 
+              onClick={() => setFilter('pending_reset')}
+              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${filter === 'pending_reset' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-gray-500 hover:text-red-400'}`}
+            >
+              Pendentes
+            </button>
+          </div>
+          <button 
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="bg-[#00D2AD] text-[#0f172a] px-6 py-3 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg hover:-translate-y-1 transition-all"
+          >
+            {showAddForm ? 'CANCELAR' : '+ NOVA CONTA'}
+          </button>
+        </div>
       </div>
 
       {showAddForm && (
@@ -162,11 +191,13 @@ export default function AdminEstoquePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4">
+       <div className="grid grid-cols-1 gap-4">
         {loading ? (
             <div className="text-center py-20 text-gray-500 animate-pulse uppercase font-black tracking-widest">Carregando Estoque...</div>
-        ) : accounts.length > 0 ? (
-          accounts.map(acc => (
+        ) : accounts.filter(acc => filter === 'all' || acc.status === filter).length > 0 ? (
+          accounts
+            .filter(acc => filter === 'all' || acc.status === filter)
+            .map(acc => (
             <div key={acc.id} className={`bg-[#1e293b] p-6 rounded-2xl border ${acc.status === 'pending_reset' ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'border-[#334155]'} flex flex-col md:flex-row md:items-center justify-between gap-6`}>
                <div className="flex items-center gap-6">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${acc.status === 'pending_reset' ? 'bg-red-500/10 text-red-500' : acc.status === 'rented' ? 'bg-blue-500/10 text-blue-500' : 'bg-[#00D2AD]/10 text-[#00D2AD]'}`}>
