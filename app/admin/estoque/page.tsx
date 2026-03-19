@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function AdminEstoquePage() {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -102,6 +103,12 @@ export default function AdminEstoquePage() {
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
+      {/* Admin Nav */}
+      <div className="flex gap-4 mb-10 border-b border-[#334155] pb-4">
+         <Link href="/admin/estoque" className="text-[#00D2AD] border-b-2 border-[#00D2AD] font-black uppercase text-xs tracking-widest px-4 py-2">📦 Gestão de Estoque</Link>
+         <Link href="/admin/servicos" className="text-gray-500 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2">🛠️ Gerenciar Serviços</Link>
+      </div>
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">GESTÃO DE <span className="text-[#00D2AD]">ESTOQUE</span></h1>
