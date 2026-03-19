@@ -51,55 +51,35 @@ export default function Home() {
         return;
       }
 
-      // 1. Check Balance
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('balance')
-        .eq('id', session.user.id)
-        .single();
+      // Call Unified RPC
+      const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
+        p_user_id: session.user.id,
+        p_service_id: selectedService.id,
+        p_input_data: { imei: imei }
+      });
 
-      if ((profile?.balance || 0) < selectedService.price) {
-        alert("Saldo insuficiente! Por favor, adicione créditos.");
-        router.push('/saldo');
+      if (rpcError) throw rpcError;
+
+      if (result.status === 'error') {
+        alert(result.message);
+        if (result.message === 'Saldo insuficiente') router.push('/saldo');
         return;
       }
 
-      // 2. Deduct Balance
-      const newBalance = (profile?.balance || 0) - selectedService.price;
-      const { error: balanceError } = await supabase
-        .from('profiles')
-        .update({ balance: newBalance })
-        .eq('id', session.user.id);
+      if (result.type === 'rental' && result.credentials) {
+        alert(`Aluguel realizado com sucesso! Suas credenciais:\n\n📧 ${result.credentials.email}\n🔑 ${result.credentials.password}\n\nVocê também pode vê-las na página 'Meus Pedidos'.`);
+      } else if (result.type === 'rental_pending_stock') {
+        alert("Pagamento aprovado! No momento estamos sem contas em estoque. O administrador enviará sua conta em breve.");
+      } else {
+        alert("Pedido realizado com sucesso!");
+      }
 
-      if (balanceError) throw balanceError;
-
-      // 3. Create Order
-      const { error: orderError } = await supabase.from('orders').insert({
-        user_id: session.user.id,
-        service_id: selectedService.id,
-        status: 'Pendente',
-        total_price: selectedService.price,
-        input_data: { imei: imei }
-      });
-
-      if (orderError) throw orderError;
-
-      // 4. Record Transaction
-      await supabase.from('transactions').insert({
-        user_id: session.user.id,
-        amount: -selectedService.price,
-        type: 'purchase',
-        description: `Compra: ${selectedService.title}`,
-        status: 'success'
-      });
-
-      alert("Pedido realizado com sucesso!");
       setSelectedService(null);
       setImei('');
       router.push('/pedidos');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Erro ao processar compra.");
+      alert("Erro ao processar compra: " + (error.message || "Erro desconhecido"));
     } finally {
       setPurchaseLoading(false);
     }

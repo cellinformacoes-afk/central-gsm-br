@@ -3,6 +3,37 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
+function CountdownTimer({ expiryDate }: { expiryDate: string }) {
+  const [timeLeft, setTimeLeft] = useState<string>('');
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = new Date(expiryDate).getTime() - now;
+
+      if (distance < 0) {
+        setTimeLeft('EXPIRADO');
+        clearInterval(timer);
+        return;
+      }
+
+      const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((distance % (1000 * 60)) / 1000);
+
+      setTimeLeft(`${h}h ${m}m ${s}s`);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [expiryDate]);
+
+  return (
+    <span className={`text-[11px] font-black ${timeLeft === 'EXPIRADO' ? 'text-red-500' : 'text-[#FFC107] animate-pulse'}`}>
+      {timeLeft}
+    </span>
+  );
+}
+
 export default function PedidosPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +55,7 @@ export default function PedidosPage() {
 
     const { data, error } = await supabase
       .from('orders')
-      .select('*, services(title)')
+      .select('*, services(title), rentals(*)')
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false });
 
@@ -104,13 +135,30 @@ export default function PedidosPage() {
                        <span className="text-white font-black text-sm">R$ {order.total_price.toFixed(2)}</span>
                     </td>
                     <td className="px-6 py-7 text-center">
-                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg ${
-                         order.status === 'Concluído' ? 'bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30' :
-                         order.status === 'Rejeitado' ? 'bg-red-500/20 text-red-500 border border-red-500/30' :
-                         'bg-[#FFC107]/20 text-[#FFC107] border border-[#FFC107]/30 shadow-[0_0_10px_rgba(255,193,7,0.1)]'
-                       }`}>
-                         {order.status}
-                       </span>
+                       <div className="flex flex-col items-center gap-2">
+                          <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg ${
+                            order.status === 'Concluído' ? 'bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30' :
+                            order.status === 'Rejeitado' ? 'bg-red-500/20 text-red-500 border border-red-500/30' :
+                            'bg-[#FFC107]/20 text-[#FFC107] border border-[#FFC107]/30 shadow-[0_0_10px_rgba(255,193,7,0.1)]'
+                          }`}>
+                            {order.status}
+                          </span>
+                          
+                          {/* Botão para ver credenciais se for aluguel */}
+                          {order.rentals && order.rentals.length > 0 && (
+                            <div className="mt-3 bg-[#0f172a] p-4 rounded-xl border border-[#00D2AD]/30 text-left min-w-[200px] animate-in zoom-in duration-300">
+                               <p className="text-[#00D2AD] text-[10px] font-black uppercase tracking-tighter mb-2">🔑 Dados de Acesso</p>
+                               <div className="space-y-1">
+                                  <p className="text-white text-xs font-mono">Email: {order.rentals[0].credentials.email}</p>
+                                  <p className="text-white text-xs font-mono">Senha: {order.rentals[0].credentials.password}</p>
+                               </div>
+                               <div className="mt-4 pt-4 border-t border-[#334155] flex items-center justify-between">
+                                  <span className="text-gray-500 text-[9px] uppercase font-bold">Expira em:</span>
+                                  <CountdownTimer expiryDate={order.rentals[0].expires_at} />
+                               </div>
+                            </div>
+                          )}
+                       </div>
                     </td>
                   </tr>
                 ))
