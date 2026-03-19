@@ -129,7 +129,15 @@ export default function AdminServicosPage() {
                        <div className="flex justify-between items-start mb-4">
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-black overflow-hidden ${service.icon_color || 'bg-[#0f172a]'}`}>
                              {service.logo_url ? (
-                               <img src={service.logo_url} alt="" className="w-full h-full object-cover" />
+                               <img 
+                                 src={service.logo_url} 
+                                 alt="" 
+                                 className="w-full h-full object-cover" 
+                                 onError={(e) => {
+                                   (e.target as HTMLImageElement).style.display = 'none';
+                                   (e.target as HTMLImageElement).parentElement!.innerHTML = service.letter || 'S';
+                                 }}
+                               />
                              ) : (
                                service.letter || 'S'
                              )}
