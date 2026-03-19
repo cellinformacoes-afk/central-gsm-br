@@ -109,7 +109,7 @@ export default function ClientLayout({
               <nav className="hidden md:flex items-center gap-6">
                  <Link href="/" className="text-sm font-medium text-white hover:text-[#00D2AD] transition-colors">Início</Link>
                  <Link href="/pedidos" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Meus Pedidos</Link>
-                 <Link href="/saldo" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Saldo</Link>
+                 <Link href="/saldo" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Adicionar Saldo</Link>
                  <Link href="/extrato" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Extrato</Link>
                  <Link href="/suporte" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Suporte</Link>
                  {profile?.role === 'admin' && (
