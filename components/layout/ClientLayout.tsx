@@ -14,6 +14,7 @@ export default function ClientLayout({
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [pendingResets, setPendingResets] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -45,7 +46,21 @@ export default function ClientLayout({
     
     if (!error && data) {
       setProfile(data);
+      if (data.role === 'admin') fetchPendingResets();
     }
+  }
+
+  async function fetchPendingResets() {
+    // Chamar o monitor primeiro para garantir que está atualizado
+    await supabase.rpc('monitor_rental_expiration');
+    
+    // Contar pendentes
+    const { count } = await supabase
+      .from('service_accounts')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending_reset');
+    
+    setPendingResets(count || 0);
   }
 
   const handleLogout = async () => {
@@ -97,6 +112,16 @@ export default function ClientLayout({
                  <Link href="/saldo" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Saldo</Link>
                  <Link href="/extrato" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Extrato</Link>
                  <Link href="/suporte" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Suporte</Link>
+                 {profile?.role === 'admin' && (
+                   <Link href="/admin/estoque" className="flex items-center gap-2 text-sm font-black text-[#FFC107] hover:text-white transition-all bg-[#FFC107]/10 px-3 py-1.5 rounded-lg border border-[#FFC107]/20">
+                     ADMIN
+                     {pendingResets > 0 && (
+                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white animate-bounce">
+                         {pendingResets}
+                       </span>
+                     )}
+                   </Link>
+                 )}
               </nav>
             )}
 
