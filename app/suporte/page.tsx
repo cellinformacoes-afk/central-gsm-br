@@ -10,7 +10,7 @@ export default function Support() {
       </p>
 
       <a 
-        href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" 
+        href="https://google.com" 
         target="_blank" 
         rel="noopener noreferrer"
         className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-full transition-all hover:scale-105 shadow-lg shadow-green-500/30"
