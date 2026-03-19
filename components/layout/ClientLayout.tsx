@@ -178,6 +178,19 @@ export default function ClientLayout({
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     Suporte
                   </Link>
+                  {profile?.role === 'admin' && (
+                    <Link href="/admin/estoque" onClick={() => setIsMenuOpen(false)} className="text-base font-black text-[#FFC107] flex items-center justify-between p-2 rounded-lg hover:bg-[#0f172a] border border-[#FFC107]/20">
+                      <div className="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        Painel Admin
+                      </div>
+                      {pendingResets > 0 && (
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] text-white">
+                          {pendingResets}
+                        </span>
+                      )}
+                    </Link>
+                  )}
                   <div className="h-px bg-[#334155] my-2" />
                   <button 
                     onClick={handleLogout}
