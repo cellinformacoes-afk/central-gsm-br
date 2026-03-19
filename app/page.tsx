@@ -95,6 +95,8 @@ export default function Home() {
       case 'creditos': return 'M12 18V6 M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8';
       case 'licencas': return 'M7 11V7a5 5 0 0 1 10 0v4';
       case 'imei': return 'M12 18h.01';
+      case 'arquivos': return 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z';
+      case 'metodos': return 'M22 10v6M2 10v6';
       default: return 'M12 2v20 M2 12h20';
     }
   }
@@ -220,6 +222,7 @@ export default function Home() {
                 {cat.slug === 'imei' && <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />}
                 {cat.slug === 'licencas' && <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />}
                 {cat.slug === 'creditos' && <circle cx="12" cy="12" r="10" />}
+                {cat.slug === 'metodos' && <path d="M22 7L12 2 2 7l10 5 10-5z M12 22l-10-5v-6l10 5 10-5v6z" />}
               </svg>
               {cat.name}
             </button>
