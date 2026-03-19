@@ -121,8 +121,8 @@ export default function Home() {
                  <div className="space-y-6">
                     <p className="text-gray-400 text-sm leading-relaxed">{selectedService.description || "Compre agora este serviço com ativação rápida e suporte garantido."}</p>
                     
-                    {/* Conditional Input for IMEI */}
-                    {(selectedService.category_id === 4 || selectedService.title.toLowerCase().includes('imei')) && (
+                    {/* Conditional Input for IMEI (Only for IMEI Category) */}
+                    {selectedService.category_id === 4 && (
                       <div className="animate-in slide-in-from-top-2 duration-300">
                         <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Digite o IMEI do Aparelho</label>
                         <input 

@@ -55,7 +55,7 @@ export default function PedidosPage() {
 
     const { data, error } = await supabase
       .from('orders')
-      .select('*, services(title), rentals(*)')
+      .select('*, services(title, download_url), rentals(*)')
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false });
 
@@ -158,6 +158,19 @@ export default function PedidosPage() {
                                </div>
                             </div>
                           )}
+
+                          {/* Botão de Download para Arquivos e Métodos */}
+                          {order.status === 'Concluído' && order.services?.download_url && (
+                             <a 
+                               href={order.services.download_url} 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               className="mt-3 w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-3 px-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-[0_10px_20px_rgba(0,210,173,0.2)] transition-all flex items-center justify-center gap-2"
+                             >
+                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                               BAIXAR ARQUIVO / ACESSAR
+                             </a>
+                           )}
                        </div>
                     </td>
                   </tr>

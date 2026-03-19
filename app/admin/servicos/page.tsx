@@ -70,6 +70,7 @@ export default function AdminServicosPage() {
       icon_color: formData.get('icon_color'),
       is_rental: formData.get('is_rental') === 'on',
       duration_hours: parseInt(formData.get('duration_hours') as string || '0'),
+      download_url: formData.get('download_url'),
       active: true
     };
 
@@ -204,19 +205,36 @@ export default function AdminServicosPage() {
                     <textarea name="description" rows={3} defaultValue={editingService?.description} className="w-full bg-[#0f172a] border border-[#334155] rounded-2xl p-4 text-white outline-none focus:border-[#00D2AD]" />
                  </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center bg-[#0f172a] p-6 rounded-3xl border border-[#334155]">
-                    <div className="flex items-center gap-4">
-                       <input name="is_rental" type="checkbox" defaultChecked={editingService?.is_rental} className="w-6 h-6 rounded bg-[#1e293b] border-[#334155] text-[#00D2AD] focus:ring-[#00D2AD]" />
-                       <div>
-                          <label className="text-sm font-black text-white uppercase">É um Aluguel?</label>
-                          <p className="text-[10px] text-gray-500">Ativa entrega automática e estoque</p>
-                       </div>
-                    </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-gray-500 uppercase">Duração do Aluguel (Horas)</label>
-                       <input name="duration_hours" type="number" defaultValue={editingService?.duration_hours} className="w-full bg-[#1e293b] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]" />
-                    </div>
-                 </div>
+                  {/* Aluguel options (Hidden for Arquivos and Metodos) */}
+                 {![5, 6].includes(parseInt(editingService?.category_id || 0)) && (
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center bg-[#0f172a] p-6 rounded-3xl border border-[#334155]">
+                      <div className="flex items-center gap-4">
+                         <input name="is_rental" type="checkbox" defaultChecked={editingService?.is_rental} className="w-6 h-6 rounded bg-[#1e293b] border-[#334155] text-[#00D2AD] focus:ring-[#00D2AD]" />
+                         <div>
+                            <label className="text-sm font-black text-white uppercase">É um Aluguel?</label>
+                            <p className="text-[10px] text-gray-500">Ativa entrega automática e estoque</p>
+                         </div>
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black text-gray-500 uppercase">Duração do Aluguel (Horas)</label>
+                         <input name="duration_hours" type="number" defaultValue={editingService?.duration_hours} className="w-full bg-[#1e293b] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]" />
+                      </div>
+                   </div>
+                 )}
+
+                 {/* Download Link (Shown only for Arquivos and Metodos) */}
+                 {[5, 6].includes(parseInt(editingService?.category_id || 0)) && (
+                   <div className="space-y-2 bg-[#00D2AD]/5 p-6 rounded-3xl border border-[#00D2AD]/30 animate-in slide-in-from-top-2">
+                      <label className="text-xs font-black text-[#00D2AD] uppercase tracking-widest">Link de Download ou Acesso Externo</label>
+                      <input 
+                        name="download_url" 
+                        placeholder="https://mega.nz/..., https://mediafire.com/..., etc" 
+                        defaultValue={editingService?.download_url} 
+                        className="w-full bg-[#0f172a] border border-[#00D2AD]/30 rounded-2xl p-4 text-white outline-none focus:border-[#00D2AD]" 
+                      />
+                      <p className="text-[10px] text-gray-500 font-bold uppercase mt-1 italic">Este link será liberado para o cliente após o pagamento aprovado.</p>
+                   </div>
+                 )}
 
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="space-y-2 col-span-2 md:col-span-2">
