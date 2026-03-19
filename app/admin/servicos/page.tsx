@@ -77,12 +77,16 @@ export default function AdminServicosPage() {
       if (!error) {
         setIsModalOpen(false);
         fetchData();
+      } else {
+        alert("Erro ao atualizar serviço: " + error.message);
       }
     } else {
       const { error } = await supabase.from('services').insert(payload);
       if (!error) {
         setIsModalOpen(false);
         fetchData();
+      } else {
+        alert("Erro ao criar serviço: " + error.message);
       }
     }
   };
