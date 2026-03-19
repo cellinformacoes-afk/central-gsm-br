@@ -182,51 +182,62 @@ export default function Home() {
         </div>
       )}
 
-      {/* Hero Section */}
-      <div className="mb-12 text-center lg:text-left flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-           <h1 className="text-4xl font-black tracking-tighter text-white mb-2 uppercase italic leading-none">SETORES DE <span className="text-[#00D2AD] drop-shadow-[0_0_10px_rgba(0,210,173,0.3)]">SERVIÇOS</span></h1>
-           <p className="text-xs text-gray-500 font-black uppercase tracking-[0.3em] mt-3 flex items-center gap-2">
-              <span className="w-6 h-px bg-gray-800"></span> Home <span className="text-gray-800">❯</span> {activeCategoryId ? categories.find(c => c.id === activeCategoryId)?.name : 'Catálogo Completo'}
+      {/* Hero & Navigation Section */}
+      <div className="mb-12 flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-[#1e293b]/50 p-8 rounded-[40px] border border-[#334155]/50 backdrop-blur-sm">
+        <div className="shrink-0">
+           <h1 className="text-4xl font-black tracking-tighter text-white mb-1 uppercase italic leading-none">SETORES DE <span className="text-[#00D2AD] drop-shadow-[0_0_10px_rgba(0,210,173,0.3)]">SERVIÇOS</span></h1>
+           <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
+              <span className="w-4 h-px bg-[#00D2AD]"></span> Explore Nossas Soluções
            </p>
+        </div>
+
+        {/* Compact Category Navigation */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button 
+            onClick={() => setActiveCategoryId(null)}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all border-2 ${
+              activeCategoryId === null 
+              ? 'bg-[#00D2AD] border-[#00D2AD] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)]' 
+              : 'bg-[#0f172a] border-[#334155] text-gray-400 hover:border-[#00D2AD]/50 hover:text-white'
+            }`}
+          >
+            <div className={`w-2 h-2 rounded-full ${activeCategoryId === null ? 'bg-[#0f172a] animate-pulse' : 'bg-gray-600'}`}></div>
+            TODOS
+          </button>
+
+          {categories.map((cat) => (
+            <button 
+              key={cat.id}
+              onClick={() => setActiveCategoryId(activeCategoryId === cat.id ? null : cat.id)}
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all border-2 group ${
+                activeCategoryId === cat.id 
+                ? 'bg-[#00D2AD] border-[#00D2AD] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)]' 
+                : 'bg-[#0f172a] border-[#334155] text-gray-400 hover:border-[#00D2AD]/50 hover:text-white'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={activeCategoryId === cat.id ? 'text-[#0f172a]' : 'text-[#00D2AD] group-hover:scale-110 transition-transform'}>
+                <path d={getIcon(cat.slug)} />
+                {cat.slug === 'imei' && <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />}
+                {cat.slug === 'licencas' && <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />}
+                {cat.slug === 'creditos' && <circle cx="12" cy="12" r="10" />}
+              </svg>
+              {cat.name}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Categories Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-20">
-        {categories.map((cat) => (
-          <div 
-            key={cat.id}
-            onClick={() => setActiveCategoryId(activeCategoryId === cat.id ? null : cat.id)}
-            className={`bg-[#1e293b] rounded-3xl p-8 border-2 transition-all cursor-pointer group text-center shadow-2xl relative overflow-hidden h-full flex flex-col items-center justify-center hover:scale-[1.02] ${
-              activeCategoryId === cat.id ? 'border-[#00D2AD] bg-[#0f172a] shadow-[0_0_30px_rgba(0,210,173,0.1)]' : 'border-[#334155] hover:border-[#00D2AD]/50'
-            }`}
-          >
-             <div className="absolute inset-0 bg-gradient-to-br from-[#00D2AD]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-             <div className={`w-20 h-20 bg-[#0f172a] rounded-2xl flex items-center justify-center mb-5 border-2 transition-all relative z-10 shadow-inner group-hover:rotate-6 ${
-               activeCategoryId === cat.id ? 'border-[#00D2AD] shadow-[0_0_20px_rgba(0,210,173,0.2)]' : 'border-[#334155] group-hover:border-[#00D2AD]/40'
-             }`}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#00D2AD" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={getIcon(cat.slug)} />
-                  {cat.slug === 'imei' && <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />}
-                  {cat.slug === 'licencas' && <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />}
-                  {cat.slug === 'creditos' && <circle cx="12" cy="12" r="10" />}
-                </svg>
-             </div>
-             <h3 className="text-white font-black text-xl relative z-10 uppercase italic tracking-tighter leading-tight">{cat.name}</h3>
-          </div>
-        ))}
-      </div>
-
       {/* Services List Header */}
-      <div className="mb-10 flex items-center justify-between border-b border-[#334155] pb-6">
-        <h2 className="text-3xl font-black text-white flex items-center gap-4 uppercase italic">
-           <div className="w-3 h-10 bg-[#00D2AD] rounded-full shadow-[0_0_15px_#00D2AD]"></div>
-           {activeCategoryId ? categories.find(c => c.id === activeCategoryId)?.name : 'Novidades & Destaques'}
-        </h2>
-        {activeCategoryId && (
-          <button onClick={() => setActiveCategoryId(null)} className="text-[10px] font-black text-[#00D2AD] hover:text-white transition-all uppercase tracking-[0.2em] bg-[#00D2AD]/10 px-6 py-3 rounded-full border border-[#00D2AD]/30">Ver Tudo</button>
-        )}
+      <div className="mb-8 flex items-center justify-between border-b border-[#334155]/50 pb-6 ml-2">
+        <div className="flex items-center gap-4">
+           <div className="w-1.5 h-8 bg-[#00D2AD] rounded-full shadow-[0_0_10px_#00D2AD]"></div>
+           <h2 className="text-2xl font-black text-white uppercase italic tracking-tight">
+              {activeCategoryId ? categories.find(c => c.id === activeCategoryId)?.name : 'Programas Disponíveis'}
+           </h2>
+        </div>
+        <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+          {filteredServices.length} {filteredServices.length === 1 ? 'Resultado' : 'Resultados'}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
