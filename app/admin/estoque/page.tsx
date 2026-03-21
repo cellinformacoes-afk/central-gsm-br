@@ -15,7 +15,7 @@ export default function AdminEstoquePage() {
   
   // New Account Form
   const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({ service_id: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ service_id: '', email: '', password: '', duration_hours: '', price: '' });
 
   const router = useRouter();
 
@@ -47,7 +47,7 @@ export default function AdminEstoquePage() {
     // Refresh expiration first
     await supabase.rpc('monitor_rental_expiration');
 
-    const { data: servData } = await supabase.from('services').select('id, title').eq('is_rental', true);
+    const { data: servData } = await supabase.from('services').select('id, title, duration_hours, price').eq('is_rental', true);
     setServices(servData || []);
 
     const { data: accData, error } = await supabase
@@ -81,6 +81,21 @@ export default function AdminEstoquePage() {
 
   const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Primeiro atualiza o serviço com a nova duração e preço
+    const { error: servError } = await supabase
+      .from('services')
+      .update({
+        duration_hours: parseInt(formData.duration_hours),
+        price: parseFloat(formData.price)
+      })
+      .eq('id', parseInt(formData.service_id));
+
+    if (servError) {
+       alert("Erro ao atualizar dados do serviço: " + servError.message);
+       return;
+    }
+
     const { error } = await supabase.from('service_accounts').insert({
       service_id: parseInt(formData.service_id),
       credentials: { email: formData.email, password: formData.password },
@@ -91,7 +106,7 @@ export default function AdminEstoquePage() {
       alert("Erro ao adicionar conta: " + error.message);
     } else {
       setShowAddForm(false);
-      setFormData({ service_id: '', email: '', password: '' });
+      setFormData({ service_id: '', email: '', password: '', duration_hours: '', price: '' });
       fetchData();
     }
   };
@@ -156,10 +171,18 @@ export default function AdminEstoquePage() {
            <form onSubmit={handleAddAccount} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
               <div className="space-y-2">
                  <label className="text-[10px] font-black text-gray-500 uppercase">Serviço</label>
-                 <select 
+                  <select 
                     required
                     value={formData.service_id}
-                    onChange={e => setFormData({...formData, service_id: e.target.value})}
+                    onChange={e => {
+                       const selected = services.find(s => s.id === parseInt(e.target.value));
+                       setFormData({
+                          ...formData, 
+                          service_id: e.target.value,
+                          duration_hours: selected?.duration_hours?.toString() || '',
+                          price: selected?.price?.toString() || ''
+                       });
+                    }}
                     className="w-full bg-[#0f172a] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]"
                  >
                     <option value="">Selecione...</option>
@@ -176,17 +199,44 @@ export default function AdminEstoquePage() {
                     className="w-full bg-[#0f172a] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]"
                  />
               </div>
-              <div className="space-y-2">
-                 <label className="text-[10px] font-black text-gray-500 uppercase">Senha</label>
-                 <input 
-                    required
-                    type="text" 
-                    value={formData.password}
-                    onChange={e => setFormData({...formData, password: e.target.value})}
-                    className="w-full bg-[#0f172a] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]"
-                 />
-              </div>
-              <button type="submit" className="bg-[#00D2AD] text-[#0f172a] p-3 rounded-xl font-black uppercase text-xs">Salvar no Estoque</button>
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-500 uppercase">Senha</label>
+                  <input 
+                     required
+                     type="text" 
+                     value={formData.password}
+                     onChange={e => setFormData({...formData, password: e.target.value})}
+                     className="w-full bg-[#0f172a] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]"
+                  />
+               </div>
+               
+               {/* Novos Campos solicitados */}
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-500 uppercase">Horas Aluguel</label>
+                  <input 
+                     required
+                     type="number" 
+                     value={formData.duration_hours}
+                     onChange={e => setFormData({...formData, duration_hours: e.target.value})}
+                     placeholder="Ex: 3"
+                     className="w-full bg-[#0f172a] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]"
+                  />
+               </div>
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-500 uppercase">Preço Aluguel (R$)</label>
+                  <input 
+                     required
+                     type="number" 
+                     step="0.01"
+                     value={formData.price}
+                     onChange={e => setFormData({...formData, price: e.target.value})}
+                     placeholder="Ex: 15.00"
+                     className="w-full bg-[#0f172a] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]"
+                  />
+               </div>
+               <div className="md:col-span-4 flex justify-end">
+                  <button type="submit" className="bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] px-10 py-4 rounded-xl font-black uppercase text-xs shadow-lg transition-all">Salvar no Estoque</button>
+               </div>
            </form>
         </div>
       )}

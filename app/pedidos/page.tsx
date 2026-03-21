@@ -119,7 +119,7 @@ export default function PedidosPage() {
                   <tr key={order.id} className="hover:bg-[#00D2AD]/5 transition-colors group">
                     <td className="px-8 py-7">
                        <div className="flex flex-col">
-                          <span className="text-white font-black text-sm uppercase italic group-hover:text-[#00D2AD] transition-colors">{order.services?.title || 'Serviço Removido'}</span>
+                          <span className="text-white font-black text-sm uppercase italic group-hover:text-[#00D2AD] transition-colors">{order.service_title || order.services?.title || 'Serviço Removido'}</span>
                           <span className="text-gray-500 text-[10px] font-mono mt-1">ID: #{order.id.slice(0, 8)}</span>
                        </div>
                     </td>
