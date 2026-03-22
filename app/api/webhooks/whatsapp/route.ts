@@ -4,17 +4,18 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Configurações SUPABASE (Admin para permitir updates)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Usar Service Role para bypass RLS se necessário
-);
 
 // Configurações W-API (Para enviar resposta)
 const W_API_TOKEN = 'Swp2rYBaElQLSscDhTYWKQ9SnTLIVz9Sv';
 const W_API_INSTANCE_ID = 'LITE-1VGFGA-OFBQ2X';
 
 export async function POST(request: Request) {
+  // Configurações SUPABASE (Admin para permitir updates)
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   try {
     const body = await request.json();
     console.log('[WHATSAPP WEBHOOK] Recebido:', body);
