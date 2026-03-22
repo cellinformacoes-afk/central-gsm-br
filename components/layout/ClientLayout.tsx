@@ -96,7 +96,7 @@ export default function ClientLayout({
                  </div>
                  <div className="flex flex-col overflow-hidden">
                     <div className="flex items-baseline overflow-hidden">
-                      <span className="text-white font-black text-sm md:text-xl italic tracking-tight uppercase truncate">JACKSON & ISRAEL</span>
+                      <span className="text-white font-black text-sm md:text-xl italic tracking-tight uppercase truncate">JACKSON & ISRAEL [V2]</span>
                       <span className="text-[#00D2AD] font-black text-sm md:text-xl italic ml-1 drop-shadow-[0_0_5px_rgba(0,210,173,0.5)]">GSM</span>
                     </div>
                     <span className="text-[#00D2AD] text-[8px] md:text-[10px] font-bold tracking-[0.1em] md:tracking-[0.2em] mt-0.5 truncate uppercase">ALUGUEL DE BOX DIGITAL</span>
@@ -110,7 +110,7 @@ export default function ClientLayout({
                  <Link href="/" className="text-sm font-medium text-white hover:text-[#00D2AD] transition-colors">Início</Link>
                  <Link href="/pedidos" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Meus Pedidos</Link>
                  <Link href="/saldo" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Adicionar Saldo</Link>
-                 <Link href="/extrato" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Ver extrato</Link>
+                 <Link href="/extrato" className="text-sm font-medium text-[#00D2AD] hover:text-white transition-colors animate-pulse">Ver extrato</Link>
                  <Link href="/suporte" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Suporte</Link>
                  {profile?.role === 'admin' && (
                    <div className="flex items-center gap-2">
@@ -178,7 +178,7 @@ export default function ClientLayout({
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     Adicionar Saldo
                   </Link>
-                  <Link href="/extrato" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
+                  <Link href="/extrato" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-[#00D2AD] flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a] animate-pulse">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     Ver extrato
                   </Link>

@@ -215,18 +215,18 @@ export default function AdminServicosPage() {
                   {/* Aluguel options (Hidden for Arquivos and Metodos) */}
                  {![5, 6].includes(formCategoryId || 0) && (
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center bg-[#0f172a] p-6 rounded-3xl border border-[#334155]">
-                      <div className="flex items-center gap-4">
-                         <input name="is_rental" type="checkbox" defaultChecked={editingService?.is_rental} className="w-6 h-6 rounded bg-[#1e293b] border-[#334155] text-[#00D2AD] focus:ring-[#00D2AD]" />
-                         <div>
-                            <label className="text-sm font-black text-white uppercase">É um Aluguel?</label>
-                            <p className="text-[10px] text-gray-500">Ativa entrega automática e estoque</p>
-                         </div>
-                      </div>
-                      <div className="space-y-2">
-                         <label className="text-[10px] font-black text-gray-500 uppercase">Duração do Aluguel (Horas) - [ATUALIZADO]</label>
-                         <input name="duration_hours" type="text" defaultValue={editingService?.duration_hours} className="w-full bg-[#1e293b] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]" />
-                         <p className="text-[9px] text-gray-500 font-bold italic mt-1 uppercase">DICA: 0.1 = 6 min | 0.5 = 30 min | 1.0 = 1 hora</p>
-                      </div>
+                       <div className="flex items-center gap-4">
+                          <input name="is_rental" type="checkbox" defaultChecked={editingService?.is_rental} className="w-6 h-6 rounded bg-[#1e293b] border-[#334155] text-[#00D2AD] focus:ring-[#00D2AD]" />
+                          <div>
+                             <label className="text-sm font-black text-white uppercase">É um Aluguel?</label>
+                             <p className="text-[10px] text-gray-500">Ativa entrega automática e estoque</p>
+                          </div>
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-gray-500 uppercase">Duração do Aluguel (Horas) - [ATUALIZADO]</label>
+                          <input name="duration_hours" type="number" step="0.01" min="0" defaultValue={editingService?.duration_hours} className="w-full bg-[#1e293b] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]" />
+                          <p className="text-[9px] text-gray-500 font-bold italic mt-1 uppercase">DICA: 0.1 = 6 min | 0.5 = 30 min | 1.0 = 1 hora</p>
+                       </div>
                    </div>
                  )}
 
