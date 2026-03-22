@@ -96,7 +96,7 @@ export default function ClientLayout({
                  </div>
                  <div className="flex flex-col overflow-hidden">
                     <div className="flex items-baseline overflow-hidden">
-                      <span className="text-white font-black text-sm md:text-xl italic tracking-tight uppercase truncate">JACKSON & ISRAEL</span>
+                      <span className="text-white font-black text-sm md:text-xl italic tracking-tight uppercase truncate">JACKSON & ISRAEL [V2]</span>
                       <span className="text-[#00D2AD] font-black text-sm md:text-xl italic ml-1 drop-shadow-[0_0_5px_rgba(0,210,173,0.5)]">GSM</span>
                     </div>
                     <span className="text-[#00D2AD] text-[8px] md:text-[10px] font-bold tracking-[0.1em] md:tracking-[0.2em] mt-0.5 truncate uppercase">ALUGUEL DE BOX DIGITAL</span>
