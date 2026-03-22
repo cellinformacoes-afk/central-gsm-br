@@ -224,7 +224,7 @@ export default function AdminServicosPage() {
                       </div>
                       <div className="space-y-2">
                          <label className="text-[10px] font-black text-gray-500 uppercase">Duração do Aluguel (Horas)</label>
-                         <input name="duration_hours" type="number" step="any" min="0" defaultValue={editingService?.duration_hours} className="w-full bg-[#1e293b] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]" />
+                         <input name="duration_hours" type="text" defaultValue={editingService?.duration_hours} className="w-full bg-[#1e293b] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]" />
                          <p className="text-[9px] text-gray-500 font-bold italic mt-1 uppercase">DICA: 0.1 = 6 min | 0.5 = 30 min | 1.0 = 1 hora</p>
                       </div>
                    </div>
