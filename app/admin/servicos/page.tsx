@@ -70,7 +70,7 @@ export default function AdminServicosPage() {
       logo_url: formData.get('logo_url'),
       icon_color: formData.get('icon_color'),
       is_rental: formData.get('is_rental') === 'on',
-      duration_hours: parseInt(formData.get('duration_hours') as string || '0'),
+      duration_hours: parseFloat(formData.get('duration_hours') as string || '0'),
       download_url: formData.get('download_url'),
       active: true
     };
@@ -224,7 +224,7 @@ export default function AdminServicosPage() {
                       </div>
                       <div className="space-y-2">
                          <label className="text-[10px] font-black text-gray-500 uppercase">Duração do Aluguel (Horas)</label>
-                         <input name="duration_hours" type="number" defaultValue={editingService?.duration_hours} className="w-full bg-[#1e293b] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]" />
+                         <input name="duration_hours" type="number" step="0.01" defaultValue={editingService?.duration_hours} className="w-full bg-[#1e293b] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]" />
                       </div>
                    </div>
                  )}
