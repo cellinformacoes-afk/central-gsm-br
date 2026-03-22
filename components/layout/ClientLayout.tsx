@@ -96,7 +96,7 @@ export default function ClientLayout({
                  </div>
                  <div className="flex flex-col overflow-hidden">
                     <div className="flex items-baseline overflow-hidden">
-                      <span className="text-white font-black text-sm md:text-xl italic tracking-tight uppercase truncate">JACKSON & ISRAEL [V2]</span>
+                      <span className="text-white font-black text-sm md:text-xl italic tracking-tight uppercase truncate">JACKSON & ISRAEL</span>
                       <span className="text-[#00D2AD] font-black text-sm md:text-xl italic ml-1 drop-shadow-[0_0_5px_rgba(0,210,173,0.5)]">GSM</span>
                     </div>
                     <span className="text-[#00D2AD] text-[8px] md:text-[10px] font-bold tracking-[0.1em] md:tracking-[0.2em] mt-0.5 truncate uppercase">ALUGUEL DE BOX DIGITAL</span>
@@ -110,26 +110,19 @@ export default function ClientLayout({
                  <Link href="/" className="text-sm font-medium text-white hover:text-[#00D2AD] transition-colors">Início</Link>
                  <Link href="/pedidos" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Meus Pedidos</Link>
                  <Link href="/saldo" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Adicionar Saldo</Link>
-                 <Link href="/extrato" className="text-sm font-medium text-[#00D2AD] hover:text-white transition-colors animate-pulse">Ver extrato</Link>
+                 <Link href="/extrato" className="text-sm font-medium text-[#00D2AD] hover:text-white transition-colors ">Ver extrato</Link>
                  <Link href="/suporte" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Suporte</Link>
                  {profile?.role === 'admin' && (
-                   <div className="flex items-center gap-2">
-                     <Link href="/admin/estoque" className="text-[10px] md:text-xs font-black text-gray-400 hover:text-[#FFC107] transition-all bg-white/5 px-2 md:px-3 py-1.5 rounded-lg border border-white/10 uppercase">
-                       Estoque
-                     </Link>
-                     <Link href="/admin/servicos" className="text-[10px] md:text-xs font-black text-gray-400 hover:text-[#00D2AD] transition-all bg-white/5 px-2 md:px-3 py-1.5 rounded-lg border border-white/10 uppercase">
-                       Serviços
-                     </Link>
-                     <Link href="/admin/expirados" className="flex items-center gap-2 text-[10px] md:text-xs font-black text-[#FFC107] hover:text-white transition-all bg-[#FFC107]/10 px-2 md:px-3 py-1.5 rounded-lg border border-[#FFC107]/20 uppercase">
-                       Expirados
-                       {pendingResets > 0 && (
-                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white animate-bounce">
-                           {pendingResets}
-                         </span>
-                       )}
-                     </Link>
-                   </div>
+                   <Link href="/admin/estoque" className="flex items-center gap-2 text-sm font-black text-[#FFC107] hover:text-white transition-all bg-[#FFC107]/10 px-3 py-1.5 rounded-lg border border-[#FFC107]/20 uppercase">
+                     ADMIN
+                     {pendingResets > 0 && (
+                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white animate-bounce">
+                         {pendingResets}
+                       </span>
+                     )}
+                   </Link>
                  )}
+                 
               </nav>
             )}
 
@@ -178,38 +171,28 @@ export default function ClientLayout({
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     Adicionar Saldo
                   </Link>
-                  <Link href="/extrato" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-[#00D2AD] flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a] animate-pulse">
+                  <Link href="/extrato" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-[#00D2AD] flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     Ver extrato
                   </Link>
                   <Link href="/suporte" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
+                  {profile?.role === 'admin' && (
+                    <Link href="/admin/estoque" onClick={() => setIsMenuOpen(false)} className="text-base font-black text-[#FFC107] flex items-center justify-between p-2 rounded-lg hover:bg-[#0f172a] border border-[#FFC107]/20 uppercase">
+                      <div className="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        Painel Admin
+                      </div>
+                      {pendingResets > 0 && (
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] text-white">
+                          {pendingResets}
+                        </span>
+                      )}
+                    </Link>
+                  )}
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     Suporte
                   </Link>
-                   {profile?.role === 'admin' && (
-                     <div className="flex flex-col gap-2">
-                       <span className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Painel Admin</span>
-                       <Link href="/admin/estoque" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-white flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-                         Estoque
-                       </Link>
-                       <Link href="/admin/servicos" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-white flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                         Serviços
-                       </Link>
-                       <Link href="/admin/expirados" onClick={() => setIsMenuOpen(false)} className="text-base font-black text-[#FFC107] flex items-center justify-between p-3 rounded-xl hover:bg-[#0f172a] border border-[#FFC107]/20 bg-[#FFC107]/5">
-                         <div className="flex items-center gap-3">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                           Reset Manual
-                         </div>
-                         {pendingResets > 0 && (
-                           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] text-white">
-                             {pendingResets}
-                           </span>
-                         )}
-                       </Link>
-                     </div>
-                   )}
+                   
                   <div className="h-px bg-[#334155] my-2" />
                   <button 
                     onClick={handleLogout}
