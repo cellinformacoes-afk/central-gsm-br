@@ -4,8 +4,6 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [checkboxChecked, setCheckboxChecked] = useState(false);
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,38 +147,6 @@ export default function Home() {
                  </div>
               </div>
            </div>
-        </div>
-      )}
-
-      {/* Terms Modal ... (Unchanged) */}
-      {!termsAccepted && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0f172a]/80 backdrop-blur-sm p-4">
-          <div className="bg-[#1e293b] max-w-2xl w-full rounded-xl neon-modal overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar space-y-4">
-              <h2 className="text-xl font-bold text-center text-[#00D2AD] drop-shadow-[0_0_8px_rgba(0,210,173,0.5)] mb-6 uppercase">BEM-VINDO(A) AO CENTRAL GSM!</h2>
-              <div className="bg-[#2a1b1e] border border-red-900/50 rounded-lg p-4 text-red-100 italic">
-                <h3 className="text-red-400 font-bold mb-2 flex items-center gap-2 underline uppercase tracking-tighter"><span className="text-xl">⚖️</span> TIPICIDADE PENAL PASSÍVEL</h3>
-                <ul className="list-disc pl-5 space-y-1 text-sm not-italic opacity-80">
-                  <li><strong>Art. 154-A do Código Penal:</strong> Invasão de dispositivo informático</li>
-                  <li><strong>Lei 12.737/2012:</strong> Crimes informáticos</li>
-                </ul>
-              </div>
-              <div className="bg-[#112328] border border-[#00D2AD]/20 rounded-lg p-4 text-gray-300">
-                <h3 className="text-[#00D2AD] font-bold mb-2 flex items-center gap-2 drop-shadow-[0_0_5px_rgba(0,210,173,0.5)] uppercase italic tracking-tighter"><span className="text-xl">🚨</span> RESPONSABILIDADE DO USUÁRIO</h3>
-                <p className="text-sm leading-relaxed">O uso inadequado das ferramentas após a compra é de <strong className="text-white underline underline-offset-4 decoration-[#00D2AD]">TOTAL responsabilidade do usuário</strong>, podendo responder civil e criminalmente.</p>
-              </div>
-              <div className="border-2 border-dashed border-[#00D2AD]/40 bg-[#00D2AD]/5 rounded-2xl p-6 mt-6">
-                <label className="flex items-center gap-4 cursor-pointer group">
-                  <input type="checkbox" checked={checkboxChecked} onChange={(e) => setCheckboxChecked(e.target.checked)} className="w-6 h-6 rounded-lg border-2 border-gray-600 text-[#00D2AD] focus:ring-[#00D2AD] bg-[#0f172a] transition-all" />
-                  <span className="text-sm text-gray-200 font-bold group-hover:text-white transition-colors">Declaro que <strong className="text-[#00D2AD]">Li!</strong> e <strong className="text-[#00D2AD]">ESTOU DE ACORDO</strong> com todos os termos.</span>
-                </label>
-              </div>
-            </div>
-            <div className="bg-[#151e2e] p-5 border-t border-[#334155] flex justify-between items-center gap-4">
-              <button onClick={() => window.location.href = 'https://google.com'} className="bg-[#334155] hover:bg-[#475569] text-white px-8 py-3 rounded-xl font-bold transition-all uppercase text-xs">Sair</button>
-              <button onClick={() => checkboxChecked && setTermsAccepted(true)} disabled={!checkboxChecked} className={`px-10 py-3 rounded-xl font-black transition-all uppercase text-xs shadow-lg ${checkboxChecked ? 'bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a]' : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'}`}>Aceito os Termos</button>
-            </div>
-          </div>
         </div>
       )}
 
