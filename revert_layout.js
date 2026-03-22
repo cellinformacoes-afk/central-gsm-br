@@ -9,10 +9,10 @@ let layout = fs.readFileSync(layoutPath, 'utf8');
 layout = layout.replace('JACKSON & ISRAEL [V2]', 'JACKSON & ISRAEL');
 layout = layout.replace('!!! VER EXTRATO !!!', 'Ver extrato');
 layout = layout.replace('animate-pulse', '');
-// Remove administrative sections
-layout = layout.replace(/<Link href="\/admin\/expirados"[\s\S]*?<\/Link>/g, '');
-// Remove Reset Manual link in mobile
-layout = layout.replace(/<Link href="\/admin\/expirados"[\s\S]*?Reset Manual[\s\S]*?<\/Link>/g, '');
+// Remove administrative sections in desktop header
+layout = layout.replace(/\{profile\?\.role === 'admin' && \([\s\S]*?<div className="flex items-center gap-2">[\s\S]*?<\/div>\s*?\)\}/, '');
+// Remove administrative sections in mobile header
+layout = layout.replace(/\{profile\?\.role === 'admin' && \([\s\S]*?<div className="flex flex-col gap-2">[\s\S]*?<\/div>\s*?\)\}/, '');
 
 fs.writeFileSync(layoutPath, layout);
 
