@@ -1,5 +1,4 @@
 {
-  "_comment": "trigger build v2",
   "crons": [
     {
       "path": "/api/cron/check-expiration",
