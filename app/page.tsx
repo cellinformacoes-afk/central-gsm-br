@@ -97,7 +97,6 @@ export default function Home() {
       case 'imei': return 'M12 18h.01';
       case 'arquivos': return 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z';
       case 'metodos': return 'M22 10v6M2 10v6';
-      case 'miskidata': return 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 4v10h16V8H4z';
       default: return 'M12 2v20 M2 12h20';
     }
   }
