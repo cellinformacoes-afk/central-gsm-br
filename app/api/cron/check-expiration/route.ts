@@ -13,32 +13,27 @@ export async function GET(request: Request) {
   try {
     console.log('[CRON] Iniciando monitoramento de expirações...');
 
-    // 1. Rodar o monitor de expiração (RPC) para garantir que contas expiradas sejam detectadas no DB
-    await supabase.rpc('monitor_rental_expiration');
+    // 1. Chamar o RPC que faz tudo (Monitora, marca como expirado e retorna alertas pendentes)
+    const { data: alerts, error } = await supabase.rpc('get_pending_whatsapp_alerts');
 
-    // 3. Buscar contas que expiraram e precisam de aviso final
-    const { data: expiredAccounts, error: expiredError } = await supabase
-      .from('service_accounts')
-      .select('id, credentials, services(title)')
-      .eq('status', 'pending_reset')
-      .eq('expiry_notified', false);
-
-    if (expiredError) throw expiredError;
+    if (error) throw error;
 
     let msgCount = 0;
 
-    // Processar Expirações Reais (Já venceu)
-    if (expiredAccounts && expiredAccounts.length > 0) {
-      for (const account of expiredAccounts) {
-        const serviceTitle = (account as any).services?.title || 'Serviço';
-        const email = account.credentials?.email || 'N/A';
-        
-        const msg = `🚨 *Jackson & Israel GSM* 🚨\n\nA conta *${email}* (${serviceTitle}) acaba de *EXPIRAR*!\n\n*Como Resetar:*\n1. Mude a senha no site original.\n2. Responda aqui assim:\nEmail: ${email}\nNova Senha: [sua_nova_senha]`;
-        console.log(`[CRON] Enviando aviso de expiração para ${email}...`);
-        await sendWhatsApp(msg);
-        
-        await supabase.from('service_accounts').update({ expiry_notified: true }).eq('id', account.id);
-        msgCount++;
+    if (alerts && alerts.length > 0) {
+      for (const alert of alerts) {
+        let msg = '';
+        if (alert.message_type === 'EXPIRED') {
+          msg = `🚨 *Jackson & Israel GSM* 🚨\n\nA conta *${alert.email}* (${alert.service_title}) acaba de *EXPIRAR*!\n\n*Como Resetar:*\n1. Mude a senha no site original.\n2. Responda aqui assim:\nEmail: ${alert.email}\nNova Senha: [sua_nova_senha]`;
+        } else if (alert.message_type === 'WARNING') {
+          msg = `⚠️ *AVISO DE EXPIRAÇÃO* ⚠️\n\nA conta *${alert.email}* (${alert.service_title}) irá vencer em *10 MINUTOS*!`;
+        }
+
+        if (msg) {
+          console.log(`[CRON] Enviando alerta (${alert.message_type}) para ${alert.email}...`);
+          await sendWhatsApp(msg);
+          msgCount++;
+        }
       }
     }
 
