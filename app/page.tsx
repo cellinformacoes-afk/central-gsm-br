@@ -60,27 +60,45 @@ export default function Home() {
         return;
       }
 
-      // Call Unified RPC
-      const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
-        p_user_id: session.user.id,
-        p_service_id: selectedService.id,
-        p_input_data: { imei: imei, quantity: quantity }
-      });
+      // Loop quantity times to deduct balance properly for credits
+      let successCount = 0;
+      let lastResult: any = null;
 
-      if (rpcError) throw rpcError;
+      for (let i = 0; i < quantity; i++) {
+        // Call Unified RPC
+        const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
+          p_user_id: session.user.id,
+          p_service_id: selectedService.id,
+          p_input_data: { imei: imei, quantity: 1 } // Send 1 to backend explicitly since we are looping
+        });
 
-      if (result.status === 'error') {
-        alert(result.message);
-        if (result.message === 'Saldo insuficiente') router.push('/saldo');
-        return;
+        if (rpcError) throw rpcError;
+
+        if (result.status === 'error') {
+          if (successCount > 0) {
+            alert(`Atenção: Saldo insuficiente após comprar ${successCount} unidade(s). O pedido restante não foi processado.`);
+          } else {
+            alert(result.message);
+          }
+          if (result.message === 'Saldo insuficiente') router.push('/saldo');
+          
+          setSelectedService(null);
+          setImei('');
+          setQuantity(1);
+          setPurchaseLoading(false);
+          return;
+        }
+
+        successCount++;
+        lastResult = result;
       }
 
-      if (result.type === 'rental' && result.credentials) {
-        alert(`Aluguel realizado com sucesso! Suas credenciais:\n\n📧 ${result.credentials.email}\n🔑 ${result.credentials.password}\n\nVocê também pode vê-las na página 'Meus Pedidos'.`);
-      } else if (result.type === 'rental_pending_stock') {
+      if (lastResult.type === 'rental' && lastResult.credentials) {
+        alert(`Aluguel realizado com sucesso! Suas credenciais:\n\n📧 ${lastResult.credentials.email}\n🔑 ${lastResult.credentials.password}\n\nVocê também pode vê-las na página 'Meus Pedidos'.`);
+      } else if (lastResult.type === 'rental_pending_stock') {
         alert("Pagamento aprovado! No momento estamos sem contas em estoque. O administrador enviará sua conta em breve.");
       } else {
-        alert("Pedido realizado com sucesso!");
+        alert(quantity > 1 ? `Pedido de ${quantity} unidades realizado com sucesso!` : "Pedido realizado com sucesso!");
       }
 
       setSelectedService(null);
