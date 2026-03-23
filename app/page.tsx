@@ -366,21 +366,20 @@ export default function Home() {
               <div className="flex-1 min-w-0 relative z-10">
                  <h3 className="text-[18px] font-black text-gray-100 mb-4 leading-none group-hover:text-[#00D2AD] transition-colors uppercase italic tracking-tighter">{service.title}</h3>
                  
-                 <div className="flex items-center gap-4">
-                    <span className="text-[#00D2AD] font-black text-2xl drop-shadow-[0_0_5px_rgba(0,210,173,0.3)]">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price)}
-                    </span>
-                    {service.is_rental && service.duration_hours && (
-                      <div className="flex items-center gap-1.5 bg-[#00D2AD] text-[#0f172a] px-3 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-tighter shadow-[0_0_15px_rgba(0,210,173,0.4)]">
-                        <span>📅</span>
-                        <span>
-                          {Number(service.duration_hours) < 24 
-                            ? `${service.duration_hours}H` 
-                            : `${Math.floor(Number(service.duration_hours) / 24)} ${Math.floor(Number(service.duration_hours) / 24) === 1 ? 'DIA' : 'DIAS'}`
-                          }
-                        </span>
-                      </div>
-                    )}
+                 <div className="flex items-end justify-between">
+                    <div className="flex flex-col">
+                       <span className="text-[#00D2AD] font-black text-2xl drop-shadow-[0_0_5px_rgba(0,210,173,0.3)]">
+                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price)}
+                       </span>
+                       {service.is_rental && service.duration_hours && (
+                         <span className="text-[10px] font-black text-gray-500 uppercase tracking-tight mt-1">
+                           ⏱️ {Number(service.duration_hours) < 24 
+                             ? `${service.duration_hours} HORAS` 
+                             : `${Math.floor(Number(service.duration_hours) / 24)} ${Math.floor(Number(service.duration_hours) / 24) === 1 ? 'DIA' : 'DIAS'}`
+                           } DE USO
+                         </span>
+                       )}
+                    </div>
                     {service.time_estimate && (
                       <div className="flex items-center gap-2 bg-[#FFC107]/10 px-3 py-1.5 rounded-lg border border-[#FFC107]/30">
                         <span className="w-2 h-2 rounded-full bg-[#FFC107] animate-pulse"></span>
