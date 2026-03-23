@@ -376,6 +376,16 @@ export default function Home() {
                         <span className="text-[#FFC107] text-[10px] font-black uppercase tracking-widest">{service.time_estimate}</span>
                       </div>
                     )}
+                    {service.is_rental && service.duration_hours && (
+                      <div className="flex items-center gap-2 bg-[#00D2AD]/10 px-3 py-1.5 rounded-lg border border-[#00D2AD]/30">
+                        <span className="text-[#00D2AD] text-[10px] font-black uppercase tracking-widest">
+                          {Number(service.duration_hours) < 24 
+                            ? `${service.duration_hours} HORAS` 
+                            : `${Math.floor(Number(service.duration_hours) / 24)} ${Math.floor(Number(service.duration_hours) / 24) === 1 ? 'DIA' : 'DIAS'}`
+                          }
+                        </span>
+                      </div>
+                    )}
                  </div>
               </div>
             </div>
