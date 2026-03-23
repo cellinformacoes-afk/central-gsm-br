@@ -370,20 +370,21 @@ export default function Home() {
                     <span className="text-[#00D2AD] font-black text-2xl drop-shadow-[0_0_5px_rgba(0,210,173,0.3)]">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price)}
                     </span>
+                    {service.is_rental && service.duration_hours && (
+                      <div className="flex items-center gap-1.5 bg-[#00D2AD] text-[#0f172a] px-3 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-tighter shadow-[0_0_15px_rgba(0,210,173,0.4)]">
+                        <span>📅</span>
+                        <span>
+                          {Number(service.duration_hours) < 24 
+                            ? `${service.duration_hours}H` 
+                            : `${Math.floor(Number(service.duration_hours) / 24)} ${Math.floor(Number(service.duration_hours) / 24) === 1 ? 'DIA' : 'DIAS'}`
+                          }
+                        </span>
+                      </div>
+                    )}
                     {service.time_estimate && (
                       <div className="flex items-center gap-2 bg-[#FFC107]/10 px-3 py-1.5 rounded-lg border border-[#FFC107]/30">
                         <span className="w-2 h-2 rounded-full bg-[#FFC107] animate-pulse"></span>
                         <span className="text-[#FFC107] text-[10px] font-black uppercase tracking-widest">{service.time_estimate}</span>
-                      </div>
-                    )}
-                    {service.is_rental && service.duration_hours && (
-                      <div className="flex items-center gap-2 bg-[#00D2AD]/10 px-3 py-1.5 rounded-lg border border-[#00D2AD]/30">
-                        <span className="text-[#00D2AD] text-[10px] font-black uppercase tracking-widest">
-                          {Number(service.duration_hours) < 24 
-                            ? `${service.duration_hours} HORAS` 
-                            : `${Math.floor(Number(service.duration_hours) / 24)} ${Math.floor(Number(service.duration_hours) / 24) === 1 ? 'DIA' : 'DIAS'}`
-                          }
-                        </span>
                       </div>
                     )}
                  </div>
