@@ -131,37 +131,41 @@ export default function Home() {
                  <div className="space-y-6">
                     <p className="text-gray-400 text-sm leading-relaxed">{selectedService.description || "Compre agora este serviço com ativação rápida e suporte garantido."}</p>
                     
-                    {/* Quantity Selector */}
-                    <div className="bg-[#0f172a] rounded-2xl p-4 border border-[#334155]/50 flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-black text-gray-500 uppercase tracking-widest block mb-1">Quantidade</span>
-                        <div className="text-xl font-bold text-white flex items-center gap-2">
-                          <span className="text-[#00D2AD]">{quantity}</span> <span className="text-sm text-gray-400">x {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}</span>
+                    {/* Quantity Selector (Apenas para Créditos) */}
+                    {selectedService.categories?.slug === 'creditos' && (
+                      <>
+                        <div className="bg-[#0f172a] rounded-2xl p-4 border border-[#334155]/50 flex items-center justify-between">
+                          <div>
+                            <span className="text-xs font-black text-gray-500 uppercase tracking-widest block mb-1">Quantidade</span>
+                            <div className="text-xl font-bold text-white flex items-center gap-2">
+                              <span className="text-[#00D2AD]">{quantity}</span> <span className="text-sm text-gray-400">x {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 bg-[#1e293b] rounded-xl p-1 border border-[#334155]">
+                            <button 
+                              onClick={() => setQuantity(Math.max(5, quantity - 1))}
+                              className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#0f172a] text-gray-400 hover:text-white hover:bg-[#334155] transition-all"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>
+                            </button>
+                            <span className="w-8 text-center font-black text-white">{quantity}</span>
+                            <button 
+                              onClick={() => setQuantity(quantity + 1)}
+                              className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#0f172a] text-gray-400 hover:text-[#00D2AD] hover:bg-[#334155] transition-all"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 bg-[#1e293b] rounded-xl p-1 border border-[#334155]">
-                        <button 
-                          onClick={() => setQuantity(Math.max(selectedService.categories?.slug === 'creditos' ? 5 : 1, quantity - 1))}
-                          className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#0f172a] text-gray-400 hover:text-white hover:bg-[#334155] transition-all"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>
-                        </button>
-                        <span className="w-8 text-center font-black text-white">{quantity}</span>
-                        <button 
-                          onClick={() => setQuantity(quantity + 1)}
-                          className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#0f172a] text-gray-400 hover:text-[#00D2AD] hover:bg-[#334155] transition-all"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/20">
-                      <span className="text-sm font-bold text-gray-300 uppercase">Total a Pagar:</span>
-                      <span className="text-2xl font-black text-[#00D2AD] drop-shadow-[0_0_8px_rgba(0,210,173,0.4)]">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price * quantity)}
-                      </span>
-                    </div>
+                        
+                        <div className="flex justify-between items-center bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/20">
+                          <span className="text-sm font-bold text-gray-300 uppercase">Total a Pagar:</span>
+                          <span className="text-2xl font-black text-[#00D2AD] drop-shadow-[0_0_8px_rgba(0,210,173,0.4)]">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price * quantity)}
+                          </span>
+                        </div>
+                      </>
+                    )}
                     
                     {/* Conditional Input for IMEI (Only for IMEI Category) */}
                     {selectedService.category_id === 4 && (
