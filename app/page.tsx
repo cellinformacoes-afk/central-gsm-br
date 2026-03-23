@@ -152,7 +152,7 @@ export default function Home() {
                     <div>
                        <h2 className="text-2xl font-black text-white uppercase italic">{selectedService.title}</h2>
                        <p className="text-[#00D2AD] font-bold text-lg">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
+                          {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
                        </p>
                     </div>
                     <button onClick={() => setSelectedService(null)} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
@@ -211,17 +211,34 @@ export default function Home() {
                       </div>
                     )}
 
-                    <div className="bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/10 text-xs text-gray-400 font-medium">
-                       📌 O prazo médio de entrega para este serviço é de <span className="text-[#FFC107] font-black">{selectedService.time_estimate || '30 MINUTOS'}</span>.
-                    </div>
+                    {selectedService.category_id !== 9 && (
+                      <div className="bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/10 text-xs text-gray-400 font-medium">
+                         📌 O prazo médio de entrega para este serviço é de <span className="text-[#FFC107] font-black">{selectedService.time_estimate || '30 MINUTOS'}</span>.
+                      </div>
+                    )}
 
-                    <button 
-                      onClick={handlePurchase}
-                      disabled={purchaseLoading}
-                      className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-5 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-xl transition-all hover:-translate-y-1"
-                    >
-                      {purchaseLoading ? 'PROCESSANDO...' : 'CONFIRMAR COMPRA'}
-                    </button>
+                    {selectedService.category_id === 9 ? (
+                      <button 
+                        onClick={() => {
+                          if (selectedService.download_url) {
+                            window.open(selectedService.download_url, '_blank');
+                          } else {
+                            alert("Link de download não disponível no momento.");
+                          }
+                        }}
+                        className="w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white py-5 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-xl transition-all hover:-translate-y-1"
+                      >
+                        BAIXAR AGORA
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handlePurchase}
+                        disabled={purchaseLoading}
+                        className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-5 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-xl transition-all hover:-translate-y-1"
+                      >
+                        {purchaseLoading ? 'PROCESSANDO...' : 'CONFIRMAR COMPRA'}
+                      </button>
+                    )}
                  </div>
               </div>
            </div>
@@ -367,11 +384,11 @@ export default function Home() {
                  <h3 className="text-[18px] font-black text-gray-100 mb-4 leading-none group-hover:text-[#00D2AD] transition-colors uppercase italic tracking-tighter">{service.title}</h3>
                  
                  <div className="flex items-end justify-between">
-                    <div className="flex flex-col">
+                    <div className="flex items-center gap-4">
                        <span className="text-[#00D2AD] font-black text-2xl drop-shadow-[0_0_5px_rgba(0,210,173,0.3)]">
-                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price)}
+                         {service.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price)}
                        </span>
-                       {service.is_rental && service.duration_hours && (
+                       {service.category_id !== 9 && service.is_rental && service.duration_hours && (
                          <span className="text-[10px] font-black text-gray-500 uppercase tracking-tight mt-1">
                            ⏱️ {Number(service.duration_hours) < 24 
                              ? `${service.duration_hours} HORAS` 
