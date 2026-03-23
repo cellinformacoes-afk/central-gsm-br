@@ -24,6 +24,7 @@ export default function Home() {
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [imei, setImei] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
   
   const router = useRouter();
 
@@ -75,12 +76,23 @@ export default function Home() {
         if (rpcError) throw rpcError;
 
         if (result.status === 'error') {
+          if (result.message === 'Saldo insuficiente') {
+            if (successCount > 0) {
+              alert(`Atenção: Seu saldo acabou após processar ${successCount} unidade(s).`);
+            }
+            setSelectedService(null);
+            setImei('');
+            setQuantity(1);
+            setPurchaseLoading(false);
+            setShowInsufficientBalance(true);
+            return;
+          }
+
           if (successCount > 0) {
-            alert(`Atenção: Saldo insuficiente após comprar ${successCount} unidade(s). O pedido restante não foi processado.`);
+            alert(`Atenção: Erro após comprar ${successCount} unidade(s). O pedido restante não foi processado. (${result.message})`);
           } else {
             alert(result.message);
           }
-          if (result.message === 'Saldo insuficiente') router.push('/saldo');
           
           setSelectedService(null);
           setImei('');
@@ -383,6 +395,38 @@ export default function Home() {
          </div>
          <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" className="whitespace-nowrap bg-[#25D366] hover:bg-[#1fb356] text-white px-12 py-6 rounded-[30px] font-black uppercase text-lg shadow-[0_15px_35px_rgba(37,211,102,0.3)] hover:-translate-y-2 transition-all">Falar com Consultor</a>
       </div>
+      {/* Modal de Saldo Insuficiente */}
+      {showInsufficientBalance && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#0f172a]/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="bg-[#1e293b] max-w-sm w-full rounded-3xl border border-red-500/30 shadow-[0_0_50px_rgba(239,68,68,0.15)] overflow-hidden relative text-center p-8">
+            <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">💰</span>
+            </div>
+            <h2 className="text-2xl font-black text-white uppercase italic mb-2">Saldo Insuficiente</h2>
+            <p className="text-gray-400 mb-8 leading-relaxed font-medium">
+              Adicione créditos à sua conta para continuar.
+            </p>
+            
+            <div className="space-y-4">
+              <button 
+                onClick={() => {
+                  setShowInsufficientBalance(false);
+                  router.push('/saldo');
+                }}
+                className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-4 rounded-xl font-black text-[15px] uppercase tracking-widest shadow-[0_0_20px_rgba(0,210,173,0.3)] transition-all hover:-translate-y-1"
+              >
+                + Adicionar Saldo
+              </button>
+              <button 
+                onClick={() => setShowInsufficientBalance(false)}
+                className="w-full bg-transparent hover:bg-[#334155] border-2 border-[#334155] text-gray-300 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
