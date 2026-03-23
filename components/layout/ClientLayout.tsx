@@ -15,6 +15,7 @@ export default function ClientLayout({
   const [profile, setProfile] = useState<any>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pendingResets, setPendingResets] = useState(0);
+  const [showHowToUse, setShowHowToUse] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -108,6 +109,9 @@ export default function ClientLayout({
             {session && (
               <nav className="hidden md:flex items-center gap-6">
                  <Link href="/" className="text-sm font-medium text-white hover:text-[#00D2AD] transition-colors">Início</Link>
+                 <button onClick={() => setShowHowToUse(true)} className="text-sm font-bold text-[#00D2AD] hover:text-white transition-colors flex items-center gap-1 px-2 py-1 bg-[#00D2AD]/10 rounded-md border border-[#00D2AD]/20">
+                   ❓ Como Usar
+                 </button>
                  <Link href="/pedidos" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Meus Pedidos</Link>
                  <Link href="/saldo" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Adicionar Saldo</Link>
                  <Link href="/extrato" className="text-sm font-medium text-[#00D2AD] hover:text-white transition-colors ">Ver extrato</Link>
@@ -163,6 +167,9 @@ export default function ClientLayout({
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     Início
                   </Link>
+                  <button onClick={() => { setIsMenuOpen(false); setShowHowToUse(true); }} className="text-base font-black text-[#00D2AD] flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a] text-left bg-[#00D2AD]/10 border border-[#00D2AD]/20">
+                    ❓ Como Usar a Plataforma
+                  </button>
                   <Link href="/pedidos" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                     Meus Pedidos
@@ -221,6 +228,52 @@ export default function ClientLayout({
         <footer className="w-full border-t border-[#334155] p-8 text-center text-gray-500 text-sm mt-12 bg-[#0f172a]">
            <p>© 2026 JACKSON & ISRAEL GSM - Todos os direitos reservados.</p>
         </footer>
+
+        {/* Modal Como Usar */}
+        {showHowToUse && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#0f172a]/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
+            <div className="bg-[#1e293b] max-w-md w-full rounded-3xl border border-[#00D2AD]/30 shadow-[0_0_50px_rgba(0,210,173,0.15)] overflow-hidden relative p-8">
+              
+              <div className="w-16 h-16 bg-[#00D2AD]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl drop-shadow-[0_0_10px_rgba(0,210,173,0.5)]">💡</span>
+              </div>
+              
+              <h2 className="text-2xl font-black text-white text-center uppercase italic mb-6">COMO USAR A PLATAFORMA</h2>
+              
+              <div className="space-y-4 mb-8">
+                 <div className="flex items-center gap-4">
+                   <div className="w-8 h-8 rounded-full bg-[#334155] flex items-center justify-center text-white font-black shrink-0">1</div>
+                   <p className="text-gray-300 font-medium">Adicione saldo via PIX</p>
+                 </div>
+                 <div className="flex items-center gap-4">
+                   <div className="w-8 h-8 rounded-full bg-[#334155] flex items-center justify-center text-white font-black shrink-0">2</div>
+                   <p className="text-gray-300 font-medium">Escolha o serviço desejado</p>
+                 </div>
+                 <div className="flex items-center gap-4">
+                   <div className="w-8 h-8 rounded-full bg-[#334155] flex items-center justify-center text-white font-black shrink-0">3</div>
+                   <p className="text-gray-300 font-medium">Clique e aguarde o processamento</p>
+                 </div>
+                 <div className="flex items-center gap-4">
+                   <div className="w-8 h-8 rounded-full bg-[#00D2AD]/20 border border-[#00D2AD]/50 flex items-center justify-center text-[#00D2AD] font-black shrink-0">4</div>
+                   <p className="text-white font-bold">Receba o resultado automaticamente</p>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 mb-8 bg-[#0f172a]/50 p-4 rounded-xl border border-[#334155]/50">
+                 <div className="flex items-center gap-2 text-sm text-[white] font-bold"><span className="text-lg text-[#00D2AD]">✔</span> Entrega automática</div>
+                 <div className="flex items-center gap-2 text-sm text-[white] font-bold"><span className="text-lg text-[#00D2AD]">✔</span> Processo rápido</div>
+                 <div className="flex items-center gap-2 text-sm text-[white] font-bold"><span className="text-lg text-[#00D2AD]">✔</span> Sem complicação</div>
+              </div>
+              
+              <button 
+                onClick={() => setShowHowToUse(false)}
+                className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-3.5 rounded-xl font-black text-sm uppercase tracking-widest shadow-[0_0_20px_rgba(0,210,173,0.3)] transition-all hover:-translate-y-1"
+              >
+                ENTENDI, VAMOS LÁ!
+              </button>
+            </div>
+          </div>
+        )}
     </div>
   );
 }
