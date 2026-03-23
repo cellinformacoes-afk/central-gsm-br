@@ -47,12 +47,13 @@ export async function POST(request: Request) {
       debug.capturedEmail = email;
       debug.capturedSenha = novaSenha;
 
-      // 3. Validar se o email existe no sistema usando supabaseAdmin
+      // 3. Validar se o email existe no sistema usando supabaseAdmin e está pendente de reset
       const { data: account, error: findError } = await supabaseAdmin
         .from('service_accounts')
         .select('id, credentials, status')
         .eq('credentials->>email', email)
-        .single();
+        .eq('status', 'pending_reset')
+        .maybeSingle();
       
       debug.foundAccount = !!account;
       debug.findError = findError;
