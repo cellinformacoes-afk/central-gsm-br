@@ -6,13 +6,15 @@ import Link from 'next/link';
 
 export default function AdminPedidosPage() {
   const [orders, setOrders] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     checkAdmin();
-    fetchOrders();
+    fetchData();
   }, []);
 
   async function checkAdmin() {
@@ -33,14 +35,20 @@ export default function AdminPedidosPage() {
     }
   }
 
-  async function fetchOrders() {
+  async function fetchData() {
     setLoading(true);
-    // Join orders with profiles to get user email
+    
+    // Fetch Categories
+    const { data: catData } = await supabase.from('categories').select('*').order('name');
+    setCategories(catData || []);
+
+    // Join orders with profiles and services to get user email and category
     const { data, error } = await supabase
       .from('orders')
       .select(`
         *,
-        profiles:user_id (email)
+        profiles:user_id (email),
+        services:service_id (category_id)
       `)
       .order('created_at', { ascending: false });
 
@@ -52,12 +60,17 @@ export default function AdminPedidosPage() {
     setLoading(false);
   }
 
-  const filteredOrders = orders.filter(order => 
-    order.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.service_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.input_data?.imei?.includes(searchTerm) ||
-    order.input_data?.account_email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = 
+      order.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.service_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.input_data?.imei?.includes(searchTerm) ||
+      order.input_data?.account_email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = activeCategoryId === null || order.services?.category_id === activeCategoryId;
+
+    return matchesSearch && matchesCategory;
+  });
 
   const getStatusColor = (status: string) => {
     switch(status?.toLowerCase()) {
@@ -78,7 +91,7 @@ export default function AdminPedidosPage() {
          <Link href="/admin/servicos" className="text-gray-500 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap">🛠️ Gerenciar Serviços</Link>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
         <div>
            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">HISTÓRICO DE <span className="text-[#00D2AD]">PEDIDOS</span></h1>
            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-2">Visualize todas as vendas do site</p>
@@ -94,6 +107,25 @@ export default function AdminPedidosPage() {
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         </div>
+      </div>
+
+      {/* Category Filter */}
+      <div className="flex gap-2 mb-10 overflow-x-auto no-scrollbar pb-2">
+          <button 
+            onClick={() => setActiveCategoryId(null)}
+            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeCategoryId === null ? 'bg-[#334155] text-white border border-[#475569]' : 'bg-[#0f172a] text-gray-500 border border-[#334155] hover:text-gray-300'}`}
+          >
+            TODOS OS SETORES
+          </button>
+          {categories.map(cat => (
+            <button 
+              key={cat.id}
+              onClick={() => setActiveCategoryId(cat.id)}
+              className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeCategoryId === cat.id ? 'bg-[#00D2AD] text-[#0f172a] border border-[#00D2AD]/50 shadow-[0_0_20px_rgba(0,210,173,0.3)]' : 'bg-[#0f172a] text-gray-500 border border-[#334155] hover:text-[#00D2AD]'}`}
+            >
+              {cat.name}
+            </button>
+          ))}
       </div>
 
       <div className="grid grid-cols-1 gap-4">
