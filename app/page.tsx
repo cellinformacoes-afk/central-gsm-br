@@ -257,13 +257,23 @@ export default function Home() {
                         BAIXAR AGORA
                       </button>
                     ) : (
-                      <button 
-                        onClick={handlePurchase}
-                        disabled={purchaseLoading}
-                        className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-5 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-xl transition-all hover:-translate-y-1"
-                      >
-                        {purchaseLoading ? 'PROCESSANDO...' : 'CONFIRMAR COMPRA'}
-                      </button>
+                      <>
+                        <button 
+                          onClick={handlePurchase}
+                          disabled={purchaseLoading}
+                          className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-5 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-xl transition-all hover:-translate-y-1"
+                        >
+                          {purchaseLoading ? 'PROCESSANDO...' : 'CONFIRMAR COMPRA'}
+                        </button>
+
+                        {selectedService.categories?.slug === 'creditos' && (
+                          <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl">
+                            <p className="text-[10px] text-red-400 font-bold leading-relaxed text-center uppercase">
+                              <span className="text-red-500 font-black">ATENÇÃO :</span> DIGITE O EMAIL CERTO. SE REGISTRAR O EMAIL ERRADO O CREDITO IRÁ PARAR EM OUTRA CONTA E NÃO CONSEGUIMOS REVERTER ISSO MUITA ATENÇÃO PARA NÃO COLOCAR O EMAIL ERRADO. EMAIL ERRADO NÃO FAZEMOS REENBOLSO.
+                            </p>
+                          </div>
+                        )}
+                      </>
                     )}
                  </div>
               </div>
