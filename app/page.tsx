@@ -18,6 +18,7 @@ export default function Home() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   
   // Purchase Modal State
   const [selectedService, setSelectedService] = useState<any>(null);
@@ -125,9 +126,9 @@ export default function Home() {
     }
   };
 
-  const filteredServices = activeCategoryId 
-    ? services.filter(s => s.category_id === activeCategoryId)
-    : services;
+  const filteredServices = services
+    .filter(s => !activeCategoryId || s.category_id === activeCategoryId)
+    .filter(s => s.title.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const getIcon = (slug: string) => {
     switch(slug) {
@@ -335,14 +336,39 @@ export default function Home() {
       </div>
 
       {/* Services List Header */}
-      <div className="mb-8 flex items-center justify-between border-b border-[#334155]/50 pb-6 ml-2">
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between border-b border-[#334155]/50 pb-6 ml-2 gap-4">
         <div className="flex items-center gap-4">
            <div className="w-1.5 h-8 bg-[#00D2AD] rounded-full shadow-[0_0_10px_#00D2AD]"></div>
            <h2 className="text-2xl font-black text-white uppercase italic tracking-tight">
               {activeCategoryId ? categories.find(c => c.id === activeCategoryId)?.name : 'Programas Disponíveis'}
            </h2>
         </div>
-        <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+
+        {/* Search Field */}
+        <div className="relative flex-1 max-w-md w-full group">
+           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-[#00D2AD] group-focus-within:scale-110 transition-transform">
+                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+              </svg>
+           </div>
+           <input 
+              type="text" 
+              placeholder="PESQUISAR SERVIÇO..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-[#0f172a] border-2 border-[#334155] rounded-2xl py-3 pl-12 pr-10 text-white font-black text-xs uppercase tracking-widest focus:border-[#00D2AD] focus:shadow-[0_0_30px_rgba(0,210,173,0.15)] outline-none transition-all placeholder:text-gray-600"
+           />
+           {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-white transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+           )}
+        </div>
+
+        <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest whitespace-nowrap">
           {filteredServices.length} {filteredServices.length === 1 ? 'Resultado' : 'Resultados'}
         </div>
       </div>
