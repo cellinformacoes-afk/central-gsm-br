@@ -19,6 +19,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [accountEmail, setAccountEmail] = useState('');
   
   // Purchase Modal State
   const [selectedService, setSelectedService] = useState<any>(null);
@@ -53,6 +54,17 @@ export default function Home() {
 
   const handlePurchase = async () => {
     if (!selectedService) return;
+
+    // Basic Validation
+    if (selectedService.categories?.slug === 'creditos' && !accountEmail) {
+      alert("Por favor, informe o e-mail da conta onde os créditos serão adicionados.");
+      return;
+    }
+    if (selectedService.category_id === 4 && !imei) {
+      alert("Por favor, informe o IMEI do aparelho.");
+      return;
+    }
+
     setPurchaseLoading(true);
 
     try {
@@ -71,7 +83,7 @@ export default function Home() {
         const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
           p_user_id: session.user.id,
           p_service_id: selectedService.id,
-          p_input_data: { imei: imei, quantity: 1 } // Send 1 to backend explicitly since we are looping
+          p_input_data: { imei: imei, account_email: accountEmail, quantity: 1 } // Send 1 to backend explicitly since we are looping
         });
 
         if (rpcError) throw rpcError;
@@ -116,6 +128,7 @@ export default function Home() {
 
       setSelectedService(null);
       setImei('');
+      setAccountEmail('');
       setQuantity(1);
       router.push('/pedidos');
     } catch (error: any) {
@@ -156,7 +169,7 @@ export default function Home() {
                           {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
                        </p>
                     </div>
-                    <button onClick={() => setSelectedService(null)} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
+                     <button onClick={() => { setSelectedService(null); setAccountEmail(''); setImei(''); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
                  </div>
 
                  <div className="space-y-6">
@@ -194,6 +207,18 @@ export default function Home() {
                           <span className="text-2xl font-black text-[#00D2AD] drop-shadow-[0_0_8px_rgba(0,210,173,0.4)]">
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price * quantity)}
                           </span>
+                        </div>
+
+                        {/* Account Email Field for Credits */}
+                        <div className="animate-in slide-in-from-top-2 duration-300">
+                          <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">E-mail da Conta (Destino dos Créditos)</label>
+                          <input 
+                            type="email" 
+                            value={accountEmail}
+                            onChange={(e) => setAccountEmail(e.target.value)}
+                            placeholder="EX: usuario@exemplo.com"
+                            className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-bold text-center focus:border-[#00D2AD] outline-none transition-all"
+                          />
                         </div>
                       </>
                     )}
