@@ -4,7 +4,8 @@ import { supabaseAdmin as supabase } from '@/lib/supabase-admin';
 // CONFIGURAÇÕES W-API
 const W_API_TOKEN = 'Swp2rYBaElQLSscDhTYWKQ9SnTLIVz9Sv';
 const W_API_INSTANCE_ID = 'LITE-1VGFGA-OFBQ2X';
-const WHATSAPP_NUMBER = '120363408498119601@g.us'; // Grupo ALERTA CONTA EXPIRADA
+const GROUP_ID = '120363408498119601@g.us'; // Grupo ALERTA CONTA EXPIRADA
+const ADMIN_NUMBER = '5511961025492'; // Número do Israel para teste de entrega
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -27,15 +28,20 @@ export async function GET() {
       for (const alert of alerts) {
         let msg = '';
         if (alert.message_type === 'EXPIRED') {
-          msg = `🚨 *Jackson & Israel GSM* 🚨\n\nA conta *${alert.email}* (${alert.service_title}) acaba de *EXPIRAR*!\n\n*Como Resetar:*\n1. Mude a senha no site original.\n2. Responda aqui assim:\nEmail: ${alert.email}\nNova Senha: [sua_nova_senha]`;
+          msg = `🚨 *ALERTA JACKSON & ISRAEL GSM* 🚨\n\nA conta *${alert.email}* (${alert.service_title}) acaba de *EXPIRAR*!\n\n*Como Resetar:*\n1. Mude a senha no site original.\n2. Responda aqui assim:\nEmail: ${alert.email}\nNova Senha: [sua_nova_senha]`;
         } 
 
         if (msg) {
-          console.log(`[CRON] Enviando alerta (${alert.message_type}) para ${alert.email}...`);
-          const success = await sendWhatsApp(msg);
+          console.log(`[CRON] Enviando alerta para ${alert.email}...`);
           
-          if (success) {
-            // SOMENTE marcar como notificado se o WhatsApp enviou com sucesso
+          // Enviar para o GRUPO
+          const successGroup = await sendWhatsApp(GROUP_ID, msg);
+          
+          // Enviar duplicata para o ADMIN (Teste de entrega)
+          const successAdmin = await sendWhatsApp(ADMIN_NUMBER, `*CÓPIA DE SEGURANÇA (GRUPO):*\n\n${msg}`);
+          
+          if (successGroup || successAdmin) {
+            // Se pelo menos um tentou com sucesso (API 200), marcamos como notificado para não repetir INFINITAMENTE
             await supabase.rpc('mark_rental_notified', { p_rental_id: alert.account_id });
             msgCount++;
           }
@@ -58,7 +64,7 @@ export async function GET() {
 /**
  * Envia mensagem via W-API
  */
-async function sendWhatsApp(message: string) {
+async function sendWhatsApp(to: string, message: string) {
   const url = `https://api.w-api.app/v1/message/send-text?instanceId=${W_API_INSTANCE_ID}`;
   
   try {
@@ -69,21 +75,28 @@ async function sendWhatsApp(message: string) {
         'Authorization': `Bearer ${W_API_TOKEN}`
       },
       body: JSON.stringify({
-        phone: WHATSAPP_NUMBER,
+        phone: to,
         message: message,
-        delayMessage: 1
+        delayMessage: 1 // Mantendo o delay padrão
       })
     });
 
+    const data = await res.json().catch(() => ({}));
+
+    // Logar no banco para vermos se foi 200 ou erro
+    await supabase.from('webhook_logs').insert({
+      source: 'cron_debug_final',
+      payload: { to, status: res.status, response: data, message: message.substring(0, 50) }
+    });
+
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      console.error('W-API Error Response:', data);
+      console.error(`W-API Error (${to}):`, data);
       return false;
     }
 
     return true;
   } catch (error: any) {
-    console.error('Error sending WhatsApp:', error);
+    console.error(`Error sending to ${to}:`, error);
     return false;
   }
 }
