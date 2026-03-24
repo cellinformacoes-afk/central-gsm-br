@@ -42,13 +42,14 @@ export default function AdminPedidosPage() {
     const { data: catData } = await supabase.from('categories').select('*').order('name');
     setCategories(catData || []);
 
-    // Join orders with profiles and services to get user email and category
+    // Join orders with profiles, services and rentals
     const { data, error } = await supabase
       .from('orders')
       .select(`
         *,
         profiles:user_id (email),
-        services:service_id (category_id)
+        services:service_id (category_id),
+        rentals:rentals(credentials, expires_at)
       `)
       .order('created_at', { ascending: false });
 
@@ -74,9 +75,10 @@ export default function AdminPedidosPage() {
 
   const getStatusColor = (status: string) => {
     switch(status?.toLowerCase()) {
+      case 'concluído': return 'bg-[#00D2AD]/20 text-[#00D2AD]';
       case 'completed': return 'bg-[#00D2AD]/20 text-[#00D2AD]';
       case 'paid': return 'bg-[#00D2AD]/20 text-[#00D2AD]';
-      case 'pending': return 'bg-yellow-500/20 text-yellow-500';
+      case 'pendente': return 'bg-yellow-500/20 text-yellow-500';
       case 'failed': return 'bg-red-500/20 text-red-500';
       default: return 'bg-gray-500/20 text-gray-400';
     }
@@ -132,59 +134,80 @@ export default function AdminPedidosPage() {
         {loading ? (
           <div className="text-center py-20 text-gray-500 animate-pulse uppercase font-black tracking-widest">Carregando Pedidos...</div>
         ) : filteredOrders.length > 0 ? (
-          filteredOrders.map((order) => (
-            <div key={order.id} className="bg-[#1e293b] p-6 rounded-2xl border border-[#334155] hover:border-[#00D2AD]/30 transition-all group">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-center gap-6">
-                  <div className="w-14 h-14 rounded-2xl bg-[#0f172a] border border-[#334155] flex items-center justify-center text-2xl group-hover:scale-110 transition-all shadow-xl">
-                    {order.service_title?.toLowerCase().includes('credito') ? '💰' : 
-                     order.service_title?.toLowerCase().includes('imei') ? '📱' : 
-                     order.service_title?.toLowerCase().includes('aluguel') ? '🔑' : '📦'}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-white font-black uppercase italic tracking-tighter text-lg">{order.service_title}</h3>
-                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter ${getStatusColor(order.status)}`}>
-                        {order.status}
-                      </span>
+          filteredOrders.map((order) => {
+            const rental = order.rentals && order.rentals.length > 0 ? order.rentals[0] : null;
+            
+            return (
+              <div key={order.id} className="bg-[#1e293b] p-6 rounded-2xl border border-[#334155] hover:border-[#00D2AD]/30 transition-all group">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                  <div className="flex items-start gap-6">
+                    <div className="w-14 h-14 rounded-2xl bg-[#0f172a] border border-[#334155] flex items-center justify-center text-2xl group-hover:scale-110 transition-all shadow-xl flex-shrink-0">
+                      {order.service_title?.toLowerCase().includes('credito') ? '💰' : 
+                       order.service_title?.toLowerCase().includes('imei') ? '📱' : 
+                       order.service_title?.toLowerCase().includes('aluguel') ? '🔑' : '📦'}
                     </div>
-                    <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-2">Comprado por: <span className="text-gray-300">{order.profiles?.email}</span></p>
-                    
-                    {/* Input Data / Specialized Fields */}
-                    <div className="flex flex-wrap gap-2">
-                      {order.input_data?.account_email && (
-                        <div className="bg-[#00D2AD]/10 border border-[#00D2AD]/20 px-3 py-1.5 rounded-lg">
-                          <p className="text-[10px] text-gray-500 font-bold uppercase mb-0.5">E-mail Destino:</p>
-                          <p className="text-[#00D2AD] font-black text-xs uppercase underline underline-offset-2">{order.input_data.account_email}</p>
-                        </div>
-                      )}
-                      {order.input_data?.imei && (
-                        <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg">
-                          <p className="text-[10px] text-gray-500 font-bold uppercase mb-0.5">IMEI:</p>
-                          <p className="text-blue-400 font-black text-xs font-mono tracking-widest">{order.input_data.imei}</p>
-                        </div>
-                      )}
-                      {order.input_data?.quantity && (
-                        <div className="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-lg">
-                          <p className="text-[10px] text-gray-500 font-bold uppercase mb-0.5">Qtd:</p>
-                          <p className="text-white font-black text-xs">{order.input_data.quantity} un</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1 overflow-x-auto whitespace-nowrap no-scrollbar">
+                        <h3 className="text-white font-black uppercase italic tracking-tighter text-lg">{order.service_title}</h3>
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter ${getStatusColor(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </div>
+                      <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4">Comprado por: <span className="text-gray-300">{order.profiles?.email}</span></p>
+                      
+                      {/* Input Data / Specialized Fields */}
+                      <div className="flex flex-wrap gap-3">
+                        {order.input_data?.account_email && (
+                          <div className="bg-[#00D2AD]/10 border border-[#00D2AD]/20 px-3 py-1.5 rounded-lg">
+                            <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">E-mail Destino:</p>
+                            <p className="text-[#00D2AD] font-black text-xs uppercase underline underline-offset-2">{order.input_data.account_email}</p>
+                          </div>
+                        )}
+                        {order.input_data?.imei && (
+                          <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg">
+                            <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">IMEI:</p>
+                            <p className="text-blue-400 font-black text-xs font-mono tracking-widest">{order.input_data.imei}</p>
+                          </div>
+                        )}
+                        {order.input_data?.quantity && (
+                          <div className="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-lg">
+                            <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">Qtd:</p>
+                            <p className="text-white font-black text-xs">{order.input_data.quantity} un</p>
+                          </div>
+                        )}
 
-                <div className="flex flex-col md:items-end justify-center min-w-[120px]">
-                  <p className="text-white font-black text-2xl tracking-tighter italic">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_price)}
-                  </p>
-                  <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-1">
-                    {new Date(order.created_at).toLocaleString('pt-BR')}
-                  </p>
+                        {/* RENTAL DETAILS (CREDENTIALS) */}
+                        {rental && (
+                          <>
+                            <div className="bg-purple-500/10 border border-purple-500/20 px-3 py-1.5 rounded-lg">
+                              <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">Login Entregue:</p>
+                              <div className="flex flex-col gap-0.5">
+                                <p className="text-purple-400 font-black text-xs tracking-tight">E: {rental.credentials?.email}</p>
+                                <p className="text-purple-400 font-black text-xs tracking-tight">S: {rental.credentials?.password}</p>
+                              </div>
+                            </div>
+                            <div className="bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg">
+                              <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">Expiração:</p>
+                              <p className="text-red-400 font-black text-xs">{new Date(rental.expires_at).toLocaleString('pt-BR')}</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col md:items-end justify-center min-w-[120px]">
+                    <p className="text-white font-black text-2xl tracking-tighter italic">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_price)}
+                    </p>
+                    <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-1">
+                      Comprado em: {new Date(order.created_at).toLocaleString('pt-BR')}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="text-center py-20 bg-[#1e293b]/50 rounded-3xl border-2 border-dashed border-[#334155]">
              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Nenhum pedido encontrado.</p>
