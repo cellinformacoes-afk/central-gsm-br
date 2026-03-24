@@ -127,8 +127,28 @@ export default function PedidosPage() {
                        <span className="text-gray-400 text-xs font-bold">{new Date(order.created_at).toLocaleDateString('pt-BR')}</span>
                     </td>
                     <td className="px-6 py-7">
-                       <div className="bg-[#0f172a] px-3 py-1.5 rounded-lg border border-[#334155] inline-block">
-                          <span className="text-gray-300 text-xs font-mono">{order.input_data?.imei || 'N/A'}</span>
+                       <div className="flex flex-wrap gap-2">
+                          {order.input_data?.imei && (
+                            <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg">
+                               <p className="text-[8px] text-gray-500 font-black uppercase mb-0.5">IMEI</p>
+                               <span className="text-blue-400 text-xs font-mono font-bold tracking-wider">{order.input_data.imei}</span>
+                            </div>
+                          )}
+                          {order.input_data?.account_email && (
+                            <div className="bg-[#00D2AD]/10 border border-[#00D2AD]/20 px-3 py-1.5 rounded-lg">
+                               <p className="text-[8px] text-gray-500 font-black uppercase mb-0.5">E-mail Conta</p>
+                               <span className="text-[#00D2AD] text-[10px] font-black uppercase">{order.input_data.account_email}</span>
+                            </div>
+                          )}
+                          {order.input_data?.quantity && (
+                            <div className="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-lg">
+                               <p className="text-[8px] text-gray-500 font-black uppercase mb-0.5">Qtd</p>
+                               <span className="text-white text-xs font-black">{order.input_data.quantity}x</span>
+                            </div>
+                          )}
+                          {!order.input_data?.imei && !order.input_data?.account_email && !order.input_data?.quantity && (
+                             <span className="text-gray-500 text-xs font-bold uppercase tracking-widest italic opacity-50">S/ DETALHES</span>
+                          )}
                        </div>
                     </td>
                     <td className="px-6 py-7">
