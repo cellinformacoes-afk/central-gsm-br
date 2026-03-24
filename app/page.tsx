@@ -74,49 +74,34 @@ export default function Home() {
         return;
       }
 
-      // Loop quantity times to deduct balance properly for credits
-      let successCount = 0;
-      let lastResult: any = null;
+      // Call Unified RPC with quantity
+      const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
+        p_user_id: session.user.id,
+        p_service_id: selectedService.id,
+        p_input_data: { imei: imei, account_email: accountEmail },
+        p_quantity: quantity
+      });
 
-      for (let i = 0; i < quantity; i++) {
-        // Call Unified RPC
-        const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
-          p_user_id: session.user.id,
-          p_service_id: selectedService.id,
-          p_input_data: { imei: imei, account_email: accountEmail, quantity: 1 } // Send 1 to backend explicitly since we are looping
-        });
+      if (rpcError) throw rpcError;
 
-        if (rpcError) throw rpcError;
-
-        if (result.status === 'error') {
-          if (result.message === 'Saldo insuficiente') {
-            if (successCount > 0) {
-              alert(`Atenção: Seu saldo acabou após processar ${successCount} unidade(s).`);
-            }
-            setSelectedService(null);
-            setImei('');
-            setQuantity(1);
-            setPurchaseLoading(false);
-            setShowInsufficientBalance(true);
-            return;
-          }
-
-          if (successCount > 0) {
-            alert(`Atenção: Erro após comprar ${successCount} unidade(s). O pedido restante não foi processado. (${result.message})`);
-          } else {
-            alert(result.message);
-          }
-          
+      if (result.status === 'error') {
+        if (result.message === 'Saldo insuficiente') {
           setSelectedService(null);
           setImei('');
           setQuantity(1);
           setPurchaseLoading(false);
+          setShowInsufficientBalance(true);
           return;
         }
-
-        successCount++;
-        lastResult = result;
+        alert(result.message);
+        setSelectedService(null);
+        setImei('');
+        setQuantity(1);
+        setPurchaseLoading(false);
+        return;
       }
+
+      const lastResult = result;
 
       if (lastResult.type === 'rental' && lastResult.credentials) {
         alert(`Aluguel realizado com sucesso! Suas credenciais:\n\n📧 ${lastResult.credentials.email}\n🔑 ${lastResult.credentials.password}\n\nVocê também pode vê-las na página 'Meus Pedidos'.`);
