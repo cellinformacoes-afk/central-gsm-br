@@ -75,34 +75,15 @@ async function sendWhatsApp(message: string) {
       })
     });
 
-    const data = await res.json().catch(() => ({ error: 'Failed to parse JSON' }));
-    
-    // Logar resposta para debug no banco de dados (Usando supabaseAdmin via import acima)
-    await supabase.from('webhook_logs').insert({
-      source: 'cron_debug',
-      payload: { 
-        attempt: 'send_whatsapp', 
-        target: WHATSAPP_NUMBER, 
-        message_preview: message.substring(0, 50),
-        status: res.status,
-        response: data
-      }
-    });
-
     if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
       console.error('W-API Error Response:', data);
       return false;
     }
 
-    console.log('W-API Success:', data);
     return true;
   } catch (error: any) {
     console.error('Error sending WhatsApp:', error);
-    // Logar erro crítico
-    await supabase.from('webhook_logs').insert({
-      source: 'cron_debug_error',
-      payload: { error: error.message, stack: error.stack }
-    });
     return false;
   }
 }
