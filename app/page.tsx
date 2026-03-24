@@ -216,7 +216,7 @@ export default function Home() {
                             type="email" 
                             value={accountEmail}
                             onChange={(e) => setAccountEmail(e.target.value)}
-                            placeholder="EX: usuario@exemplo.com"
+                            placeholder="DIGITE O E-MAIL"
                             className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-bold text-center focus:border-[#00D2AD] outline-none transition-all"
                           />
                         </div>
