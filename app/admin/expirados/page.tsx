@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Shield, RefreshCcw, CheckCircle2, XCircle, Clock, Key, Mail, Trash2 } from 'lucide-react';
 
 export default function ExpiradosPage() {
