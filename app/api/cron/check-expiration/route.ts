@@ -13,8 +13,8 @@ export async function GET(request: Request) {
   try {
     console.log('[CRON] Iniciando monitoramento de expirações...');
 
-    // 1. Chamar o RPC que faz tudo (Monitora, marca como expirado e retorna alertas pendentes)
-    const { data: alerts, error } = await supabase.rpc('get_pending_whatsapp_alerts');
+    // 1. Chamar o RPC que apenas LISTA contas expiradas (v2)
+    const { data: alerts, error } = await supabase.rpc('get_expired_rentals_v2');
 
     if (error) throw error;
 
@@ -25,14 +25,17 @@ export async function GET(request: Request) {
         let msg = '';
         if (alert.message_type === 'EXPIRED') {
           msg = `🚨 *Jackson & Israel GSM* 🚨\n\nA conta *${alert.email}* (${alert.service_title}) acaba de *EXPIRAR*!\n\n*Como Resetar:*\n1. Mude a senha no site original.\n2. Responda aqui assim:\nEmail: ${alert.email}\nNova Senha: [sua_nova_senha]`;
-        } else if (alert.message_type === 'WARNING') {
-          msg = `⚠️ *AVISO DE EXPIRAÇÃO* ⚠️\n\nA conta *${alert.email}* (${alert.service_title}) irá vencer em *10 MINUTOS*!`;
-        }
+        } 
 
         if (msg) {
           console.log(`[CRON] Enviando alerta (${alert.message_type}) para ${alert.email}...`);
-          await sendWhatsApp(msg);
-          msgCount++;
+          const success = await sendWhatsApp(msg);
+          
+          if (success) {
+            // SOMENTE marcar como notificado se o WhatsApp enviou com sucesso
+            await supabase.rpc('mark_rental_notified', { p_rental_id: (alert as any).account_id });
+            msgCount++;
+          }
         }
       }
     }
