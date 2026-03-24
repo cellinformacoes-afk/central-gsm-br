@@ -159,125 +159,127 @@ export default function Home() {
     <>
       {/* Selection/Purchase Modal */}
       {selectedService && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#0f172a]/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
-           <div className="bg-[#1e293b] max-w-md w-full rounded-3xl border border-[#00D2AD]/50 shadow-[0_0_50px_rgba(0,210,173,0.2)] overflow-hidden relative">
-              <div className="p-8">
-                 <div className="flex justify-between items-start mb-6">
-                    <div>
-                       <h2 className="text-2xl font-black text-white uppercase italic">{selectedService.title}</h2>
-                       <p className="text-[#00D2AD] font-bold text-lg">
-                          {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
-                       </p>
-                    </div>
-                     <button onClick={() => { setSelectedService(null); setAccountEmail(''); setImei(''); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
-                 </div>
-
-                 <div className="space-y-6">
-                    <p className="text-gray-400 text-sm leading-relaxed">{selectedService.description || "Compre agora este serviço com ativação rápida e suporte garantido."}</p>
-                    
-                    {/* Quantity Selector (Apenas para Créditos) */}
-                    {selectedService.categories?.slug === 'creditos' && (
-                      <>
-                        <div className="bg-[#0f172a] rounded-2xl p-4 border border-[#334155]/50 flex items-center justify-between">
-                          <div>
-                            <span className="text-xs font-black text-gray-500 uppercase tracking-widest block mb-1">Quantidade</span>
-                            <div className="text-xl font-bold text-white flex items-center gap-2">
-                              <span className="text-[#00D2AD]">{quantity}</span> <span className="text-sm text-gray-400">x {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 bg-[#1e293b] rounded-xl p-1 border border-[#334155]">
-                            <button 
-                              onClick={() => setQuantity(Math.max(5, quantity - 1))}
-                              className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#0f172a] text-gray-400 hover:text-white hover:bg-[#334155] transition-all"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>
-                            </button>
-                            <span className="w-8 text-center font-black text-white">{quantity}</span>
-                            <button 
-                              onClick={() => setQuantity(quantity + 1)}
-                              className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#0f172a] text-gray-400 hover:text-[#00D2AD] hover:bg-[#334155] transition-all"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                            </button>
-                          </div>
+        <div className="fixed inset-0 z-[110] overflow-y-auto bg-[#0f172a]/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
+           <div className="flex min-h-full items-center justify-center py-4 text-center">
+              <div className="bg-[#1e293b] max-w-md w-full rounded-3xl border border-[#00D2AD]/50 shadow-[0_0_50px_rgba(0,210,173,0.2)] relative text-left">
+                  <div className="p-8">
+                     <div className="flex justify-between items-start mb-6">
+                        <div>
+                           <h2 className="text-2xl font-black text-white uppercase italic">{selectedService.title}</h2>
+                           <p className="text-[#00D2AD] font-bold text-lg">
+                              {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
+                           </p>
                         </div>
+                        <button onClick={() => { setSelectedService(null); setAccountEmail(''); setImei(''); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
+                     </div>
+
+                     <div className="space-y-6">
+                        <p className="text-gray-400 text-sm leading-relaxed">{selectedService.description || "Compre agora este serviço com ativação rápida e suporte garantido."}</p>
                         
-                        <div className="flex justify-between items-center bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/20">
-                          <span className="text-sm font-bold text-gray-300 uppercase">Total a Pagar:</span>
-                          <span className="text-2xl font-black text-[#00D2AD] drop-shadow-[0_0_8px_rgba(0,210,173,0.4)]">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price * quantity)}
-                          </span>
-                        </div>
-
-                        {/* Account Email Field for Credits */}
-                        <div className="animate-in slide-in-from-top-2 duration-300">
-                          <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">E-mail da Conta (Destino dos Créditos)</label>
-                          <input 
-                            type="email" 
-                            value={accountEmail}
-                            onChange={(e) => setAccountEmail(e.target.value)}
-                            placeholder="DIGITE O E-MAIL"
-                            className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-bold text-center focus:border-[#00D2AD] outline-none transition-all"
-                          />
-                        </div>
-                      </>
-                    )}
-                    
-                    {/* Conditional Input for IMEI (Only for IMEI Category) */}
-                    {selectedService.category_id === 4 && (
-                      <div className="animate-in slide-in-from-top-2 duration-300">
-                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Digite o IMEI do Aparelho</label>
-                        <input 
-                          type="text" 
-                          value={imei}
-                          onChange={(e) => setImei(e.target.value)}
-                          placeholder="EX: 351234567890123"
-                          className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-mono text-center tracking-[0.2em] focus:border-[#00D2AD] outline-none"
-                        />
-                      </div>
-                    )}
-
-                    {selectedService.category_id !== 9 && (
-                      <div className="bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/10 text-xs text-gray-400 font-medium">
-                         📌 O prazo médio de entrega para este serviço é de <span className="text-[#FFC107] font-black">{selectedService.time_estimate || '30 MINUTOS'}</span>.
-                      </div>
-                    )}
-
-                    {selectedService.category_id === 9 ? (
-                      <button 
-                        onClick={() => {
-                          if (selectedService.download_url) {
-                            window.open(selectedService.download_url, '_blank');
-                          } else {
-                            alert("Link de download não disponível no momento.");
-                          }
-                        }}
-                        className="w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white py-5 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-xl transition-all hover:-translate-y-1"
-                      >
-                        BAIXAR AGORA
-                      </button>
-                    ) : (
-                      <>
-                        <button 
-                          onClick={handlePurchase}
-                          disabled={purchaseLoading}
-                          className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-5 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-xl transition-all hover:-translate-y-1"
-                        >
-                          {purchaseLoading ? 'PROCESSANDO...' : 'CONFIRMAR COMPRA'}
-                        </button>
-
+                        {/* Quantity Selector (Apenas para Créditos) */}
                         {selectedService.categories?.slug === 'creditos' && (
-                          <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl">
-                            <p className="text-[10px] text-red-400 font-bold leading-relaxed text-center uppercase">
-                              <span className="text-red-500 font-black">ATENÇÃO :</span> DIGITE O EMAIL CERTO. SE REGISTRAR O EMAIL ERRADO O CREDITO IRÁ PARAR EM OUTRA CONTA E NÃO CONSEGUIMOS REVERTER ISSO MUITA ATENÇÃO PARA NÃO COLOCAR O EMAIL ERRADO. EMAIL ERRADO NÃO FAZEMOS REENBOLSO.
-                            </p>
+                          <>
+                            <div className="bg-[#0f172a] rounded-2xl p-4 border border-[#334155]/50 flex items-center justify-between">
+                              <div>
+                                <span className="text-xs font-black text-gray-500 uppercase tracking-widest block mb-1">Quantidade</span>
+                                <div className="text-xl font-bold text-white flex items-center gap-2">
+                                  <span className="text-[#00D2AD]">{quantity}</span> <span className="text-sm text-gray-400">x {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 bg-[#1e293b] rounded-xl p-1 border border-[#334155]">
+                                <button 
+                                  onClick={() => setQuantity(Math.max(5, quantity - 1))}
+                                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#0f172a] text-gray-400 hover:text-white hover:bg-[#334155] transition-all"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>
+                                </button>
+                                <span className="w-8 text-center font-black text-white">{quantity}</span>
+                                <button 
+                                  onClick={() => setQuantity(quantity + 1)}
+                                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#0f172a] text-gray-400 hover:text-[#00D2AD] hover:bg-[#334155] transition-all"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                                </button>
+                              </div>
+                            </div>
+                            
+                            <div className="flex justify-between items-center bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/20">
+                              <span className="text-sm font-bold text-gray-300 uppercase">Total a Pagar:</span>
+                              <span className="text-2xl font-black text-[#00D2AD] drop-shadow-[0_0_8px_rgba(0,210,173,0.4)]">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price * quantity)}
+                              </span>
+                            </div>
+
+                            {/* Account Email Field for Credits */}
+                            <div className="animate-in slide-in-from-top-2 duration-300">
+                              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">E-mail da Conta (Destino dos Créditos)</label>
+                              <input 
+                                type="email" 
+                                value={accountEmail}
+                                onChange={(e) => setAccountEmail(e.target.value)}
+                                placeholder="DIGITE O E-MAIL"
+                                className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-bold text-center focus:border-[#00D2AD] outline-none transition-all"
+                              />
+                            </div>
+                          </>
+                        )}
+                        
+                        {/* Conditional Input for IMEI (Only for IMEI Category) */}
+                        {selectedService.category_id === 4 && (
+                          <div className="animate-in slide-in-from-top-2 duration-300">
+                            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Digite o IMEI do Aparelho</label>
+                            <input 
+                              type="text" 
+                              value={imei}
+                              onChange={(e) => setImei(e.target.value)}
+                              placeholder="EX: 351234567890123"
+                              className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-mono text-center tracking-[0.2em] focus:border-[#00D2AD] outline-none"
+                            />
                           </div>
                         )}
-                      </>
-                    )}
-                 </div>
-              </div>
-           </div>
+
+                        {selectedService.category_id !== 9 && (
+                          <div className="bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/10 text-xs text-gray-400 font-medium">
+                             📌 O prazo médio de entrega para este serviço é de <span className="text-[#FFC107] font-black">{selectedService.time_estimate || '30 MINUTOS'}</span>.
+                          </div>
+                        )}
+
+                        {selectedService.category_id === 9 ? (
+                          <button 
+                            onClick={() => {
+                              if (selectedService.download_url) {
+                                window.open(selectedService.download_url, '_blank');
+                              } else {
+                                alert("Link de download não disponível no momento.");
+                              }
+                            }}
+                            className="w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white py-5 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-xl transition-all hover:-translate-y-1"
+                          >
+                            BAIXAR AGORA
+                          </button>
+                        ) : (
+                          <>
+                            <button 
+                              onClick={handlePurchase}
+                              disabled={purchaseLoading}
+                              className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-5 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-xl transition-all hover:-translate-y-1"
+                            >
+                              {purchaseLoading ? 'PROCESSANDO...' : 'CONFIRMAR COMPRA'}
+                            </button>
+
+                            {selectedService.categories?.slug === 'creditos' && (
+                              <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl">
+                                <p className="text-[10px] text-red-400 font-bold leading-relaxed text-center uppercase">
+                                  <span className="text-red-500 font-black">ATENÇÃO :</span> DIGITE O EMAIL CERTO. SE REGISTRAR O EMAIL ERRADO O CREDITO IRÁ PARAR EM OUTRA CONTA E NÃO CONSEGUIMOS REVERTER ISSO MUITA ATENÇÃO PARA NÃO COLOCAR O EMAIL ERRADO. EMAIL ERRADO NÃO FAZEMOS REENBOLSO.
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        )}
+                     </div>
+                  </div>
+               </div>
+            </div>
         </div>
       )}
 
