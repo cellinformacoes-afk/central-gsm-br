@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin as supabase } from '@/lib/supabase-admin';
 
 // CONFIGURAÇÕES W-API
 const W_API_TOKEN = 'Swp2rYBaElQLSscDhTYWKQ9SnTLIVz9Sv';
@@ -9,14 +9,17 @@ const WHATSAPP_NUMBER = '120363408498119601@g.us'; // Grupo ALERTA CONTA EXPIRAD
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     console.log('[CRON] Iniciando monitoramento de expirações...');
 
     // 1. Chamar o RPC que apenas LISTA contas expiradas (v2)
     const { data: alerts, error } = await supabase.rpc('get_expired_rentals_v2');
 
-    if (error) throw error;
+    if (error) {
+      console.error('[CRON] RPC Error:', error);
+      throw error;
+    }
 
     let msgCount = 0;
 
@@ -33,7 +36,7 @@ export async function GET(request: Request) {
           
           if (success) {
             // SOMENTE marcar como notificado se o WhatsApp enviou com sucesso
-            await supabase.rpc('mark_rental_notified', { p_rental_id: (alert as any).account_id });
+            await supabase.rpc('mark_rental_notified', { p_rental_id: alert.account_id });
             msgCount++;
           }
         }
@@ -46,12 +49,15 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString()
     });
 
-  } catch (err: any) {
-    console.error('[CRON ERROR]', err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (error: any) {
+    console.error('[CRON ERROR]', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
+/**
+ * Envia mensagem via W-API
+ */
 async function sendWhatsApp(message: string) {
   const url = `https://api.w-api.app/v1/message/send-text?instanceId=${W_API_INSTANCE_ID}`;
   
@@ -65,13 +71,13 @@ async function sendWhatsApp(message: string) {
       body: JSON.stringify({
         phone: WHATSAPP_NUMBER,
         message: message,
-        delayMessage: 1 // Delay pequeno para automação
+        delayMessage: 1
       })
     });
 
     const data = await res.json().catch(() => ({ error: 'Failed to parse JSON' }));
     
-    // Logar resposta para debug no banco de dados
+    // Logar resposta para debug no banco de dados (Usando supabaseAdmin via import acima)
     await supabase.from('webhook_logs').insert({
       source: 'cron_debug',
       payload: { 
