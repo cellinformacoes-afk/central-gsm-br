@@ -10,6 +10,7 @@ export default function AdminPedidosPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('TUDO');
   const router = useRouter();
 
   useEffect(() => {
@@ -61,6 +62,45 @@ export default function AdminPedidosPage() {
     setLoading(false);
   }
 
+  async function handleCancelOrder(orderId: string) {
+    if (!confirm('Tem certeza que deseja CANCELAR este pedido e ESTORNAR o saldo para o cliente?')) return;
+
+    try {
+      const { data, error } = await supabase.rpc('cancel_order_v2', { p_order_id: orderId });
+      
+      if (error) throw error;
+      
+      if (data.status === 'success') {
+        alert(data.message);
+        fetchData(); // Recarregar dados
+      } else {
+        alert('Erro: ' + data.message);
+      }
+    } catch (err: any) {
+      console.error('Erro ao cancelar:', err);
+      alert('Falha ao cancelar pedido: ' + err.message);
+    }
+  }
+
+  async function handleCompleteOrder(orderId: string) {
+    if (!confirm('Deseja marcar este pedido como CONCLUÍDO (Entregue)?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'Concluído' })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+      
+      alert('Pedido marcado como concluído!');
+      fetchData(); // Recarregar dados
+    } catch (err: any) {
+      console.error('Erro ao concluir:', err);
+      alert('Falha ao concluir pedido: ' + err.message);
+    }
+  }
+
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
       order.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -69,8 +109,13 @@ export default function AdminPedidosPage() {
       order.input_data?.account_email?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = activeCategoryId === null || order.services?.category_id === activeCategoryId;
+    
+    const matchesStatus = statusFilter === 'TUDO' || 
+                         (statusFilter === 'PENDENTES' && order.status?.toLowerCase() === 'pendente') ||
+                         (statusFilter === 'CONCLUÍDOS' && (order.status?.toLowerCase() === 'concluído' || order.status?.toLowerCase() === 'completed')) ||
+                         (statusFilter === 'CANCELADOS' && order.status?.toLowerCase() === 'cancelado');
 
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   const getStatusColor = (status: string) => {
@@ -79,6 +124,7 @@ export default function AdminPedidosPage() {
       case 'completed': return 'bg-[#00D2AD]/20 text-[#00D2AD]';
       case 'paid': return 'bg-[#00D2AD]/20 text-[#00D2AD]';
       case 'pendente': return 'bg-yellow-500/20 text-yellow-500';
+      case 'cancelado': return 'bg-red-500/20 text-red-500';
       case 'failed': return 'bg-red-500/20 text-red-500';
       default: return 'bg-gray-500/20 text-gray-400';
     }
@@ -109,6 +155,23 @@ export default function AdminPedidosPage() {
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         </div>
+      </div>
+
+      {/* Status Filter Tabs */}
+      <div className="flex bg-[#0f172a] p-1 rounded-2xl border border-[#334155] mb-8 w-fit">
+        {['TUDO', 'PENDENTES', 'CONCLUÍDOS', 'CANCELADOS'].map((status) => (
+          <button
+            key={status}
+            onClick={() => setStatusFilter(status)}
+            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              statusFilter === status 
+                ? 'bg-[#334155] text-white shadow-lg' 
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            {status}
+          </button>
+        ))}
       </div>
 
       {/* Category Filter */}
@@ -200,9 +263,26 @@ export default function AdminPedidosPage() {
                     <p className="text-white font-black text-2xl tracking-tighter italic">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_price)}
                     </p>
-                    <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-1">
+                    <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-1 mb-4">
                       Comprado em: {new Date(order.created_at).toLocaleString('pt-BR')}
                     </p>
+
+                    {order.status?.toLowerCase() === 'pendente' && (
+                      <div className="flex flex-col gap-2 w-full">
+                        <button 
+                          onClick={() => handleCompleteOrder(order.id)}
+                          className="bg-[#00D2AD]/10 hover:bg-[#00D2AD] text-[#00D2AD] hover:text-[#0f172a] border border-[#00D2AD]/20 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg hover:shadow-[#00D2AD]/20"
+                        >
+                          ✅ CONCLUIR ENTREGA
+                        </button>
+                        <button 
+                          onClick={() => handleCancelOrder(order.id)}
+                          className="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg hover:shadow-red-500/20"
+                        >
+                          ❌ CANCELAR E ESTORNAR
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
