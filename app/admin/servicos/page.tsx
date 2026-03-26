@@ -103,6 +103,27 @@ export default function AdminServicosPage() {
          <Link href="/admin/servicos" className="text-[#00D2AD] border-b-2 border-[#00D2AD] font-black uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap">🛠️ Gerenciar Serviços</Link>
       </div>
 
+      {/* Credentials Info */}
+      <div className="bg-[#1e293b] p-6 rounded-2xl border border-[#334155] mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-lg">
+         <div>
+            <h2 className="text-[#00D2AD] font-black uppercase text-sm flex items-center gap-2">
+               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+               Credenciais de Acesso Admin
+            </h2>
+            <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">Caso esqueça, estes são os dados para entrar no painel.</p>
+         </div>
+         <div className="flex flex-col xs:flex-row gap-4 text-sm w-full md:w-auto">
+            <div className="bg-[#0f172a] px-4 py-3 rounded-xl border border-[#334155] flex-1">
+               <span className="text-gray-500 text-[10px] font-black uppercase block mb-1">Login / Email</span>
+               <code className="text-white font-mono font-bold text-xs select-all">admin@seu_email.com</code>
+            </div>
+            <div className="bg-[#0f172a] px-4 py-3 rounded-xl border border-[#334155] flex-1 border-l-4 border-l-[#00D2AD]">
+               <span className="text-gray-500 text-[10px] font-black uppercase block mb-1">Senha Atual</span>
+               <code className="text-[#00D2AD] font-mono font-bold text-xs select-all">sua_senha_aqui</code>
+            </div>
+         </div>
+      </div>
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">CATÁLOGO DE <span className="text-[#00D2AD]">SERVIÇOS</span></h1>
