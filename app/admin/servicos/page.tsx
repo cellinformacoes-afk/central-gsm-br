@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AdminCreds from '@/components/admin/AdminCreds';
 
 export default function AdminServicosPage() {
   const [services, setServices] = useState<any[]>([]);
@@ -105,7 +104,26 @@ export default function AdminServicosPage() {
       </div>
 
       {/* Credentials Info */}
-      <AdminCreds />
+      <div className="bg-[#1e293b] p-6 rounded-2xl border border-[#334155] mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-lg relative overflow-hidden group">
+         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full duration-1000 transition-all"></div>
+         <div>
+            <h2 className="text-[#00D2AD] font-black uppercase text-sm flex items-center gap-2">
+               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+               Credenciais de Acesso Admin
+            </h2>
+            <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">Caso esqueça, estes são os dados para entrar no painel.</p>
+         </div>
+         <div className="flex gap-4 w-full md:w-auto">
+            <div className="flex-1 md:flex-none">
+               <div className="text-gray-600 text-[9px] font-black uppercase mb-1">Login / Email</div>
+               <div className="bg-[#0f172a] border border-[#334155] rounded-xl px-4 py-2 text-white text-xs font-mono font-bold select-all">admin@seu_email.com</div>
+            </div>
+            <div className="flex-1 md:flex-none">
+               <div className="text-gray-600 text-[9px] font-black uppercase mb-1">Senha Atual</div>
+               <div className="bg-[#0f172a] border border-[#00D2AD]/30 rounded-xl px-4 py-2 text-[#00D2AD] text-xs font-mono font-bold select-all">sua_senha_aqui</div>
+            </div>
+         </div>
+      </div>
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>

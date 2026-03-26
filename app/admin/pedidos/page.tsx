@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AdminCreds from '@/components/admin/AdminCreds';
 
 export default function AdminPedidosPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -141,7 +140,6 @@ export default function AdminPedidosPage() {
       </div>
 
       {/* Credentials Info */}
-      <AdminCreds />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
         <div>

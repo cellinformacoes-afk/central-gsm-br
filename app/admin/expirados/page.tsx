@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AdminCreds from '@/components/admin/AdminCreds';
 import { Shield, RefreshCcw, CheckCircle2, XCircle, Clock, Key, Mail, Trash2 } from 'lucide-react';
 
 export default function ExpiradosPage() {
@@ -74,7 +73,6 @@ export default function ExpiradosPage() {
         </div>
 
         {/* Credentials Info */}
-        <AdminCreds />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
