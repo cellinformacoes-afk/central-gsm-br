@@ -8,7 +8,12 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'JACKSON & ISRAEL GSM | Aluguel de Box Digital e Ferramentas Unlock',
   description: 'A melhor plataforma de aluguel de ferramentas GSM, UnlockTool, Chimera, Licenças e Créditos. Desbloqueio de IMEI e ativações rápidas e seguras.',
-  keywords: ['GSM', 'UnlockTool', 'Chimera Tool', 'Aluguel de Box', 'Desbloqueio IMEI', 'Créditos GSM', 'Licenças de Software', 'Central GSM'],
+  keywords: [
+    'GSM', 'UnlockTool', 'Chimera Tool', 'Aluguel de Box', 'Desbloqueio IMEI', 'Créditos GSM', 'Licenças de Software', 'Central GSM',
+    'android multi tool', 'unlock tool', 'tsm tool', 'kg pro tool', 'sansung tool', 'amt', 'AMT', 'desbloqueio mdm', 
+    'aluguel de programas de desbloqueio', 'payjoy', 'rguard', 'miskidata', 'android multi', 'ANDROID MULTI TOOL', 
+    'UNLOCK TOOL', 'TSM TOOL'
+  ],
   authors: [{ name: 'Jackson & Israel GSM' }],
   robots: 'index, follow',
   openGraph: {
