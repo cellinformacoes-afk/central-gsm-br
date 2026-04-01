@@ -70,15 +70,7 @@ export default function ExpiradosPage() {
 
         {/* Credentials Info */}
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-black text-white italic tracking-tighter uppercase flex items-center gap-3">
-              <Shield className="text-[#FFC107]" size={40} />
-              Contas Expiradas
-            </h1>
-            <p className="text-gray-500 font-medium text-sm">Resete a senha no site oficial e clique em "Liberar Conta"</p>
-          </div>
-          
+        <div className="flex justify-end mb-8">
           <button 
             onClick={fetchExpirados}
             disabled={loading}
