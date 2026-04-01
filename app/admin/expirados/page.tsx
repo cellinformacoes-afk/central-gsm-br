@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Shield, RefreshCcw, CheckCircle2, XCircle, Clock, Key, Mail, Trash2 } from 'lucide-react';
+import AdminNav from '@/components/admin/AdminNav';
 
 export default function ExpiradosPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -65,12 +66,7 @@ export default function ExpiradosPage() {
     <div className="min-h-screen bg-[#020617] p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Admin Nav */}
-        <div className="flex gap-4 mb-10 border-b border-[#334155] pb-4 overflow-x-auto no-scrollbar">
-           <Link href="/admin/pedidos" className="text-gray-500 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap flex items-center gap-2">🛒 Pedidos</Link>
-           <Link href="/admin/estoque" className="text-gray-500 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap flex items-center gap-2">📦 Estoque</Link>
-           <Link href="/admin/servicos" className="text-gray-500 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap flex items-center gap-2">🛠️ Serviços</Link>
-           <Link href="/admin/expirados" className="text-[#FFC107] border-b-2 border-[#FFC107] font-black uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap flex items-center gap-2">⚠️ Expirados</Link>
-        </div>
+        <AdminNav />
 
         {/* Credentials Info */}
 

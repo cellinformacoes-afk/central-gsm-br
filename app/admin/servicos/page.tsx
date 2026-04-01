@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AdminNav from '@/components/admin/AdminNav';
 
 export default function AdminServicosPage() {
   const [services, setServices] = useState<any[]>([]);
@@ -97,11 +98,7 @@ export default function AdminServicosPage() {
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
       {/* Admin Nav */}
-      <div className="flex gap-4 mb-10 border-b border-[#334155] pb-4 overflow-x-auto no-scrollbar">
-         <Link href="/admin/pedidos" className="text-gray-500 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap">🛒 Pedidos</Link>
-         <Link href="/admin/estoque" className="text-gray-500 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap">📦 Gestão de Estoque</Link>
-         <Link href="/admin/servicos" className="text-[#00D2AD] border-b-2 border-[#00D2AD] font-black uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap">🛠️ Gerenciar Serviços</Link>
-      </div>
+      <AdminNav />
 
 
 
