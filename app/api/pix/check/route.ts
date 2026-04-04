@@ -12,7 +12,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'ID do pagamento ou do usuário faltando' }, { status: 400 });
     }
 
-    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
+    let accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
+    if (accessToken) accessToken = accessToken.trim();
+    
     const client = new MercadoPagoConfig({ accessToken: accessToken! });
     const payment = new Payment(client);
 

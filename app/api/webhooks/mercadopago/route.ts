@@ -4,7 +4,9 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
-    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
+    let accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
+    if (accessToken) accessToken = accessToken.trim();
+
     if (!accessToken) {
        return NextResponse.json({ error: 'Token não encontrado no servidor' }, { status: 500 });
     }

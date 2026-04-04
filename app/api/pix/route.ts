@@ -6,7 +6,9 @@ export async function POST(request: Request) {
   try {
     const { amount, description, userId } = await request.json();
     
-    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
+    let accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
+    if (accessToken) accessToken = accessToken.trim();
+    
     if (!accessToken) {
       return NextResponse.json({ 
         error: 'Chave do Mercado Pago não encontrada no servidor.',

@@ -83,14 +83,21 @@ export default function AdminPedidosPage() {
     }
   }
 
-  async function handleCompleteOrder(orderId: string) {
-    if (!confirm('Deseja marcar este pedido como CONCLUÍDO (Entregue)?')) return;
+  async function handleCompleteOrder(order: any) {
+    const isRental = order.services?.is_rental || order.service_title?.toLowerCase().includes('aluguel');
+    const rental = order.rentals && order.rentals.length > 0 ? order.rentals[0] : null;
+
+    if (isRental && !rental) {
+      if (!confirm('Este pedido é de ALUGUEL mas ainda NÃO possui uma conta atribuída. Deseja marcar como CONCLUÍDO mesmo assim? (O cliente continuará sem acesso)')) return;
+    } else {
+      if (!confirm('Deseja marcar este pedido como CONCLUÍDO (Entregue)?')) return;
+    }
 
     try {
       const { error } = await supabase
         .from('orders')
         .update({ status: 'Concluído' })
-        .eq('id', orderId);
+        .eq('id', order.id);
       
       if (error) throw error;
       
@@ -269,7 +276,7 @@ export default function AdminPedidosPage() {
                     {order.status?.toLowerCase() === 'pendente' && (
                       <div className="flex flex-col gap-2 w-full">
                         <button 
-                          onClick={() => handleCompleteOrder(order.id)}
+                          onClick={() => handleCompleteOrder(order)}
                           className="bg-[#00D2AD]/10 hover:bg-[#00D2AD] text-[#00D2AD] hover:text-[#0f172a] border border-[#00D2AD]/20 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg hover:shadow-[#00D2AD]/20"
                         >
                           ✅ CONCLUIR ENTREGA
