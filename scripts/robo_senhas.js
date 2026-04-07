@@ -1,7 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
 const { chromium } = require('playwright-extra');
 const stealth = require('puppeteer-extra-plugin-stealth')();
-require('dotenv').config({ path: '../.env.local' });
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env.local') });
 
 // Configurar Stealth para burlar Anti-Bot (Cloudflare)
 chromium.use(stealth);
