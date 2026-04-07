@@ -34,12 +34,14 @@ async function processarUnlockTool(conta) {
   try {
     // Passo 1: Ir para a tela de login
     console.log(`[ROBÔ] Acessando tela de login (post-in)...`);
-    await page.goto('https://unlocktool.net/post-in/', { waitUntil: 'load' });
+    // 'domcontentloaded' é mais seguro contra a catraca infinita do Cloudflare
+    await page.goto('https://unlocktool.net/post-in/', { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(e => console.log('[AVISO] Cloudflare travou o carregamento da rede, porem a página está ali.'));
     
-    console.log(`[ROBÔ] Preenchendo credenciais da conta...`);
+    console.log(`[ROBÔ] Aguardando o Security Check (Cloudflare) da Unlock Tool...`);
+    console.log(`👉 IMPORTANTE: Se aparecer a caixa "Confirme que é humano", CLIQUE NELA com o mouse! O robô vai pausar e te esperar por até 2 minutos.`);
     
-    // Identificar e preencher Login
-    await page.waitForSelector('input[type="text"], input[name="username"]', { timeout: 15000 });
+    // Identificar e preencher Login (O triplo de tempo para aguardar ação humana caso Cloudflare seja chato)
+    await page.waitForSelector('input[type="text"], input[name="username"]', { timeout: 120000 });
     const userInputs = await page.$$('input[type="text"], input[name="username"]');
     if(userInputs.length > 0) {
         await userInputs[0].fill(conta.credentials.email);
