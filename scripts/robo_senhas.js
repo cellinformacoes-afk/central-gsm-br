@@ -26,9 +26,17 @@ async function processarUnlockTool(conta) {
   const novaSenha = gerarNovaSenha();
   console.log(`[ROBÔ] Nova senha magica sera: ${novaSenha}`);
 
-  // Iniciar navegador VISÍVEL: É crucial ser false para o Windows parecer um humano pro Cloudflare
-  const browser = await chromium.launch({ headless: false });
-  const context = await browser.newContext();
+  // MODO BLINDADO: Usa o Chrome real, esconde a barra de Automação e injeta um User-Agent limpo
+  const browser = await chromium.launch({ 
+      headless: false, 
+      channel: 'chrome', 
+      ignoreDefaultArgs: ['--enable-automation'],
+      args: ['--disable-blink-features=AutomationControlled', '--start-maximized']
+  });
+  const context = await browser.newContext({
+      viewport: null, // Maximizado real
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+  });
   const page = await context.newPage();
 
   try {
