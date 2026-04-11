@@ -12,7 +12,7 @@ export default function AdminEstoquePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<any>(null);
   const [newPass, setNewPass] = useState('');
-  const [filter, setFilter] = useState<'all' | 'available' | 'rented' | 'pending_reset'>('all');
+  const [filter, setFilter] = useState<'all' | 'available' | 'rented'>('all');
   
   // New Account Form
   const [showAddForm, setShowAddForm] = useState(false);
@@ -118,11 +118,6 @@ export default function AdminEstoquePage() {
     if (!error) fetchData();
   };
 
-  const handleTriggerRobot = async (id: string) => {
-    if (!confirm("Você quer mandar essa conta para o Robô resetar sozinho agora?")) return;
-    const { error } = await supabase.from('service_accounts').update({ status: 'pending_reset' }).eq('id', id);
-    if (!error) fetchData();
-  };
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
@@ -155,12 +150,6 @@ export default function AdminEstoquePage() {
               className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${filter === 'rented' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-gray-500 hover:text-blue-400'}`}
             >
               Em Uso
-            </button>
-            <button 
-              onClick={() => setFilter('pending_reset')}
-              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${filter === 'pending_reset' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-gray-500 hover:text-red-400'}`}
-            >
-              Pendentes
             </button>
           </div>
           <button 
@@ -254,10 +243,10 @@ export default function AdminEstoquePage() {
           accounts
             .filter(acc => filter === 'all' || acc.status === filter)
             .map(acc => (
-            <div key={acc.id} className={`bg-[#1e293b] p-6 rounded-2xl border ${acc.status === 'pending_reset' ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'border-[#334155]'} flex flex-col md:flex-row md:items-center justify-between gap-6`}>
+            <div key={acc.id} className={`bg-[#1e293b] p-6 rounded-2xl border border-[#334155] flex flex-col md:flex-row md:items-center justify-between gap-6`}>
                <div className="flex items-center gap-6">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${acc.status === 'pending_reset' ? 'bg-red-500/10 text-red-500' : acc.status === 'rented' ? 'bg-blue-500/10 text-blue-500' : 'bg-[#00D2AD]/10 text-[#00D2AD]'}`}>
-                     {acc.status === 'pending_reset' ? '⚠️' : acc.status === 'rented' ? '🔑' : '✅'}
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${acc.status === 'rented' ? 'bg-blue-500/10 text-blue-500' : 'bg-[#00D2AD]/10 text-[#00D2AD]'}`}>
+                     {acc.status === 'rented' ? '🔑' : '✅'}
                   </div>
                   <div>
                      <h3 className="text-white font-black uppercase italic tracking-tighter">{acc.services?.title}</h3>
@@ -268,20 +257,13 @@ export default function AdminEstoquePage() {
 
                <div className="flex items-center gap-4">
                   <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                    acc.status === 'pending_reset' ? 'bg-red-500 text-white animate-pulse' :
                     acc.status === 'rented' ? 'bg-blue-500/20 text-blue-400' :
                     'bg-[#00D2AD]/20 text-[#00D2AD]'
                   }`}>
-                    {acc.status === 'pending_reset' ? 'RESET PENDENTE' : acc.status === 'rented' ? 'ALUGADA' : 'DISPONÍVEL'}
+                    {acc.status === 'rented' ? 'ALUGADA' : 'DISPONÍVEL'}
                   </span>
 
                   <div className="flex gap-2">
-                     <button 
-                        onClick={() => handleTriggerRobot(acc.id)}
-                        className="bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-900/50 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all"
-                     >
-                        🤖 Chamar Robô
-                     </button>
                      <button 
                         onClick={() => { setEditingAccount(acc); setIsModalOpen(true); }}
                         className="bg-[#334155] hover:bg-[#475569] text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all"
