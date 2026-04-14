@@ -144,6 +144,12 @@ export default function AdminEstoquePage() {
     if (!error) fetchData();
   };
 
+  const handleTriggerRobot = async (id: string) => {
+    if (!confirm("Você quer mandar essa conta para o Robô resetar sozinho agora?")) return;
+    const { error } = await supabase.from('service_accounts').update({ status: 'pending_reset' }).eq('id', id);
+    if (!error) fetchData();
+  };
+
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
       {/* Admin Nav */}
@@ -315,7 +321,7 @@ export default function AdminEstoquePage() {
                         onClick={() => { setEditingAccount(acc); setIsModalOpen(true); }}
                         className="bg-[#334155] hover:bg-[#475569] text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all"
                      >
-                        Resetar Senha
+                        Reset Manual
                      </button>
                      <button 
                         onClick={() => handleDelete(acc.id)}
