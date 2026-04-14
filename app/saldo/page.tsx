@@ -44,8 +44,8 @@ export default function SaldoPage() {
   }, [step, pixData]);
 
   const handleGeneratePix = async () => {
-    if (!amount || parseFloat(amount) < 5) {
-      alert("Valor mínimo para recarga é R$ 5,00");
+    if (!amount || parseFloat(amount) < 12) {
+      alert("Valor mínimo para recarga é R$ 12,00");
       return;
     }
 
@@ -156,7 +156,7 @@ export default function SaldoPage() {
                   className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 pl-12 pr-4 text-white text-2xl font-black focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD] transition-all outline-none"
                 />
               </div>
-              <p className="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-wider">* Mínimo R$ 5,00</p>
+              <p className="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-wider">* Mínimo R$ 12,00</p>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
