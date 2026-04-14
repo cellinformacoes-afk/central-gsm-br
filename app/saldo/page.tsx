@@ -10,6 +10,26 @@ export default function SaldoPage() {
   const [pixData, setPixData] = useState<any>(null);
   const [paymentStartTime, setPaymentStartTime] = useState<string | null>(null);
   const router = useRouter();
+  const [cpf, setCpf] = useState('');
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        if (data) {
+          setProfile(data);
+          if (data.cpf) setCpf(data.cpf);
+        }
+      }
+    };
+    fetchProfile();
+  }, []);
 
   // Polling automático a cada 10 segundos quando o QR Code está visível
   useEffect(() => {
@@ -28,6 +48,12 @@ export default function SaldoPage() {
       alert("Valor mínimo para recarga é R$ 5,00");
       return;
     }
+
+    if (!cpf || cpf.replace(/\D/g, '').length < 11) {
+      alert("Por favor, preencha um CPF ou CNPJ válido para continuar.");
+      return;
+    }
+
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -42,7 +68,8 @@ export default function SaldoPage() {
         body: JSON.stringify({ 
           amount, 
           description: `Recarga Central GSM - R$ ${amount}`,
-          userId: session.user.id
+          userId: session.user.id,
+          cpf: cpf.replace(/\D/g, '')
         }),
       });
       
@@ -71,7 +98,7 @@ export default function SaldoPage() {
       // 1. Tentar verificar DIRETAMENTE no Mercado Pago via nossa nova API
       if (pixData?.id) {
         console.log("Chamando /api/pix/check para ID:", pixData.id);
-        const checkRes = await fetch(`/api/pix/check?id=${pixData.id}&userId=${session.user.id}`);
+        const checkRes = await fetch(`/api/pix/check?id=${pixData.id}&userId=${session.user.id}&t=${Date.now()}`);
         const checkData = await checkRes.json();
         console.log("Resultado do /api/pix/check:", checkData);
         
@@ -143,6 +170,19 @@ export default function SaldoPage() {
                 </button>
               ))}
             </div>
+
+            {!profile?.cpf && (
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">CPF ou CNPJ (Obrigatório Asaas)</label>
+                <input 
+                  type="text" 
+                  value={cpf}
+                  onChange={(e) => setCpf(e.target.value)}
+                  placeholder="000.000.000-00"
+                  className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-lg font-bold focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD] transition-all outline-none"
+                />
+              </div>
+            )}
 
             <button 
               onClick={handleGeneratePix}

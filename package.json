@@ -11,7 +11,9 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.99.2",
     "dotenv": "^17.3.1",
+    "imap": "^0.8.19",
     "lucide-react": "^0.378.0",
+    "mailparser": "^3.9.8",
     "mercadopago": "^2.12.0",
     "next": "14.2.3",
     "playwright": "^1.58.2",
