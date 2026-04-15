@@ -16,37 +16,16 @@ export async function GET(request: Request) {
     }
 
     let status = await asaas.getPaymentStatus(paymentId);
-    let finalPaymentId = paymentId;
+    // Se o pagamento atual estiver pendente, não fazemos mais fallback global
+    // O webhook cuidará de atualizar o saldo se outros pagamentos forem confirmados.
+    // Manter a verificação estritamente para o paymentId solicitado para evitar confusão no frontend.
 
-    // Se o pagamento atual estiver pendente, vamos ver se o usuário tem algum outro que já foi pago
-    // Isso resolve o problema de gerar 2 QR codes e pagar o primeiro
-    if (status !== 'approved') {
-      const userPayments = await asaas.listUserPayments(userId);
-      
-      for (const payment of userPayments) {
-        if (payment.status === 'RECEIVED' || payment.status === 'CONFIRMED') {
-          // Verificar se esse ID de pagamento já foi creditado no banco
-          const { data: existingTx } = await supabaseAdmin
-            .from('transactions')
-            .select('id')
-            .eq('external_id', payment.id)
-            .maybeSingle();
-
-          if (!existingTx) {
-            status = 'approved';
-            finalPaymentId = payment.id;
-            console.log('Detectado NOVO pagamento confirmado para o usuário:', finalPaymentId);
-            break; // Encontramos um pagamento válido e não processado
-          }
-        }
-      }
-    }
 
     // Debug Log
     await supabaseAdmin.from('webhook_logs').insert({
       payload: { 
         source: 'check_route_asaas', 
-        paymentId: finalPaymentId, 
+        paymentId: paymentId, 
         originalId: paymentId,
         status: status
       },
@@ -55,7 +34,7 @@ export async function GET(request: Request) {
 
     if (status === 'approved') {
       // In Asaas, we might need the amount if it's not passed, but usually it's better to fetch it
-      const response = await fetch(`${process.env.ASAAS_API_URL || 'https://api.asaas.com/v3'}/payments/${finalPaymentId}`, {
+      const response = await fetch(`${process.env.ASAAS_API_URL || 'https://api.asaas.com/v3'}/payments/${paymentId}`, {
         headers: {
           'access_token': (process.env.ASAAS_API_KEY || '').trim(),
           'Content-Type': 'application/json'
@@ -69,7 +48,7 @@ export async function GET(request: Request) {
       const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('handle_payment_success', {
         p_user_id: userId,
         p_amount: amount,
-        p_payment_id: finalPaymentId
+        p_payment_id: paymentId
       });
 
       if (rpcError) {

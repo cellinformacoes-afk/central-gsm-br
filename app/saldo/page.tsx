@@ -111,14 +111,14 @@ export default function SaldoPage() {
       }
 
       // 2. Fallback: Verificar se a transação já foi registrada no Banco de Dados (pelo webhook)
+      // Buscamos especificamente pelo ID externo para evitar confusão com outros pagamentos
       const { data: transaction } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', session.user.id)
-        .gt('created_at', paymentStartTime || new Date(0).toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .eq('external_id', pixData.id)
+        .maybeSingle();
+
 
       if (transaction && transaction.status === 'success') {
         console.log("Pagamento detectado no DB!");
