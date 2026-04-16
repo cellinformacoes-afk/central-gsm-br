@@ -258,9 +258,6 @@ export default function AdminPedidosPage() {
                             <div className="bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg">
                               <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">Expiração:</p>
                               <p className="text-red-400 font-black text-xs">{new Date(rental.expires_at).toLocaleString('pt-BR')}</p>
-                              <p className="text-[8px] text-red-500/70 font-black uppercase mt-0.5">
-                                (+{Math.round((new Date(rental.expires_at).getTime() - new Date(order.created_at).getTime()) / (1000 * 60 * 60))} HORAS DE ACESSO)
-                              </p>
                             </div>
                           </>
                         )}
