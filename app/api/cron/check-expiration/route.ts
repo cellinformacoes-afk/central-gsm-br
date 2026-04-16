@@ -13,39 +13,24 @@ export async function GET() {
   try {
     console.log('[CRON] Iniciando monitoramento de expirações...');
 
-    // 1. Chamar o RPC que apenas LISTA contas expiradas (v2)
-    const { data: alerts, error } = await supabase.rpc('get_expired_rentals_v2');
+    // 1. Chamar o RPC que processa expirações e cria tarefas de automação
+    const { data: result, error } = await supabase.rpc('monitor_rental_expiration_v3');
 
     if (error) {
       console.error('[CRON] RPC Error:', error);
       throw error;
     }
 
-    let msgCount = 0;
+    const { expiredCount } = result as { expiredCount: number };
 
-    if (alerts && alerts.length > 0) {
-      for (const alert of alerts) {
-        let msg = '';
-        if (alert.message_type === 'EXPIRED') {
-          msg = `🚨 *Jackson & Israel GSM* 🚨\n\nA conta *${alert.email}* (${alert.service_title}) acaba de *EXPIRAR*!\n\n*Como Resetar:*\n1. Mude a senha no site original.\n2. Responda aqui assim:\nEmail: ${alert.email}\nNova Senha: [sua_nova_senha]`;
-        } 
-
-        if (msg) {
-          console.log(`[CRON] Enviando alerta para ${alert.email}...`);
-          const success = await sendWhatsApp(GROUP_ID, msg);
-          
-          if (success) {
-            // SOMENTE marcar como notificado se o WhatsApp enviou com sucesso
-            await supabase.rpc('mark_rental_notified', { p_rental_id: alert.account_id });
-            msgCount++;
-          }
-        }
-      }
+    if (expiredCount > 0) {
+      const msg = `🚨 *Central GSM - Automação* 🚨\n\nProcessadas *${expiredCount}* expirações.\nTarefas de reset de senha criadas e enviadas para o Worker.`;
+      await sendWhatsApp(GROUP_ID, msg);
     }
 
     return NextResponse.json({ 
       success: true, 
-      processed: msgCount,
+      processed: expiredCount,
       timestamp: new Date().toISOString()
     });
 

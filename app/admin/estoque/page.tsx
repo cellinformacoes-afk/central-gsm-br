@@ -59,6 +59,32 @@ export default function AdminEstoquePage() {
     if (!error) setAccounts(accData || []);
     setLoading(false);
   }
+  
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr; // Se não for data válida, mostra o texto original
+      return date.toLocaleDateString('pt-BR');
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const getExpiryStatus = (dateStr: string) => {
+    if (!dateStr) return null;
+    try {
+      const expiry = new Date(dateStr);
+      const now = new Date();
+      const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) return { label: 'EXPIRADA', color: 'text-red-500' };
+      if (diffDays <= 7) return { label: `VENCE EM ${diffDays} DIAS`, color: 'text-orange-500' };
+      return { label: `VENCE EM ${diffDays} DIAS`, color: 'text-gray-400' };
+    } catch (e) {
+      return null;
+    }
+  };
 
   const handleUpdatePassword = async () => {
     if (!newPass || !editingAccount) return;
@@ -279,6 +305,21 @@ export default function AdminEstoquePage() {
                         </p>
                      )}
                   </div>
+               </div>
+
+               {/* Info de Licença */}
+               <div className="flex-1 border-l border-[#334155] pl-6 hidden md:block">
+                  <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Licença Original</p>
+                  {acc.license_expires_at ? (
+                     <div className="mt-1">
+                        <p className="text-white font-black text-xs">{formatDate(acc.license_expires_at)}</p>
+                        <p className={`text-[9px] font-bold uppercase mt-0.5 ${getExpiryStatus(acc.license_expires_at)?.color}`}>
+                           {getExpiryStatus(acc.license_expires_at)?.label}
+                        </p>
+                     </div>
+                  ) : (
+                     <p className="text-gray-600 font-bold text-[10px] italic mt-1 uppercase">Não identificada</p>
+                  )}
                </div>
 
                <div className="flex items-center gap-4">

@@ -1,56 +1,80 @@
 import { NextResponse } from 'next/server';
-import { MercadoPagoConfig, Payment } from 'mercadopago';
-import { supabase } from '@/lib/supabase';
+import { asaas } from '@/lib/asaas';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(request: Request) {
   try {
-    const { amount, description, userId } = await request.json();
+    const { amount, description, userId, cpf } = await request.json();
     
-    let accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
-    if (accessToken) accessToken = accessToken.trim();
-    
-    if (!accessToken) {
-      return NextResponse.json({ 
-        error: 'Chave do Mercado Pago não encontrada no servidor.',
-        debug: 'Verifique se a variável MERCADO_PAGO_ACCESS_TOKEN foi adicionada corretamente na Vercel.'
-      }, { status: 500 });
-    }
-
-    const client = new MercadoPagoConfig({ 
-      accessToken: accessToken,
-      options: { timeout: 5000 }
-    });
-
     if (!userId) {
       return NextResponse.json({ error: 'ID do usuário não fornecido' }, { status: 400 });
     }
 
-    const payment = new Payment(client);
+    console.log('--- Iniciando Geração de Pix Asaas ---');
+    console.log('User ID:', userId);
+    console.log('Amount:', amount);
+    
+    // Check if admin key is present
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('ERRO CRÍTICO: SUPABASE_SERVICE_ROLE_KEY não encontrada no ambiente!');
+    } else {
+      console.log('SUPABASE_SERVICE_ROLE_KEY detectada (tamanho:', process.env.SUPABASE_SERVICE_ROLE_KEY.length, ')');
+    }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.centralgsm.com.br';
-    const body = {
-      transaction_amount: parseFloat(amount),
-      description: description || 'Recarga de Saldo - Central GSM',
-      payment_method_id: 'pix',
-      payer: {
-        email: 'cliente@centralgsm.com.br',
-      },
-      notification_url: `${siteUrl}/api/webhooks/mercadopago`,
-      metadata: {
-        user_id: userId
-      }
-    };
+    // 1. Get user profile using Admin client to ensure access
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('email, username, asaas_customer_id, cpf')
+      .eq('id', userId)
+      .single();
 
-    const result = await payment.create({ body });
+    if (profileError) {
+      console.error('Erro RLS ao buscar perfil:', profileError);
+      return NextResponse.json({ error: profileError.message }, { status: 403 });
+    }
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Perfil do usuário não encontrado' }, { status: 404 });
+    }
+
+    console.log('Perfil encontrado:', profile.email);
+    let customerId = profile.asaas_customer_id;
+
+    // 2. Ensure customer exists in Asaas and update profile
+    // We call getOrCreateCustomer even if customerId exists to handle CPF updates/sync
+    const newCustomerId = await asaas.getOrCreateCustomer(
+      profile.email, 
+      profile.username || profile.email.split('@')[0],
+      cpf || profile.cpf
+    );
+
+    if (!customerId || customerId !== newCustomerId || (cpf && profile.cpf !== cpf)) {
+      await supabaseAdmin
+        .from('profiles')
+        .update({ 
+          asaas_customer_id: newCustomerId,
+          cpf: cpf || profile.cpf
+        })
+        .eq('id', userId);
+      customerId = newCustomerId;
+    }
+
+    // 3. Create Pix Payment in Asaas
+    const result = await asaas.createPixPayment(
+      customerId,
+      parseFloat(amount),
+      description || 'Recarga de Saldo - Central GSM',
+      userId
+    );
 
     return NextResponse.json({
       id: result.id,
-      qr_code: result.point_of_interaction?.transaction_data?.qr_code,
-      qr_code_base64: result.point_of_interaction?.transaction_data?.qr_code_base64,
-      copy_paste: result.point_of_interaction?.transaction_data?.qr_code,
+      qr_code: result.copyPaste, // In asaas util, copyPaste is the payload
+      qr_code_base64: result.qrCode, // In asaas util, qrCode is the base64 image
+      copy_paste: result.copyPaste,
     });
   } catch (error: any) {
-    console.error('Erro ao gerar Pix:', error);
+    console.error('Erro ao gerar Pix no Asaas:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
