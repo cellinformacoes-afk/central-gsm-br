@@ -16,7 +16,7 @@ export default function AdminEstoquePage() {
   
   // New Account Form
   const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({ service_id: '', email: '', password: '', duration_hours: '', price: '' });
+  const [formData, setFormData] = useState({ service_id: '', email: '', password: '', duration_hours: '', price: '', expires_at: '' });
 
   const router = useRouter();
 
@@ -99,7 +99,7 @@ export default function AdminEstoquePage() {
 
     const { error } = await supabase.from('service_accounts').insert({
       service_id: parseInt(formData.service_id),
-      credentials: { email: formData.email, password: formData.password },
+      credentials: { email: formData.email, password: formData.password, expires_at: formData.expires_at },
       status: 'available'
     });
 
@@ -107,7 +107,7 @@ export default function AdminEstoquePage() {
       alert("Erro ao adicionar conta: " + error.message);
     } else {
       setShowAddForm(false);
-      setFormData({ service_id: '', email: '', password: '', duration_hours: '', price: '' });
+      setFormData({ service_id: '', email: '', password: '', duration_hours: '', price: '', expires_at: '' });
       fetchData();
     }
   };
@@ -215,6 +215,16 @@ export default function AdminEstoquePage() {
                      className="w-full bg-[#0f172a] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]"
                   />
                </div>
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-500 uppercase">Validade Licença</label>
+                  <input 
+                     type="text" 
+                     placeholder="Ex: 25 de junho de 2026..."
+                     value={formData.expires_at}
+                     onChange={e => setFormData({...formData, expires_at: e.target.value})}
+                     className="w-full bg-[#0f172a] border border-[#334155] rounded-xl p-3 text-white outline-none focus:border-[#00D2AD]"
+                  />
+               </div>
                
                {/* Novos Campos solicitados */}
                <div className="space-y-2">
@@ -263,6 +273,11 @@ export default function AdminEstoquePage() {
                      <h3 className="text-white font-black uppercase italic tracking-tighter">{acc.services?.title}</h3>
                      <p className="text-gray-500 text-xs font-mono">{acc.credentials.email}</p>
                      <p className="text-[#00D2AD] text-[10px] font-mono mt-0.5 font-bold">Senha: {acc.credentials.password}</p>
+                     {acc.credentials.expires_at && (
+                        <p className="inline-block mt-2 px-2 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded text-yellow-500 text-[9px] font-black uppercase tracking-widest">
+                           ⏳ VENCE EM: {acc.credentials.expires_at}
+                        </p>
+                     )}
                   </div>
                </div>
 
