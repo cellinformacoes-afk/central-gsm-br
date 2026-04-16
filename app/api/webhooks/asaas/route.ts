@@ -16,9 +16,32 @@ export async function POST(request: Request) {
 
     // We only care about success events
     if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
-      const userId = payment.externalReference;
-      const amount = payment.value;
       const paymentId = payment.id;
+
+      // BARRAGEM DE SEGURANÇA (ANTI-FRAUDE)
+      // O site não confia mais no payload que chegou. Ele vai no Asaas checar se o Pix realmente existe.
+      const asaasResponse = await fetch(`${process.env.ASAAS_API_URL || 'https://api.asaas.com/v3'}/payments/${paymentId}`, {
+        headers: {
+          'access_token': (process.env.ASAAS_API_KEY || '').trim(),
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!asaasResponse.ok) {
+         console.error('Anti-fraude: Pagamento não encontrado no Asaas oficial.');
+         return NextResponse.json({ error: 'Pagamento não encontrado no sistema' }, { status: 400 });
+      }
+
+      const verifiedPayment = await asaasResponse.json();
+
+      if (verifiedPayment.status !== 'RECEIVED' && verifiedPayment.status !== 'CONFIRMED') {
+         console.error('Anti-fraude: Tentativa de forçar status, o status real é:', verifiedPayment.status);
+         return NextResponse.json({ error: 'O pagamento real não consta como pago' }, { status: 400 });
+      }
+
+      // EXTRAIR VALOR ÚNICA E EXCLUSIVAMENTE DA RESPOSTA OFICIAL DO ASAAS
+      const amount = parseFloat(String(verifiedPayment.netValue || verifiedPayment.value || '0'));
+      const userId = verifiedPayment.externalReference;
 
       if (!userId) {
         console.error('UserId missing in Asaas payment externalReference:', paymentId);
