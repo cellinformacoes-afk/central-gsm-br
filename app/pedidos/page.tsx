@@ -73,9 +73,13 @@ export default function PedidosPage() {
     order.input_data?.imei?.includes(searchTerm)
   );
 
+  const totalSpent = orders.filter(o => o.status === 'Concluído').reduce((acc, curr) => acc + (curr.total_price || 0), 0);
+  const completedOrders = orders.filter(o => o.status === 'Concluído').length;
+  const pendingOrders = orders.filter(o => o.status === 'Pendente' || o.status === 'Em Andamento').length;
+
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">MEUS <span className="text-[#00D2AD]">PEDIDOS</span></h1>
            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
@@ -89,10 +93,46 @@ export default function PedidosPage() {
             placeholder="Pesquisar por IMEI ou Serviço..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#1e293b] border border-[#334155] rounded-2xl py-4 pl-12 pr-4 text-white text-sm font-medium focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD]/30 outline-none transition-all shadow-xl"
+            className="w-full bg-[#1e293b] border border-[#334155] rounded-2xl py-4 pl-12 pr-4 text-white text-sm font-medium focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD]/50 outline-none transition-all shadow-[0_5px_15px_rgba(0,0,0,0.3)] hover:border-[#00D2AD]/30 hover:shadow-[0_0_20px_rgba(0,210,173,0.1)]"
           />
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:stroke-[#00D2AD] transition-colors"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         </div>
+      </div>
+
+      {/* 🚀 DASHBOARD CLIENTE 🚀 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+         <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] p-5 rounded-3xl border border-[#334155] relative overflow-hidden group hover:border-[#00D2AD]/50 transition-all shadow-xl">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#00D2AD]/10 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2"></div>
+            <div className="flex justify-between items-center relative z-10">
+               <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Recebido (Ativações)</p>
+                  <h3 className="text-2xl font-black text-white">R$ {totalSpent.toFixed(2)}</h3>
+               </div>
+               <div className="w-12 h-12 bg-[#00D2AD]/10 rounded-2xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(0,210,173,0.2)] group-hover:scale-110 transition-transform text-[#00D2AD]">💰</div>
+            </div>
+         </div>
+
+         <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] p-5 rounded-3xl border border-[#334155] relative overflow-hidden group hover:border-blue-500/50 transition-all shadow-xl">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2"></div>
+            <div className="flex justify-between items-center relative z-10">
+               <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Concluídos</p>
+                  <h3 className="text-2xl font-black text-white">{completedOrders}</h3>
+               </div>
+               <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(59,130,246,0.2)] group-hover:scale-110 transition-transform">✅</div>
+            </div>
+         </div>
+
+         <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] p-5 rounded-3xl border border-[#334155] relative overflow-hidden group hover:border-[#FFC107]/50 transition-all shadow-xl">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#FFC107]/10 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2"></div>
+            <div className="flex justify-between items-center relative z-10">
+               <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Em Processamento</p>
+                  <h3 className="text-2xl font-black text-white">{pendingOrders}</h3>
+               </div>
+               <div className="w-12 h-12 bg-[#FFC107]/10 rounded-2xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(255,193,7,0.2)] group-hover:scale-110 transition-transform">⏳</div>
+            </div>
+         </div>
       </div>
 
       <div className="bg-[#1e293b] rounded-[32px] border border-[#334155] overflow-hidden shadow-2xl">
@@ -116,7 +156,7 @@ export default function PedidosPage() {
                 ))
               ) : filteredOrders.length > 0 ? (
                 filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-[#00D2AD]/5 transition-colors group">
+                  <tr key={order.id} className="hover:bg-gradient-to-r hover:from-[#1e293b] hover:to-[#0f172a] hover:shadow-[0_5px_15px_rgba(0,210,173,0.05)] transition-all group relative border-b border-[#334155]/30 hover:border-transparent">
                     <td className="px-8 py-7">
                        <div className="flex flex-col">
                           <span className="text-white font-black text-sm uppercase italic group-hover:text-[#00D2AD] transition-colors">{order.service_title || order.services?.title || 'Serviço Removido'}</span>

@@ -158,10 +158,10 @@ export default function SaldoPage() {
               </div>
               <p className="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-wider">* Mínimo R$ 12,00</p>
               
-              <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
-                <span className="text-amber-500 text-xl">⚠️</span>
-                <p className="text-amber-400/90 text-[11px] leading-tight font-black uppercase tracking-wider">
-                  ATENÇÃO: O saldo adicionado na plataforma é de uso exclusivo para compras e não poderá ser sacado ou reembolsado.
+              <div className="mt-4 p-4 bg-gradient-to-r from-amber-500/10 to-transparent border-l-4 border-amber-500 rounded-r-xl flex items-center gap-3 shadow-md">
+                <span className="text-amber-500 text-xl animate-pulse">💡</span>
+                <p className="text-amber-500/90 text-[10px] leading-relaxed font-black uppercase tracking-widest drop-shadow-sm">
+                  O saldo adicionado é de uso exclusivo para compras e ativações na plataforma.
                 </p>
               </div>
             </div>
@@ -171,8 +171,9 @@ export default function SaldoPage() {
                 <button 
                   key={val}
                   onClick={() => setAmount(val.toString())}
-                  className="bg-[#0f172a] border border-[#334155] hover:border-[#00D2AD] text-white py-3 rounded-xl font-bold transition-all hover:-translate-y-1"
+                  className="bg-gradient-to-t from-[#0f172a] to-[#1e293b] border border-[#334155] hover:border-[#00D2AD] text-white py-3 rounded-xl font-black shadow-[0_5px_15px_rgba(0,0,0,0.3)] transition-all hover:-translate-y-2 hover:shadow-[0_10px_20px_rgba(0,210,173,0.15)] group relative overflow-hidden"
                 >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#00D2AD]/10 to-transparent -translate-x-full group-hover:translate-x-full duration-1000 transition-transform"></div>
                   + R$ {val}
                 </button>
               ))}
