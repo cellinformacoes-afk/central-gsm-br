@@ -198,6 +198,42 @@ export default function AdminEstoquePage() {
         </div>
       </div>
 
+      {/* 🚀 DASHBOARD COCKPIT 🚀 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+         <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] p-6 rounded-3xl border border-[#334155] shadow-xl relative overflow-hidden group hover:border-[#00D2AD]/50 transition-all cursor-default">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2"></div>
+            <div className="flex justify-between items-start relative z-10">
+               <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Livres p/ Aluguel</p>
+                  <h3 className="text-4xl font-black text-white">{accounts.filter(a => a.status === 'available').length}</h3>
+               </div>
+               <div className="w-12 h-12 bg-[#00D2AD]/10 rounded-2xl flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(0,210,173,0.2)] group-hover:scale-110 transition-transform">✅</div>
+            </div>
+         </div>
+
+         <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] p-6 rounded-3xl border border-[#334155] shadow-xl relative overflow-hidden group hover:border-blue-500/50 transition-all cursor-default">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2"></div>
+            <div className="flex justify-between items-start relative z-10">
+               <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Contas em Uso</p>
+                  <h3 className="text-4xl font-black text-white">{accounts.filter(a => a.status === 'rented').length}</h3>
+               </div>
+               <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(59,130,246,0.2)] group-hover:scale-110 transition-transform">🔑</div>
+            </div>
+         </div>
+
+         <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] p-6 rounded-3xl border border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.1)] relative overflow-hidden group hover:border-red-500/80 transition-all cursor-default">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2"></div>
+            <div className="flex justify-between items-start relative z-10">
+               <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Reset Pendente</p>
+                  <h3 className="text-4xl font-black text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">{accounts.filter(a => a.status === 'pending_reset').length}</h3>
+               </div>
+               <div className="w-12 h-12 bg-red-500/20 border border-red-500/50 rounded-2xl flex items-center justify-center text-2xl animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_20px_rgba(239,68,68,0.4)]">⚠️</div>
+            </div>
+         </div>
+      </div>
+
       {showAddForm && (
         <div className="mb-10 bg-[#1e293b] p-8 rounded-3xl border border-[#00D2AD]/30 animate-in slide-in-from-top duration-300">
            <form onSubmit={handleAddAccount} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
@@ -280,7 +316,7 @@ export default function AdminEstoquePage() {
           accounts
             .filter(acc => filter === 'all' || acc.status === filter)
             .map(acc => (
-            <div key={acc.id} className={`bg-[#1e293b] p-6 rounded-2xl border ${acc.status === 'pending_reset' ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'border-[#334155]'} flex flex-col md:flex-row md:items-center justify-between gap-6`}>
+            <div key={acc.id} className={`bg-[#1e293b] p-6 rounded-3xl border ${acc.status === 'pending_reset' ? 'border-red-500/80 shadow-[0_0_30px_rgba(239,68,68,0.2)] bg-red-900/10' : 'border-[#334155] hover:border-[#00D2AD]/30'} flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-2xl hover:-translate-y-1 transition-all group`}>
                <div className="flex items-center gap-6">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${acc.status === 'pending_reset' ? 'bg-red-500/10 text-red-500' : acc.status === 'rented' ? 'bg-blue-500/10 text-blue-500' : 'bg-[#00D2AD]/10 text-[#00D2AD]'}`}>
                      {acc.status === 'pending_reset' ? '⚠️' : acc.status === 'rented' ? '🔑' : '✅'}
