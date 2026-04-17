@@ -77,16 +77,16 @@ export default function ExtratoPage() {
 
       {/* Dashboard Resumo */}
       {transactions.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 mb-2">
-           <div className="bg-[#1e293b] p-5 rounded-3xl border border-[#334155] relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500"></div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 relative z-10">Entradas (PIX)</p>
-              <h3 className="text-xl md:text-2xl font-black text-green-500 relative z-10">{formatCurrency(totalDepositado)}</h3>
-           </div>
-           <div className="bg-[#1e293b] p-5 rounded-3xl border border-[#334155] relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500"></div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 relative z-10">Gastos (Ativações)</p>
-              <h3 className="text-xl md:text-2xl font-black text-red-500 relative z-10">{formatCurrency(totalGasto)}</h3>
+        <div className="grid grid-cols-1 mb-6">
+           <div className="bg-[#1e293b] p-5 rounded-3xl border border-[#334155] relative overflow-hidden group hover:border-green-500/50 transition-all">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500"></div>
+              <div className="flex justify-between items-center relative z-10">
+                 <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total de Recargas (PIX)</p>
+                    <h3 className="text-xl md:text-2xl font-black text-green-500">{formatCurrency(totalDepositado)}</h3>
+                 </div>
+                 <div className="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(34,197,94,0.2)]">📈</div>
+              </div>
            </div>
         </div>
       )}
@@ -135,7 +135,7 @@ export default function ExtratoPage() {
                   <span className={`text-sm md:text-lg font-black italic tracking-tight ${
                     t.type === 'deposit' ? 'text-green-500' : 'text-red-500'
                   }`}>
-                    {t.type === 'deposit' ? '+' : '-'} {formatCurrency(t.amount)}
+                    {t.type === 'deposit' ? '+' : '-'} {formatCurrency(Math.abs(t.amount || 0))}
                   </span>
                 </div>
               </div>
