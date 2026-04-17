@@ -15,6 +15,7 @@ export default function ClientLayout({
   const [profile, setProfile] = useState<any>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pendingResets, setPendingResets] = useState(0);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -221,11 +222,40 @@ export default function ClientLayout({
         </header>
 
 
-        {/* WhatsApp Float */}
-        <div className="fixed right-4 bottom-4 z-40">
-           <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" target="_blank" className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-           </a>
+        {/* Support Chat Widget */}
+        <div className="fixed right-4 bottom-4 z-50 flex flex-col items-end">
+           {isChatOpen && (
+              <div className="mb-4 w-72 md:w-80 bg-[#1e293b]/90 backdrop-blur-xl border border-[#00D2AD]/30 shadow-[0_10px_40px_rgba(0,0,0,0.5)] rounded-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+                 <div className="bg-gradient-to-r from-[#00D2AD] to-[#009077] p-4 flex justify-between items-center text-[#0f172a]">
+                    <div className="flex items-center gap-3">
+                       <span className="text-2xl">👋</span>
+                       <div>
+                          <h3 className="font-black text-sm uppercase tracking-tighter">Equipe de Suporte</h3>
+                          <p className="text-[10px] font-bold opacity-80">Online agora</p>
+                       </div>
+                    </div>
+                    <button onClick={() => setIsChatOpen(false)} className="opacity-70 hover:opacity-100 transition-opacity">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                 </div>
+                 <div className="p-6">
+                    <p className="text-sm text-gray-300 mb-6 font-medium">Olá! Tem dúvidas sobre alguma ativação ou encontrou algum problema? Chame a gente no WhatsApp!</p>
+                    <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" target="_blank" className="w-full relative group bg-gradient-to-r from-[#25D366] to-[#128C7E] flex items-center justify-center gap-3 py-3 rounded-xl shadow-[0_0_15px_rgba(37,211,102,0.3)] hover:shadow-[0_0_25px_rgba(37,211,102,0.5)] transition-all overflow-hidden">
+                       <div className="absolute inset-0 w-1/4 h-full bg-white/20 skew-x-[-20deg] group-hover:translate-x-[400%] transition-transform duration-700"></div>
+                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                       <span className="text-white font-black uppercase tracking-widest drop-shadow-md">Iniciar Conversa</span>
+                    </a>
+                 </div>
+              </div>
+           )}
+           <button onClick={() => setIsChatOpen(!isChatOpen)} className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,211,102,0.4)] hover:scale-110 hover:shadow-[0_0_30px_rgba(37,211,102,0.6)] transition-all relative">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-[#0f172a] animate-pulse"></span>
+              {isChatOpen ? (
+                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              ) : (
+                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              )}
+           </button>
         </div>
 
         <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 mt-4 relative z-10">
