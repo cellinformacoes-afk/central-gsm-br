@@ -72,7 +72,7 @@ export default function ClientLayout({
   return (
     <div className="min-h-screen flex flex-col bg-[#0f172a]">
         {/* Sticky Navbar */}
-        <header className="sticky top-0 z-50 w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-[#334155] shadow-lg">
+        <header className="sticky top-0 z-50 w-full bg-[#1e293b]/60 backdrop-blur-xl border-b border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] transition-all duration-300">
           <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             {/* Mobile Menu Button */}
             {session && (
@@ -128,23 +128,37 @@ export default function ClientLayout({
 
 
             {/* Right Buttons */}
-            <div className="flex items-center gap-2 md:gap-4">
+            <div className="flex items-center gap-2 md:gap-4 lg:gap-6">
               {session ? (
                 <>
-                  <div className="flex items-center gap-1.5 md:gap-2 bg-[#00D2AD]/10 border border-[#00D2AD]/20 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-[10px] md:text-sm font-bold">
+                  <div className="flex items-center gap-1.5 md:gap-2 bg-gradient-to-r from-[#00D2AD]/20 to-[#00D2AD]/5 border border-[#00D2AD]/30 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-sm font-bold shadow-[0_0_15px_rgba(0,210,173,0.1)] hover:shadow-[0_0_20px_rgba(0,210,173,0.3)] hover:border-[#00D2AD]/50 transition-all cursor-default">
                      <span className="hidden xs:inline text-gray-400">Saldo:</span>
-                     <span className="text-[#00D2AD]">
+                     <span className="text-[#00D2AD] drop-shadow-[0_0_5px_rgba(0,210,173,0.5)]">
                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile?.balance || 0)}
                      </span>
                   </div>
+                  
+                  {/* Notification Bell */}
+                  <button className="relative text-gray-400 hover:text-white transition-colors hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                    <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#1e293b]"></span>
+                  </button>
+
                   <button 
                     onClick={handleLogout}
-                    className="hidden md:block text-gray-400 hover:text-white text-sm font-medium transition-colors"
+                    className="hidden md:block text-gray-400 hover:text-red-400 text-sm font-medium transition-colors hover:scale-105"
                   >
                     Sair
                   </button>
-                  <Link href="/perfil" className="w-8 h-8 rounded-full bg-[#00D2AD] flex items-center justify-center text-[#0f172a] font-black text-xs shrink-0 shadow-[0_0_10px_rgba(0,210,173,0.3)]">
+                  
+                  <Link href="/perfil" className="relative group w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-[#00D2AD] to-[#009077] flex items-center justify-center text-[#0f172a] font-black text-sm shrink-0 shadow-[0_0_15px_rgba(0,210,173,0.4)] hover:shadow-[0_0_25px_rgba(0,210,173,0.6)] hover:scale-110 transition-all">
                     {profile?.username?.charAt(0).toUpperCase() || 'U'}
+                    {/* Active dot */}
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-[#1e293b] rounded-full"></span>
                   </Link>
                 </>
               ) : (

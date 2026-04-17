@@ -338,10 +338,10 @@ export default function Home() {
             <button 
               key={cat.id}
               onClick={() => setActiveCategoryId(activeCategoryId === cat.id ? null : cat.id)}
-              className={`flex items-center gap-3 px-5 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all border-2 group ${
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all duration-300 border-2 group ${
                 activeCategoryId === cat.id 
-                ? 'bg-[#00D2AD] border-[#00D2AD] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)]' 
-                : 'bg-[#0f172a] border-[#334155] text-gray-400 hover:border-[#00D2AD]/50 hover:text-white'
+                ? 'bg-[#00D2AD] border-[#00D2AD] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.4)] scale-105' 
+                : 'bg-[#0f172a] border-[#334155] text-gray-400 opacity-60 hover:opacity-100 hover:border-[#00D2AD]/50 hover:text-white hover:scale-105'
               }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={activeCategoryId === cat.id ? 'text-[#0f172a]' : 'text-[#00D2AD] group-hover:scale-110 transition-transform'}>
@@ -408,7 +408,7 @@ export default function Home() {
                 setSelectedService(service);
                 setQuantity(service.categories?.slug === 'creditos' ? 5 : 1);
               }}
-              className="bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center hover:shadow-[0_0_40px_rgba(0,210,173,0.1)] hover:-translate-y-2 hover:border-[#00D2AD]/40 transition-all cursor-pointer group relative overflow-hidden"
+              className="bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center hover:bg-gradient-to-r hover:from-[#1e293b] hover:to-[#0f172a] hover:shadow-[0_15px_50px_rgba(0,210,173,0.15)] hover:-translate-y-3 hover:border-[#00D2AD] hover:scale-[1.02] transition-all duration-300 cursor-pointer group relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-40 h-40 bg-[#00D2AD]/5 blur-[70px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
               
