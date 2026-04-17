@@ -75,21 +75,7 @@ export default function ExtratoPage() {
         </Link>
       </div>
 
-      {/* Dashboard Resumo */}
-      {transactions.length > 0 && (
-        <div className="grid grid-cols-1 mb-6">
-           <div className="bg-[#1e293b] p-5 rounded-3xl border border-[#334155] relative overflow-hidden group hover:border-green-500/50 transition-all">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500"></div>
-              <div className="flex justify-between items-center relative z-10">
-                 <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total de Recargas (PIX)</p>
-                    <h3 className="text-xl md:text-2xl font-black text-green-500">{formatCurrency(totalDepositado)}</h3>
-                 </div>
-                 <div className="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(34,197,94,0.2)]">📈</div>
-              </div>
-           </div>
-        </div>
-      )}
+
 
       {/* Transactions List */}
       <div className="bg-[#0f172a]/50 backdrop-blur-xl border border-[#334155] rounded-3xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
