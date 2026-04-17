@@ -3,7 +3,7 @@ export default function Profile() {
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Perfil do Usuário</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">Gerencie suas informações e chaves API (futuro Supabase).</p>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">Gerencie as informações da sua conta.</p>
       </div>
 
       <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
@@ -30,16 +30,6 @@ export default function Profile() {
                </div>
             </div>
 
-            <div>
-               <h3 className="font-semibold text-lg mb-2">Chave da API (Supabase Integration)</h3>
-               <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Use esta chave para conectar seu software de revenda à nossa API (Em breve).</p>
-               <div className="flex gap-2">
-                  <input type="text" defaultValue="sk_test_*************************" readOnly className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 font-mono text-sm" />
-                  <button className="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
-                     Copiar
-                  </button>
-               </div>
-            </div>
          </div>
       </div>
     </div>
