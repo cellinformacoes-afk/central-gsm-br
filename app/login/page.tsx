@@ -33,13 +33,21 @@ export default function Login() {
   return (
     <div className="min-h-screen w-full flex bg-[#09090b] text-white">
       {/* Brand Side (Visible on Desktop) */}
-      <div className="hidden lg:flex w-1/2 bg-[#0f172a] relative items-center justify-center p-12 overflow-hidden border-r border-[#334155]">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#00D2AD]/10 blur-[120px] rounded-full -translate-y-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] rounded-full translate-y-1/2"></div>
+      <div className="hidden lg:flex w-1/2 bg-[#050B14] relative items-center justify-center p-12 overflow-hidden border-r border-[#334155]">
+        {/* Animated Cyber Grid Background */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_20%,transparent_100%)]"></div>
         
-        <div className="z-10 text-center">
-            <h2 className="text-4xl font-black mb-6 tracking-tighter italic uppercase">JACKSON & ISRAEL <span className="text-[#00D2AD]">GSM</span></h2>
-            <p className="text-gray-400 max-w-md mx-auto text-lg leading-relaxed font-medium">Faça login para gerenciar seus aluguéis e adicionar saldo com segurança.</p>
+        {/* Glowing Orbs */}
+        <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-[#00D2AD]/10 blur-[120px] rounded-full animate-[pulse_6s_ease-in-out_infinite]"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-[400px] h-[400px] bg-blue-500/10 blur-[120px] rounded-full animate-[pulse_8s_ease-in-out_infinite_alternate]"></div>
+
+        {/* Central Scanline */}
+        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#00D2AD]/30 to-transparent shadow-[0_0_15px_rgba(0,210,173,0.5)]"></div>
+
+        <div className="z-10 text-center relative">
+            <div className="absolute -inset-10 bg-gradient-to-r from-[#00D2AD]/0 via-[#00D2AD]/5 to-[#00D2AD]/0 blur-2xl animate-pulse"></div>
+            <h2 className="text-5xl font-black mb-6 tracking-tighter italic uppercase text-white drop-shadow-[0_0_15px_rgba(0,210,173,0.3)]">JACKSON & ISRAEL <span className="text-[#00D2AD]">GSM</span></h2>
+            <p className="text-gray-400 max-w-md mx-auto text-lg leading-relaxed font-medium">Faça login para gerenciar seus aluguéis e adicionar saldo com acesso <span className="text-[#00D2AD] font-bold">criptografado</span>.</p>
         </div>
       </div>
 
@@ -62,21 +70,21 @@ export default function Login() {
             )}
             
             <div className="space-y-2">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">E-mail</label>
+              <label className="text-[11px] font-black text-white/50 uppercase tracking-[0.2em] ml-1">Endereço de E-mail</label>
               <input 
                 type="email" 
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com" 
-                className="w-full bg-[#1e293b] border border-[#334155] rounded-xl py-3.5 px-5 text-white placeholder-gray-600 focus:outline-none focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD] transition-all font-medium"
+                className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-5 text-white placeholder-gray-600 focus:outline-none focus:border-[#00D2AD] focus:ring-2 focus:ring-[#00D2AD]/30 focus:shadow-[0_0_20px_rgba(0,210,173,0.15)] transition-all font-medium"
               />
             </div>
 
             <div className="space-y-2 relative">
               <div className="flex justify-between items-center mb-1">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Senha</label>
-                <Link href="#" className="text-[10px] font-bold text-[#00D2AD] hover:text-white transition-colors">ESQUECI A SENHA</Link>
+                <label className="text-[11px] font-black text-white/50 uppercase tracking-[0.2em] ml-1">Senha de Acesso</label>
+                <Link href="#" className="text-[10px] font-bold text-[#00D2AD] hover:text-[#00D2AD]/80 hover:underline underline-offset-4 transition-all">ESQUECI A SENHA</Link>
               </div>
               <input 
                 type="password" 
@@ -84,20 +92,21 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••" 
-                className="w-full bg-[#1e293b] border border-[#334155] rounded-xl py-3.5 px-5 text-white placeholder-gray-600 focus:outline-none focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD] transition-all font-medium"
+                className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-5 text-white placeholder-gray-600 focus:outline-none focus:border-[#00D2AD] focus:ring-2 focus:ring-[#00D2AD]/30 focus:shadow-[0_0_20px_rgba(0,210,173,0.15)] transition-all font-medium"
               />
             </div>
 
             <button 
               disabled={loading}
-              className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] font-black py-5 rounded-xl shadow-[0_4px_20px_rgba(0,210,173,0.4)] hover:shadow-[0_4px_30px_rgba(0,210,173,0.6)] transition-all uppercase tracking-[0.1em] text-sm flex justify-center items-center"
+              className="group relative w-full bg-gradient-to-r from-[#00D2AD] to-[#009077] hover:from-[#00BDA0] hover:to-[#007A65] text-[#0f172a] font-black py-5 rounded-xl shadow-[0_5px_25px_rgba(0,210,173,0.4)] hover:shadow-[0_10px_40px_rgba(0,210,173,0.5)] hover:-translate-y-1 transition-all uppercase tracking-[0.15em] text-sm flex justify-center items-center overflow-hidden"
             >
+              <div className="absolute inset-0 bg-white/20 w-1/2 skew-x-[-20deg] -translate-x-[150%] group-hover:translate-x-[250%] transition-transform duration-700 ease-in-out"></div>
               {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-[#0f172a]/30 border-t-[#0f172a] rounded-full animate-spin"></div>
-                  <span>Entrando...</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 border-2 border-[#0f172a]/30 border-t-[#0f172a] rounded-full animate-spin"></div>
+                  <span>Autenticando...</span>
                 </div>
-              ) : "Entrar no Sistema"}
+              ) : "Acessar Plataforma"}
             </button>
           </form>
 
