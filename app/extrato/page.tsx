@@ -37,6 +37,9 @@ export default function ExtratoPage() {
     }
   }
 
+  const totalDepositado = transactions.filter(t => t.type === 'deposit' && (t.status === 'success' || t.status === 'approved')).reduce((sum, current) => sum + (current.amount || 0), 0);
+  const totalGasto = transactions.filter(t => t.type !== 'deposit').reduce((sum, current) => sum + (current.amount || 0), 0);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
@@ -72,8 +75,24 @@ export default function ExtratoPage() {
         </Link>
       </div>
 
+      {/* Dashboard Resumo */}
+      {transactions.length > 0 && (
+        <div className="grid grid-cols-2 gap-4 mb-2">
+           <div className="bg-[#1e293b] p-5 rounded-3xl border border-[#334155] relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500"></div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 relative z-10">Entradas (PIX)</p>
+              <h3 className="text-xl md:text-2xl font-black text-green-500 relative z-10">{formatCurrency(totalDepositado)}</h3>
+           </div>
+           <div className="bg-[#1e293b] p-5 rounded-3xl border border-[#334155] relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500"></div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 relative z-10">Gastos (Ativações)</p>
+              <h3 className="text-xl md:text-2xl font-black text-red-500 relative z-10">{formatCurrency(totalGasto)}</h3>
+           </div>
+        </div>
+      )}
+
       {/* Transactions List */}
-      <div className="bg-[#1e293b]/50 backdrop-blur-xl border border-[#334155] rounded-2xl overflow-hidden shadow-2xl">
+      <div className="bg-[#0f172a]/50 backdrop-blur-xl border border-[#334155] rounded-3xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center space-y-4">
             <div className="w-10 h-10 border-4 border-[#00D2AD] border-t-transparent rounded-full animate-spin"></div>
@@ -82,7 +101,7 @@ export default function ExtratoPage() {
         ) : transactions.length > 0 ? (
           <div className="divide-y divide-[#334155]">
             {transactions.map((t) => (
-              <div key={t.id} className="p-4 md:p-6 hover:bg-[#334155]/20 transition-colors flex items-center justify-between gap-4">
+              <div key={t.id} className="p-4 md:p-6 hover:bg-gradient-to-r hover:from-[#1e293b] hover:to-transparent transition-all flex items-center justify-between gap-4 group cursor-default">
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0 ${
                     t.type === 'deposit' 
