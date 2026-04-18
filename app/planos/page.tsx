@@ -121,15 +121,20 @@ function PlanosContent() {
           </div>
 
           <button 
-            onClick={() => handleSubscribe('basico')}
-            disabled={currentPlan === 'basico' || currentPlan === 'premium'}
+            onClick={() => {
+              if (currentPlan === 'basico' || currentPlan === 'premium') {
+                router.push('/planos/dashboard/frp');
+              } else {
+                handleSubscribe('basico');
+              }
+            }}
             className={`w-full py-4 rounded-xl font-bold border transition-all uppercase tracking-wider ${
               currentPlan === 'basico' || currentPlan === 'premium'
-                ? 'bg-gray-500/20 text-gray-500 border-gray-500/30 cursor-not-allowed'
+                ? 'bg-[#00D2AD]/10 text-[#00D2AD] border-[#00D2AD]/30 hover:bg-[#00D2AD]/20'
                 : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
             }`}
           >
-            {currentPlan === 'basico' || currentPlan === 'premium' ? 'Plano Atual' : 'Assinar Básico'}
+            {currentPlan === 'basico' || currentPlan === 'premium' ? 'Acessar Dashboard' : 'Assinar Básico'}
           </button>
         </div>
 
@@ -172,15 +177,20 @@ function PlanosContent() {
           </div>
 
           <button 
-            onClick={() => handleSubscribe('premium')}
-            disabled={currentPlan === 'premium'}
+            onClick={() => {
+              if (currentPlan === 'premium') {
+                router.push('/planos/dashboard/frp');
+              } else {
+                handleSubscribe('premium');
+              }
+            }}
             className={`w-full py-4 rounded-xl font-black uppercase tracking-widest transition-all ${
               currentPlan === 'premium'
-                ? 'bg-gray-500/20 text-gray-500 border border-gray-500/30 cursor-not-allowed shadow-none'
+                ? 'bg-[#00D2AD]/20 text-[#00D2AD] border border-[#00D2AD]/30 hover:bg-[#00D2AD]/30 shadow-[0_0_20px_rgba(0,210,173,0.1)]'
                 : 'bg-gradient-to-r from-[#00D2AD] to-[#009077] hover:from-[#00BDA0] hover:to-[#007F69] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)] hover:shadow-[0_0_30px_rgba(0,210,173,0.5)] hover:scale-[1.02]'
             }`}
           >
-            {currentPlan === 'premium' ? 'Plano Atual' : 'Assinar Premium'}
+            {currentPlan === 'premium' ? 'Acessar Dashboard' : 'Assinar Premium'}
           </button>
         </div>
       </div>
