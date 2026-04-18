@@ -134,7 +134,7 @@ function PlanosContent() {
                 : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
             }`}
           >
-            {currentPlan === 'basico' || currentPlan === 'premium' ? 'Acessar Dashboard' : 'Assinar Básico'}
+            {currentPlan === 'basico' || currentPlan === 'premium' ? 'Acessar meu plano' : 'Assinar Básico'}
           </button>
         </div>
 
@@ -190,7 +190,7 @@ function PlanosContent() {
                 : 'bg-gradient-to-r from-[#00D2AD] to-[#009077] hover:from-[#00BDA0] hover:to-[#007F69] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)] hover:shadow-[0_0_30px_rgba(0,210,173,0.5)] hover:scale-[1.02]'
             }`}
           >
-            {currentPlan === 'premium' ? 'Acessar Dashboard' : 'Assinar Premium'}
+            {currentPlan === 'premium' ? 'Acessar meu plano' : 'Assinar Premium'}
           </button>
         </div>
       </div>
