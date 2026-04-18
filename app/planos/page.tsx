@@ -7,6 +7,7 @@ import Link from 'next/link';
 
 function PlanosContent() {
   const [session, setSession] = useState<any>(null);
+  const [currentPlan, setCurrentPlan] = useState<string>('free');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,10 +30,11 @@ function PlanosContent() {
           console.log('Note: Database plan check failed, defaulting to free:', profileError.message);
         }
 
-        const userPlan = profile?.plan;
-        console.log('PlanosPage: userPlan from DB =', userPlan);
+        const userPlan = profile?.plan || 'free';
+        setCurrentPlan(userPlan);
+        console.log('PlanosPage: currentPlan =', userPlan);
         
-        if (userPlan && userPlan !== 'free' && !isUpgrade) {
+        if (userPlan !== 'free' && !isUpgrade) {
           console.log('PlanosPage: Redirecting to dashboard...');
           router.push('/planos/dashboard/frp');
         } else {
@@ -120,9 +122,14 @@ function PlanosContent() {
 
           <button 
             onClick={() => handleSubscribe('basico')}
-            className="w-full py-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold border border-white/10 transition-all uppercase tracking-wider"
+            disabled={currentPlan === 'basico' || currentPlan === 'premium'}
+            className={`w-full py-4 rounded-xl font-bold border transition-all uppercase tracking-wider ${
+              currentPlan === 'basico' || currentPlan === 'premium'
+                ? 'bg-gray-500/20 text-gray-500 border-gray-500/30 cursor-not-allowed'
+                : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+            }`}
           >
-            Assinar Básico
+            {currentPlan === 'basico' || currentPlan === 'premium' ? 'Plano Atual' : 'Assinar Básico'}
           </button>
         </div>
 
@@ -166,9 +173,14 @@ function PlanosContent() {
 
           <button 
             onClick={() => handleSubscribe('premium')}
-            className="w-full py-4 rounded-xl bg-gradient-to-r from-[#00D2AD] to-[#009077] hover:from-[#00BDA0] hover:to-[#007F69] text-[#0f172a] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(0,210,173,0.3)] hover:shadow-[0_0_30px_rgba(0,210,173,0.5)] transition-all hover:scale-[1.02]"
+            disabled={currentPlan === 'premium'}
+            className={`w-full py-4 rounded-xl font-black uppercase tracking-widest transition-all ${
+              currentPlan === 'premium'
+                ? 'bg-gray-500/20 text-gray-500 border border-gray-500/30 cursor-not-allowed shadow-none'
+                : 'bg-gradient-to-r from-[#00D2AD] to-[#009077] hover:from-[#00BDA0] hover:to-[#007F69] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)] hover:shadow-[0_0_30px_rgba(0,210,173,0.5)] hover:scale-[1.02]'
+            }`}
           >
-            Assinar Premium
+            {currentPlan === 'premium' ? 'Plano Atual' : 'Assinar Premium'}
           </button>
         </div>
       </div>
