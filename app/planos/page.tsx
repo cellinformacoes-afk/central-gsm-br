@@ -1,47 +1,75 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
-export default function PlanosPage() {
+function PlanosContent() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isUpgrade = searchParams.get('upgrade') === 'true';
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    async function checkPlan() {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       
-      // Check if user already has a plan (mocked via localStorage for now)
       if (session) {
-        const userPlan = localStorage.getItem(`userPlan_${session.user.id}`);
-        if (userPlan) {
+        // Prioritize database plan
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError) {
+          console.log('Note: Database plan check failed, defaulting to free:', profileError.message);
+        }
+
+        const userPlan = profile?.plan;
+        console.log('PlanosPage: userPlan from DB =', userPlan);
+        
+        if (userPlan && userPlan !== 'free' && !isUpgrade) {
+          console.log('PlanosPage: Redirecting to dashboard...');
           router.push('/planos/dashboard/frp');
         } else {
+          console.log('PlanosPage: Showing plans table.');
           setLoading(false);
         }
       } else {
         router.push('/login');
       }
-    });
-  }, [router]);
+    }
+
+    checkPlan();
+  }, [router, isUpgrade]);
 
   const handleSubscribe = async (plan: string) => {
     if (!session) return;
     
-    // Simulate payment / subscribing process
-    // In a real app, this redirects to a payment gateway
+    setLoading(true);
     try {
-      // Mock saving plan
-      localStorage.setItem(`userPlan_${session.user.id}`, plan);
-      // Optional: simulate success alert
+      // 1. Update Database (Supabase)
+      const { error } = await supabase
+        .from('profiles')
+        .update({ plan: plan })
+        .eq('id', session.user.id);
+
+      if (error) throw error;
+
+      // 2. Clear localStorage (deprecated)
+      localStorage.removeItem(`userPlan_${session.user.id}`);
+      
       alert(`Parabéns! Você assinou o Plano ${plan === 'premium' ? 'Premium' : 'Básico'}.`);
       router.push('/planos/dashboard/frp');
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert('Erro ao processar assinatura.');
+      alert('Erro ao processar assinatura: ' + (e.message || 'Erro desconhecido'));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -145,5 +173,13 @@ export default function PlanosPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PlanosPage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center text-white"><span className="animate-spin text-4xl text-[#00D2AD]">⚙</span></div>}>
+      <PlanosContent />
+    </Suspense>
   );
 }

@@ -17,26 +17,37 @@ export default function PlanosDashboardLayout({
   const pathname = usePathname();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    async function checkAccess() {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       
       if (session) {
-        const userPlan = localStorage.getItem(`userPlan_${session.user.id}`);
-        if (userPlan) {
-          setPlan(userPlan);
-          setLoading(false);
-          
-          // Protect downloads route for basic plan
-          if (pathname === '/planos/dashboard/downloads' && userPlan !== 'premium') {
-            router.push('/planos/dashboard/frp');
-          }
-        } else {
-          router.push('/planos');
+        // Fetch plan from database with safety fallback
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError) {
+          console.log('Note: Database plan column check ignored or failed:', profileError.message);
+        }
+
+        const userPlan = profile?.plan || 'free';
+        console.log('Dashboard: Active plan =', userPlan);
+        setPlan(userPlan);
+        setLoading(false);
+        
+        // Protect downloads route for basic plan
+        if (pathname === '/planos/dashboard/downloads' && userPlan !== 'premium') {
+          router.push('/planos/dashboard/frp');
         }
       } else {
         router.push('/login');
       }
-    });
+    }
+
+    checkAccess();
   }, [router, pathname]);
 
   if (loading) return <div className="h-screen flex items-center justify-center text-white"><span className="animate-spin text-4xl text-[#00D2AD]">⚙</span></div>;
@@ -90,12 +101,12 @@ export default function PlanosDashboardLayout({
             <p className="text-sm text-gray-300 font-medium mb-3">
               Quer acesso ilimitado aos arquivos de download?
             </p>
-            <button 
-              onClick={() => router.push('/planos')}
-              className="w-full py-2 bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] font-black rounded-lg text-xs uppercase tracking-widest transition-colors shadow-[0_0_15px_rgba(0,210,173,0.3)]"
+            <Link 
+              href="/planos?upgrade=true"
+              className="block w-full py-2 bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] font-black rounded-lg text-xs uppercase tracking-widest transition-all text-center shadow-[0_0_15px_rgba(0,210,173,0.3)] hover:scale-105"
             >
               Fazer Upgrade
-            </button>
+            </Link>
           </div>
         )}
       </div>

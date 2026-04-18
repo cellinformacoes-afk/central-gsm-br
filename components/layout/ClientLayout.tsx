@@ -106,26 +106,24 @@ export default function ClientLayout({
             </Link>
 
             {/* Navigation Desktop */}
-            {session && (
-              <nav className="hidden md:flex items-center gap-6">
-                 <Link href="/" className="text-sm font-medium text-white hover:text-[#00D2AD] transition-colors">Início</Link>
-                 <Link href="/pedidos" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Meus Pedidos</Link>
-                 <Link href="/saldo" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Adicionar Saldo</Link>
-                 <Link href="/extrato" className="text-sm font-medium text-[#00D2AD] hover:text-white transition-colors ">Ver extrato</Link>
-                 <Link href="/suporte" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Suporte</Link>
-                 {profile?.role === 'admin' && (
-                   <Link href="/admin/estoque" className="flex items-center gap-2 text-sm font-black text-[#FFC107] hover:text-white transition-all bg-[#FFC107]/10 px-3 py-1.5 rounded-lg border border-[#FFC107]/20 uppercase">
-                     ADMIN
-                     {pendingResets > 0 && (
-                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white animate-bounce">
-                         {pendingResets}
-                       </span>
-                     )}
-                   </Link>
-                 )}
-                 
-              </nav>
-            )}
+            <nav className="hidden md:flex items-center gap-6">
+                <Link href="/" className="text-sm font-medium text-white hover:text-[#00D2AD] transition-colors">Início</Link>
+                <Link href="/planos?upgrade=true" className="text-sm font-bold text-[#00D2AD] hover:text-white transition-all">Planos</Link>
+                <Link href="/pedidos" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Meus Pedidos</Link>
+                <Link href="/saldo" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Adicionar Saldo</Link>
+                <Link href="/extrato" className="text-sm font-medium text-[#00D2AD] hover:text-white transition-colors ">Ver extrato</Link>
+                <Link href="/suporte" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Suporte</Link>
+                {profile?.role === 'admin' && (
+                  <Link href="/admin/estoque" className="flex items-center gap-2 text-sm font-black text-[#FFC107] hover:text-white transition-all bg-[#FFC107]/10 px-3 py-1.5 rounded-lg border border-[#FFC107]/20 uppercase">
+                    ADMIN
+                    {pendingResets > 0 && (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white animate-bounce">
+                        {pendingResets}
+                      </span>
+                    )}
+                  </Link>
+                )}
+            </nav>
 
 
             {/* Right Buttons */}
@@ -182,6 +180,10 @@ export default function ClientLayout({
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                     Meus Pedidos
                   </Link>
+                  <Link href="/planos?upgrade=true" onClick={() => setIsMenuOpen(false)} className="text-base font-black text-[#00D2AD] bg-[#00D2AD]/10 border border-[#00D2AD]/20 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
+                    <span className="text-lg">🚀</span>
+                    MÉTODOS & PLANOS
+                  </Link>
                   <Link href="/saldo" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     Adicionar Saldo
@@ -191,6 +193,9 @@ export default function ClientLayout({
                     Ver extrato
                   </Link>
                   <Link href="/suporte" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Suporte
+                  </Link>
                   {profile?.role === 'admin' && (
                     <Link href="/admin/estoque" onClick={() => setIsMenuOpen(false)} className="text-base font-black text-[#FFC107] flex items-center justify-between p-2 rounded-lg hover:bg-[#0f172a] border border-[#FFC107]/20 uppercase">
                       <div className="flex items-center gap-3">
@@ -204,18 +209,17 @@ export default function ClientLayout({
                       )}
                     </Link>
                   )}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    Suporte
-                  </Link>
                    
                   <div className="h-px bg-[#334155] my-2" />
-                  <button 
-                    onClick={handleLogout}
-                    className="text-base font-bold text-red-400 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    Sair da Conta
-                  </button>
+                  {session && (
+                    <button 
+                      onClick={handleLogout}
+                      className="text-base font-bold text-red-400 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                      Sair da Conta
+                    </button>
+                  )}
                </nav>
             </div>
           )}
