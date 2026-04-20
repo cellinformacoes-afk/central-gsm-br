@@ -63,6 +63,57 @@ export async function POST(request: Request) {
       }
 
       console.log('Asaas webhook RPC result:', rpcResult);
+    } 
+    // Handle Chargebacks or Refunds (FRAUD PROTECTION)
+    else if (event === 'PAYMENT_CHARGEBACK_REQUESTED' || event === 'PAYMENT_REFUNDED') {
+      const paymentId = payment.id;
+      const amount = parseFloat(String(payment.netValue || payment.value || '0'));
+      const userId = payment.externalReference;
+      const eventType = event === 'PAYMENT_CHARGEBACK_REQUESTED' ? 'CHARGEBACK' : 'REFUND';
+
+      if (!userId) {
+        console.error('FRAUD ALERT: userId missing in contested payment:', paymentId);
+        return NextResponse.json({ error: 'externalReference missing' });
+      }
+
+      console.warn(`FRAUD DETECTED (${eventType}):`, { userId, amount, paymentId });
+
+      // 1. Call RPC to deduct balance and log fraud
+      const { data: fraudResult, error: fraudError } = await supabaseAdmin.rpc('handle_payment_fraud', {
+        p_user_id: userId,
+        p_amount: amount,
+        p_payment_id: paymentId,
+        p_event_type: eventType,
+        p_details: { original_payload: body }
+      });
+
+      if (fraudError) {
+        console.error('Error logging fraud in database:', fraudError);
+        // We continue anyway to try and ban the user
+      }
+
+      // 2. Get user's CPF before deleting
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('cpf, email')
+        .eq('id', userId)
+        .single();
+
+      // 3. Blacklist the CPF
+      if (profile?.cpf) {
+        await supabaseAdmin.from('cpf_blacklist').upsert({
+          cpf: profile.cpf,
+          reason: `Auto-ban: ${eventType} Pix/Cartão Pagamento ${paymentId}`
+        }, { onConflict: 'cpf' });
+      }
+
+      // 4. Delete the Auth User
+      const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (deleteError) {
+        console.error('Error deleting fraudulent user:', deleteError);
+      } else {
+        console.log(`Fraudulent user ${profile?.email || userId} banned and deleted.`);
+      }
     }
 
     return NextResponse.json({ received: true });
