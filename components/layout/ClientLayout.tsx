@@ -48,8 +48,24 @@ export default function ClientLayout({
     if (!error && data) {
       setProfile(data);
       if (data.role === 'admin') fetchPendingResets();
+      
+      // Global CPF Enforcement: Redirect if missing and not on /perfil or /suporte
+      const currentPath = window.location.pathname;
+      if (data.role !== 'admin' && !data.cpf && currentPath !== '/perfil' && currentPath !== '/suporte') {
+        router.push('/perfil');
+      }
     }
   }
+
+  // Also add a check on path changes
+  useEffect(() => {
+    if (profile && profile.role !== 'admin' && !profile.cpf) {
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/perfil' && currentPath !== '/suporte') {
+        router.push('/perfil');
+      }
+    }
+  }, [profile, router]);
 
   async function fetchPendingResets() {
     // Chamar o monitor primeiro para garantir que está atualizado
