@@ -359,12 +359,116 @@ export const mockMethods: DeviceMethod[] = [
 
   // --- POCO ---
   {
-    id: 'poco-frp', brand: 'POCO', model: 'FRP (Contas Google)', category: 'FRP',
+    id: 'poco-x8-pro-frp', brand: 'POCO', model: 'POCO X8 Pro', category: 'FRP',
     steps: [{ title: 'Passo 1', description: 'Fastboot/Sideload ou BROM.' }]
   },
   {
-    id: 'poco-mdm', brand: 'POCO', model: 'MDM / PayJoy', category: 'MDM',
+    id: 'poco-x8-pro-mdm', brand: 'POCO', model: 'POCO X8 Pro', category: 'MDM',
     steps: [{ title: 'Passo 1', description: 'Unlock Bootloader + Mi Bypass.' }]
+  },
+  {
+    id: 'poco-m8-5g-frp', brand: 'POCO', model: 'POCO M8 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset 5G MTK.' }]
+  },
+  {
+    id: 'poco-m8-5g-mdm', brand: 'POCO', model: 'POCO M8 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass M8.' }]
+  },
+  {
+    id: 'poco-c85-frp', brand: 'POCO', model: 'POCO C85', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset C85.' }]
+  },
+  {
+    id: 'poco-c85-mdm', brand: 'POCO', model: 'POCO C85', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Fix C85.' }]
+  },
+  {
+    id: 'poco-c75-frp', brand: 'POCO', model: 'POCO C75', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset C75.' }]
+  },
+  {
+    id: 'poco-c75-mdm', brand: 'POCO', model: 'POCO C75', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Fix C75.' }]
+  },
+  {
+    id: 'poco-x7-pro-frp', brand: 'POCO', model: 'POCO X7 Pro', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset X7 Pro.' }]
+  },
+  {
+    id: 'poco-x7-pro-mdm', brand: 'POCO', model: 'POCO X7 Pro', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock X7 Pro.' }]
+  },
+  {
+    id: 'poco-x7-frp', brand: 'POCO', model: 'POCO X7', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset X7.' }]
+  },
+  {
+    id: 'poco-x7-mdm', brand: 'POCO', model: 'POCO X7', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock X7.' }]
+  },
+  {
+    id: 'poco-x6-pro-frp', brand: 'POCO', model: 'POCO X6 Pro', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset X6 Pro.' }]
+  },
+  {
+    id: 'poco-x6-pro-mdm', brand: 'POCO', model: 'POCO X6 Pro', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock X6 Pro.' }]
+  },
+  {
+    id: 'poco-x6-frp', brand: 'POCO', model: 'POCO X6', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset X6.' }]
+  },
+  {
+    id: 'poco-x6-mdm', brand: 'POCO', model: 'POCO X6', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock X6.' }]
+  },
+  {
+    id: 'poco-x6-5g-frp', brand: 'POCO', model: 'POCO X6 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset X6 5G.' }]
+  },
+  {
+    id: 'poco-x6-5g-mdm', brand: 'POCO', model: 'POCO X6 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock X6 5G.' }]
+  },
+  {
+    id: 'poco-x5-pro-5g-frp', brand: 'POCO', model: 'POCO X5 Pro 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset X5 Pro.' }]
+  },
+  {
+    id: 'poco-x5-pro-5g-mdm', brand: 'POCO', model: 'POCO X5 Pro 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock X5 Pro.' }]
+  },
+  {
+    id: 'poco-x3-pro-frp', brand: 'POCO', model: 'POCO X3 Pro', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset X3 Pro.' }]
+  },
+  {
+    id: 'poco-x3-pro-mdm', brand: 'POCO', model: 'POCO X3 Pro', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock X3 Pro.' }]
+  },
+  {
+    id: 'poco-m4-5g-frp', brand: 'POCO', model: 'POCO M4 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset M4 5G.' }]
+  },
+  {
+    id: 'poco-m4-5g-mdm', brand: 'POCO', model: 'POCO M4 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock M4 5G.' }]
+  },
+  {
+    id: 'poco-c40-frp', brand: 'POCO', model: 'POCO C40', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset C40.' }]
+  },
+  {
+    id: 'poco-c40-mdm', brand: 'POCO', model: 'POCO C40', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock C40.' }]
+  },
+  {
+    id: 'poco-m4-pro-5g-frp', brand: 'POCO', model: 'POCO M4 Pro 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset M4 Pro.' }]
+  },
+  {
+    id: 'poco-m4-pro-5g-mdm', brand: 'POCO', model: 'POCO M4 Pro 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock M4 Pro.' }]
   },
 
   // --- XIAOMI ---
