@@ -18,88 +18,71 @@ export interface DeviceMethod {
 
 export const mockMethods: DeviceMethod[] = [
   {
-    id: 'samsung-a10-frp',
-    brand: 'Samsung',
-    model: 'A10',
+    id: 'realme-frp',
+    brand: 'REALME',
+    model: 'FRP (Contas Google)',
     category: 'FRP',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', // Placeholder
     steps: [
-      { title: 'Passo 1', description: 'Conecte o aparelho no Wi-Fi.' },
-      { title: 'Passo 2', description: 'Abra a ferramenta SanFirm ou SamFw Tool no seu PC.' },
-      { title: 'Passo 3', description: 'Clique em "Remove FRP" e siga as instruções na tela do celular (*#0*#).' },
+      { title: 'Passo 1', description: 'Conecte no Wi-Fi e acesse o menu de ajuda.' },
+      { title: 'Passo 2', description: 'Utilize o método de bugar o teclado ou UnlockTool via EDL/BROM.' },
     ],
-    files: [
-      { name: 'SamFw_Tool_v4.9.zip', url: '#', size: '15 MB' },
-      { name: 'Drivers_Samsung.zip', url: '#', size: '20 MB' }
-    ]
   },
   {
-    id: 'samsung-a20-frp',
-    brand: 'Samsung',
-    model: 'A20',
+    id: 'motorola-frp',
+    brand: 'MOTOROLA',
+    model: 'FRP (Contas Google)',
     category: 'FRP',
     steps: [
-      { title: 'Passo 1', description: 'Conecte o aparelho no Wi-Fi.' },
-      { title: 'Passo 2', description: 'Ative o modo Teste (*#0*#).' },
-      { title: 'Passo 3', description: 'Utilize o UnlockTool aba Samsung > Remove FRP.' },
+      { title: 'Passo 1', description: 'Ative o Wi-Fi e mude o idioma.' },
+      { title: 'Passo 2', description: 'Acesse o Chrome e desabilite o Google Play Services.' },
     ],
-    files: [
-      { name: 'Drivers_Samsung.zip', url: '#', size: '20 MB' }
-    ]
   },
   {
-    id: 'xiaomi-note9-frp',
-    brand: 'Xiaomi',
-    model: 'Redmi Note 9',
+    id: 'infinix-frp',
+    brand: 'INFINIX MTK',
+    model: 'FRP (Contas Google)',
     category: 'FRP',
     steps: [
-      { title: 'Passo 1', description: 'Desligue o aparelho e entre em modo BROM (Volume UP + Down e conecte o cabo).' },
-      { title: 'Passo 2', description: 'Abra o SP Flash Tool ou UnlockTool na aba MediaTek.' },
-      { title: 'Passo 3', description: 'Selecione "Erase FRP" e aguarde a finalização.' },
+      { title: 'Passo 1', description: 'Conecte o cabo em modo BROM (Vol + e -).' },
+      { title: 'Passo 2', description: 'Selecione a opção Erase FRP na sua ferramenta MTK.' },
     ],
-    files: [
-      { name: 'MTK_Drivers.zip', url: '#', size: '5 MB' },
-      { name: 'SP_Flash_Tool.zip', url: '#', size: '45 MB' }
-    ]
   },
   {
-    id: 'motorola-g8-frp',
-    brand: 'Motorola',
-    model: 'Moto G8',
+    id: 'tecno-frp',
+    brand: 'TECNO MTK',
+    model: 'FRP (Contas Google)',
     category: 'FRP',
     steps: [
-      { title: 'Passo 1', description: 'Ligue o aparelho e conecte no Wi-Fi.' },
-      { title: 'Passo 2', description: 'Altere o idioma para um não latino para bugar o teclado.' },
-      { title: 'Passo 3', description: 'Acesse as configurações via YouTube/Chrome > Configurações > Acessibilidade, ative o menu.' },
-      { title: 'Passo 4', description: 'Desative o Google Play Services e volte a tela inicial para prosseguir offline.' },
-    ]
+      { title: 'Passo 1', description: 'Utilize o modo BROM para conexão.' },
+      { title: 'Passo 2', description: 'Execute o procedimento de remoção via UnlockTool ou Pandora.' },
+    ],
   },
   {
-    id: 'samsung-knox-mdm',
-    brand: 'Samsung',
-    model: 'Knox (Universal)',
+    id: 'realme-mdm',
+    brand: 'REALME',
+    model: 'MDM / PayJoy',
     category: 'MDM',
-    steps: [
-      { title: 'Passo 1', description: 'Faça Root no aparelho ou utilize um firmware modificado.' },
-      { title: 'Passo 2', description: 'Utilize o Chimera Tool para Desabilitar o Knox.' },
-    ],
-    files: [
-      { name: 'Odin_v3.14.zip', url: '#', size: '3 MB' },
-      { name: 'Firwmare_Patch_Knox.tar', url: '#', size: '2.5 GB' }
-    ]
+    steps: [{ title: 'Passo 1', description: 'Necessário Auth ID ou ferramenta licenciada.' }],
   },
   {
     id: 'motorola-mdm',
-    brand: 'Motorola',
-    model: 'PayJoy Removal',
+    brand: 'MOTOROLA',
+    model: 'MDM / PayJoy',
     category: 'MDM',
-    steps: [
-      { title: 'Passo 1', description: 'Necessário desbloquear o Bootloader.' },
-      { title: 'Passo 2', description: 'Flashear arquivo via Fastboot apagando as partições persist e metadata.' },
-    ],
-    files: [
-      { name: 'Fastboot_Tools.zip', url: '#', size: '10 MB' },
-      { name: 'Moto_Fix_PayJoy.bat', url: '#', size: '1 KB' }
-    ]
+    steps: [{ title: 'Passo 1', description: 'Flashear partição persist via Fastboot.' }],
+  },
+  {
+    id: 'infinix-mdm',
+    brand: 'INFINIX MTK',
+    model: 'MDM / PayJoy',
+    category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Conecte em modo BROM e use a função Reset MDM.' }],
+  },
+  {
+    id: 'tecno-mdm',
+    brand: 'TECNO MTK',
+    model: 'MDM / PayJoy',
+    category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Utilize ferramenta certificada para Reset MDM (Tool DL).' }],
   }
 ];
