@@ -23,8 +23,12 @@ export async function POST(req: Request) {
       .eq('cpf', cleanCpf)
       .maybeSingle();
 
-    if (blacklistError && blacklistError.code !== 'PGRST116') {
-      console.error('Blacklist Check Error:', blacklistError);
+    if (blacklistError) {
+      if (blacklistError.code === '42P01') {
+        console.warn('CPF Blacklist table not found, skipping check.');
+      } else if (blacklistError.code !== 'PGRST116') {
+        console.error('Blacklist Check Error:', blacklistError);
+      }
     }
 
     if (blacklisted) {
