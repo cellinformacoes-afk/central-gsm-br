@@ -9,6 +9,7 @@ function PlanosContent() {
   const [session, setSession] = useState<any>(null);
   const [currentPlan, setCurrentPlan] = useState<string>('free');
   const [loading, setLoading] = useState(true);
+  const [pendingPlan, setPendingPlan] = useState<boolean>(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const isUpgrade = searchParams.get('upgrade') === 'true';
@@ -19,26 +20,31 @@ function PlanosContent() {
       setSession(session);
       
       if (session) {
-        // Prioritize database plan
-        const { data: profile, error: profileError } = await supabase
+        // 1. Get current plan
+        const { data: profile } = await supabase
           .from('profiles')
           .select('plan')
           .eq('id', session.user.id)
           .single();
 
-        if (profileError) {
-          console.log('Note: Database plan check failed, defaulting to free:', profileError.message);
-        }
-
         const userPlan = profile?.plan || 'free';
         setCurrentPlan(userPlan);
-        console.log('PlanosPage: currentPlan =', userPlan);
         
+        // 2. Check for pending requests
+        const { data: requests } = await supabase
+          .from('plan_purchase_requests')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .eq('status', 'pending')
+          .limit(1);
+
+        if (requests && requests.length > 0) {
+          setPendingPlan(true);
+        }
+
         if (userPlan !== 'free' && !isUpgrade) {
-          console.log('PlanosPage: Redirecting to dashboard...');
           router.push('/planos/dashboard/frp');
         } else {
-          console.log('PlanosPage: Showing plans table.');
           setLoading(false);
         }
       } else {
@@ -52,24 +58,27 @@ function PlanosContent() {
   const handleSubscribe = async (plan: string) => {
     if (!session) return;
     
+    // Check if R$ 9,99 or R$ 149,99
+    const cost = plan === 'premium' ? 149.99 : 9.99;
+
     setLoading(true);
     try {
-      // 1. Update Database (Supabase)
-      const { error } = await supabase
-        .from('profiles')
-        .update({ plan: plan })
-        .eq('id', session.user.id);
+      const { data, error } = await supabase.rpc('create_plan_purchase_request', {
+        p_plan_name: plan,
+        p_cost: cost
+      });
 
       if (error) throw error;
-
-      // 2. Clear localStorage (deprecated)
-      localStorage.removeItem(`userPlan_${session.user.id}`);
+      if (data.success === false) {
+        alert(data.error);
+        return;
+      }
       
-      alert(`Parabéns! Você assinou o Plano ${plan === 'premium' ? 'Premium' : 'Básico'}.`);
-      router.push('/planos/dashboard/frp');
+      setPendingPlan(true);
+      alert(`Solicitação enviada com sucesso! O administrador irá revisar seu pedido em breve.`);
     } catch (e: any) {
       console.error(e);
-      alert('Erro ao processar assinatura: ' + (e.message || 'Erro desconhecido'));
+      alert('Erro ao processar solicitação: ' + (e.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }
@@ -124,17 +133,22 @@ function PlanosContent() {
             onClick={() => {
               if (currentPlan === 'basico' || currentPlan === 'premium') {
                 router.push('/planos/dashboard/frp');
-              } else {
+              } else if (!pendingPlan) {
                 handleSubscribe('basico');
               }
             }}
+            disabled={pendingPlan && (currentPlan !== 'basico' && currentPlan !== 'premium')}
             className={`w-full py-4 rounded-xl font-bold border transition-all uppercase tracking-wider ${
               currentPlan === 'basico' || currentPlan === 'premium'
                 ? 'bg-[#00D2AD]/10 text-[#00D2AD] border-[#00D2AD]/30 hover:bg-[#00D2AD]/20'
-                : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+                : pendingPlan 
+                  ? 'bg-orange-500/10 text-orange-500 border-orange-500/30 cursor-not-allowed'
+                  : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
             }`}
           >
-            {currentPlan === 'basico' || currentPlan === 'premium' ? 'Acessar meu plano' : 'Assinar Básico'}
+            {currentPlan === 'basico' || currentPlan === 'premium' 
+              ? 'Acessar meu plano' 
+              : pendingPlan ? 'Aguardando Aprovação' : 'Solicitar Básico'}
           </button>
         </div>
 
@@ -180,17 +194,22 @@ function PlanosContent() {
             onClick={() => {
               if (currentPlan === 'premium') {
                 router.push('/planos/dashboard/frp');
-              } else {
+              } else if (!pendingPlan) {
                 handleSubscribe('premium');
               }
             }}
+            disabled={pendingPlan && currentPlan !== 'premium'}
             className={`w-full py-4 rounded-xl font-black uppercase tracking-widest transition-all ${
               currentPlan === 'premium'
                 ? 'bg-[#00D2AD]/20 text-[#00D2AD] border border-[#00D2AD]/30 hover:bg-[#00D2AD]/30 shadow-[0_0_20px_rgba(0,210,173,0.1)]'
-                : 'bg-gradient-to-r from-[#00D2AD] to-[#009077] hover:from-[#00BDA0] hover:to-[#007F69] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)] hover:shadow-[0_0_30px_rgba(0,210,173,0.5)] hover:scale-[1.02]'
+                : pendingPlan
+                  ? 'bg-orange-500/20 text-orange-500 border border-orange-500/30 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-[#00D2AD] to-[#009077] hover:from-[#00BDA0] hover:to-[#007F69] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)] hover:shadow-[0_0_30px_rgba(0,210,173,0.5)] hover:scale-[1.02]'
             }`}
           >
-            {currentPlan === 'premium' ? 'Acessar meu plano' : 'Assinar Premium'}
+            {currentPlan === 'premium' 
+              ? 'Acessar meu plano' 
+              : pendingPlan ? 'Aguardando Aprovação' : 'Solicitar Premium'}
           </button>
         </div>
       </div>

@@ -10,7 +10,6 @@ export default function AdminNav() {
 
   useEffect(() => {
     async function fetchRevenue() {
-      // Começo e fim do dia atual no fuso horário local
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const startOfDay = today.toISOString();
@@ -42,6 +41,7 @@ export default function AdminNav() {
     { href: '/admin/pedidos', label: '🛒 Pedidos' },
     { href: '/admin/estoque', label: '📦 Gestão de Estoque' },
     { href: '/admin/servicos', label: '🛠️ Gerenciar Serviços' },
+    { href: '/admin/assinaturas', label: '💎 Assinaturas' },
     { href: '/admin/fraudes', label: '🚫 Fraudes' },
   ];
 

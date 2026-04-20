@@ -12,6 +12,7 @@ export default function PlanosDashboardLayout({
 }) {
   const [session, setSession] = useState<any>(null);
   const [plan, setPlan] = useState<string | null>(null);
+  const [expiryDate, setExpiryDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -25,17 +26,32 @@ export default function PlanosDashboardLayout({
         // Fetch plan from database with safety fallback
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('plan')
+          .select('plan, plan_expiration_date')
           .eq('id', session.user.id)
           .single();
 
         if (profileError) {
-          console.log('Note: Database plan column check ignored or failed:', profileError.message);
+          console.log('Note: Database plan check failed:', profileError.message);
         }
 
         const userPlan = profile?.plan || 'free';
-        console.log('Dashboard: Active plan =', userPlan);
+        const expiration = profile?.plan_expiration_date;
+        
+        // 1. Check for expiration
+        if (userPlan !== 'free' && expiration) {
+          const now = new Date();
+          const expDate = new Date(expiration);
+          
+          if (now > expDate) {
+            console.log('Dashboard: Plan expired. Resetting to free.');
+            await supabase.from('profiles').update({ plan: 'free' }).eq('id', session.user.id);
+            router.push('/planos');
+            return;
+          }
+        }
+
         setPlan(userPlan);
+        setExpiryDate(expiration);
         setLoading(false);
         
         // Protect downloads route for basic plan
@@ -70,8 +86,13 @@ export default function PlanosDashboardLayout({
           <div>
             <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Seu Plano</p>
             <p className={`text-sm font-black uppercase ${plan === 'premium' ? 'text-[#00D2AD]' : 'text-white'}`}>
-              {plan === 'premium' ? 'Premium' : 'Básico'}
+              {plan === 'premium' ? 'Premium' : plan === 'basico' ? 'Básico' : 'Gratuito'}
             </p>
+            {expiryDate && plan !== 'free' && (
+              <p className="text-[10px] text-gray-500 font-bold mt-0.5">
+                Validade: {new Date(expiryDate).toLocaleDateString('pt-BR')}
+              </p>
+            )}
           </div>
         </div>
 
