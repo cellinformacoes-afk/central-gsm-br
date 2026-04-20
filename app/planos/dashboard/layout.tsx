@@ -71,6 +71,7 @@ export default function PlanosDashboardLayout({
   const links = [
     { name: 'FRP (Desbloqueio)', href: '/planos/dashboard/frp', icon: '📱' },
     { name: 'MDM (Desbloqueio)', href: '/planos/dashboard/mdm', icon: '🔒' },
+    { name: 'Mini Curso', href: '/planos/dashboard/curso', icon: '🎓' },
     ...(plan === 'premium' ? [{ name: 'Downloads Extras', href: '/planos/dashboard/downloads', icon: '💾' }] : []),
   ];
 

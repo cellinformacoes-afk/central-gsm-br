@@ -17,14 +17,24 @@ export interface DeviceMethod {
 }
 
 export const mockMethods: DeviceMethod[] = [
-  // --- REALME ---
+  // --- REALME SPD ---
   {
-    id: 'realme-frp', brand: 'REALME', model: 'FRP (Contas Google)', category: 'FRP',
-    steps: [{ title: 'Passo 1', description: 'Conecte no Wi-Fi e acesse o menu de ajuda.' }, { title: 'Passo 2', description: 'UnlockTool via EDL/BROM.' }]
+    id: 'realme-spd-frp', brand: 'REALME SPD', model: 'FRP (Contas Google)', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Conecte no Wi-Fi e acesse o menu de ajuda.' }, { title: 'Passo 2', description: 'UnlockTool via SPD Flash Tool.' }]
   },
   {
-    id: 'realme-mdm', brand: 'REALME', model: 'MDM / PayJoy', category: 'MDM',
-    steps: [{ title: 'Passo 1', description: 'Auth ID necessário para Reset MDM.' }]
+    id: 'realme-spd-mdm', brand: 'REALME SPD', model: 'MDM / PayJoy', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Auth ID necessário para Reset MDM SPD.' }]
+  },
+
+  // --- REALME MTK ---
+  {
+    id: 'realme-mtk-frp', brand: 'REALME MTK', model: 'FRP (Contas Google)', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Modo BROM (Segurar Volume + e -).' }, { title: 'Passo 2', description: 'Erase FRP via MTK Universal.' }]
+  },
+  {
+    id: 'realme-mtk-mdm', brand: 'REALME MTK', model: 'MDM / PayJoy', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Reset MDM via Brom Mode MTK.' }]
   },
 
   // --- MOTOROLA ---

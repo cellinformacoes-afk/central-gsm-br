@@ -8,7 +8,7 @@ export default function MDMPage() {
   const [methods, setMethods] = useState<DeviceMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<DeviceMethod | null>(null);
   const [plan, setPlan] = useState<string>('basico');
-  const [selectedBrand, setSelectedBrand] = useState<string>('REALME');
+  const [selectedBrand, setSelectedBrand] = useState<string>('REALME SPD');
 
   useEffect(() => {
     async function fetchPlan() {
@@ -27,7 +27,7 @@ export default function MDMPage() {
     setMethods(mockMethods.filter(m => m.category === 'MDM'));
   }, []);
 
-  const brands = ['REALME', 'MOTOROLA', 'INFINIX MTK', 'TECNO MTK', 'INTEL MTK', 'POCO', 'XIAOMI'];
+  const brands = ['REALME SPD', 'REALME MTK', 'MOTOROLA', 'INFINIX MTK', 'TECNO MTK', 'INTEL MTK', 'POCO', 'XIAOMI'];
   const filteredMethods = methods.filter(m => m.brand === selectedBrand);
 
   return (
