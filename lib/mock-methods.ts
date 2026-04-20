@@ -315,14 +315,46 @@ export const mockMethods: DeviceMethod[] = [
     steps: [{ title: 'Passo 1', description: 'MDM Bypass Spark 30c.' }]
   },
 
-  // --- INTEL MTK ---
+  // --- ITEL MTK ---
   {
-    id: 'intel-frp', brand: 'INTEL MTK', model: 'FRP (Contas Google)', category: 'FRP',
+    id: 'itel-s24-frp', brand: 'ITEL MTK', model: 'Itel S24', category: 'FRP',
     steps: [{ title: 'Passo 1', description: 'BROM Mode > Reset FRP.' }]
   },
   {
-    id: 'intel-mdm', brand: 'INTEL MTK', model: 'MDM / PayJoy', category: 'MDM',
-    steps: [{ title: 'Passo 1', description: 'Reset MDM Intel Special Tool.' }]
+    id: 'itel-s24-mdm', brand: 'ITEL MTK', model: 'Itel S24', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Reset MDM Special Tool.' }]
+  },
+  {
+    id: 'itel-p55-5g-frp', brand: 'ITEL MTK', model: 'Itel P55 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset 5G MTK.' }]
+  },
+  {
+    id: 'itel-p55-5g-mdm', brand: 'ITEL MTK', model: 'Itel P55 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock P55.' }]
+  },
+  {
+    id: 'itel-power-70-frp', brand: 'ITEL MTK', model: 'Itel Power 70', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Power 70 FRP Reset.' }]
+  },
+  {
+    id: 'itel-power-70-mdm', brand: 'ITEL MTK', model: 'Itel Power 70', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass Power 70.' }]
+  },
+  {
+    id: 'itel-a70-frp', brand: 'ITEL MTK', model: 'Itel A70', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'A70 FRP Removal.' }]
+  },
+  {
+    id: 'itel-a70-mdm', brand: 'ITEL MTK', model: 'Itel A70', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock A70.' }]
+  },
+  {
+    id: 'itel-a50-frp', brand: 'ITEL MTK', model: 'Itel A50', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'A50 FRP Reset.' }]
+  },
+  {
+    id: 'itel-a50-mdm', brand: 'ITEL MTK', model: 'Itel A50', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Fix A50.' }]
   },
 
   // --- POCO ---

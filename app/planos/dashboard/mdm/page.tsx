@@ -27,7 +27,7 @@ export default function MDMPage() {
     setMethods(mockMethods.filter(m => m.category === 'MDM'));
   }, []);
 
-  const brands = ['REALME SPD', 'REALME MTK', 'MOTOROLA', 'INFINIX MTK', 'TECNO MTK', 'INTEL MTK', 'POCO', 'XIAOMI'];
+  const brands = ['REALME SPD', 'REALME MTK', 'MOTOROLA', 'INFINIX MTK', 'TECNO MTK', 'ITEL MTK', 'POCO', 'XIAOMI'];
   const filteredMethods = methods.filter(m => m.brand === selectedBrand);
 
   return (
