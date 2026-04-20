@@ -473,11 +473,91 @@ export const mockMethods: DeviceMethod[] = [
 
   // --- XIAOMI ---
   {
-    id: 'xiaomi-frp', brand: 'XIAOMI', model: 'FRP (Contas Google)', category: 'FRP',
+    id: 'xiaomi-redmi-13-frp', brand: 'XIAOMI', model: 'Redmi 13', category: 'FRP',
     steps: [{ title: 'Passo 1', description: 'Sideload Mi Assistant.' }]
   },
   {
-    id: 'xiaomi-mdm', brand: 'XIAOMI', model: 'MDM / PayJoy', category: 'MDM',
+    id: 'xiaomi-redmi-13-mdm', brand: 'XIAOMI', model: 'Redmi 13', category: 'MDM',
     steps: [{ title: 'Passo 1', description: 'Patch Firmware Bypass.' }]
+  },
+  {
+    id: 'xiaomi-redmi-13c-frp', brand: 'XIAOMI', model: 'Redmi 13C', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset 13C.' }]
+  },
+  {
+    id: 'xiaomi-redmi-13c-mdm', brand: 'XIAOMI', model: 'Redmi 13C', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass 13C.' }]
+  },
+  {
+    id: 'xiaomi-redmi-14-frp', brand: 'XIAOMI', model: 'Redmi 14', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset 14.' }]
+  },
+  {
+    id: 'xiaomi-redmi-14-mdm', brand: 'XIAOMI', model: 'Redmi 14', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass 14.' }]
+  },
+  {
+    id: 'xiaomi-redmi-14c-frp', brand: 'XIAOMI', model: 'Redmi 14c', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset 14c.' }]
+  },
+  {
+    id: 'xiaomi-redmi-14c-mdm', brand: 'XIAOMI', model: 'Redmi 14c', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass 14c.' }]
+  },
+  {
+    id: 'xiaomi-redmi-note-13-frp', brand: 'XIAOMI', model: 'Redmi Note 13', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset Note 13.' }]
+  },
+  {
+    id: 'xiaomi-redmi-note-13-mdm', brand: 'XIAOMI', model: 'Redmi Note 13', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass Note 13.' }]
+  },
+  {
+    id: 'xiaomi-redmi-note-13-pro-5g-frp', brand: 'XIAOMI', model: 'Redmi Note 13 Pro 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset Note 13 Pro.' }]
+  },
+  {
+    id: 'xiaomi-redmi-note-13-pro-5g-mdm', brand: 'XIAOMI', model: 'Redmi Note 13 Pro 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass Note 13 Pro.' }]
+  },
+  {
+    id: 'xiaomi-note-13-pro-plus-5g-frp', brand: 'XIAOMI', model: 'Note 13 Pro+ 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset Pro Plus.' }]
+  },
+  {
+    id: 'xiaomi-note-13-pro-plus-5g-mdm', brand: 'XIAOMI', model: 'Note 13 Pro+ 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass Pro Plus.' }]
+  },
+  {
+    id: 'xiaomi-redmi-15c-frp', brand: 'XIAOMI', model: 'Redmi 15C', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset 15C.' }]
+  },
+  {
+    id: 'xiaomi-redmi-15c-mdm', brand: 'XIAOMI', model: 'Redmi 15C', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass 15C.' }]
+  },
+  {
+    id: 'xiaomi-redmi-note-14-5g-frp', brand: 'XIAOMI', model: 'Redmi Note 14 5g', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset Note 14.' }]
+  },
+  {
+    id: 'xiaomi-redmi-note-14-5g-mdm', brand: 'XIAOMI', model: 'Redmi Note 14 5g', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass Note 14.' }]
+  },
+  {
+    id: 'xiaomi-redmi-note-15-frp', brand: 'XIAOMI', model: 'Redmi Note 15', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset Note 15.' }]
+  },
+  {
+    id: 'xiaomi-redmi-note-15-mdm', brand: 'XIAOMI', model: 'Redmi Note 15', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass Note 15.' }]
+  },
+  {
+    id: 'xiaomi-redmi-note-15-pro-frp', brand: 'XIAOMI', model: 'Redmi Note 15 Pro', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset Note 15 Pro.' }]
+  },
+  {
+    id: 'xiaomi-redmi-note-15-pro-mdm', brand: 'XIAOMI', model: 'Redmi Note 15 Pro', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass Note 15 Pro.' }]
   }
 ];
