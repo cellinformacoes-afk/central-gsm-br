@@ -26,46 +26,26 @@ export default function Cadastro() {
       return;
     }
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
-        },
-      },
-    });
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name, cpf }),
+      });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      if (data.user) {
-        // Use upsert to update the profile that might have been created by a DB trigger
-        const { error: profileError } = await supabase.from('profiles').upsert([
-          { id: data.user.id, username: name, email, cpf: cpf.replace(/\D/g, "") }
-        ], { onConflict: 'id' });
-        
-        if (profileError) {
-            if (profileError.code === '42703') {
-                setError("Erro no servidor: Coluna CPF não encontrada. Contate o suporte.");
-                setLoading(false);
-                return;
-            }
-            if (profileError.code === '23505') {
-                // This specifically handles the case where the UNIQUE constraint on CPF is triggered
-                setError("Este CPF já está cadastrado em outra conta.");
-                setLoading(false);
-                // Delete the auth user if profile creation failed due to duplicate CPF
-                await supabase.auth.admin.deleteUser(data.user.id);
-                return;
-            }
-           console.error('Profile update/insert error:', profileError);
-        }
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao realizar cadastro');
       }
-      alert("Cadastro realizado! Verifique seu e-mail ou faça login.");
+
+      alert("Cadastro realizado com sucesso! Você já pode fazer login.");
       router.push("/login");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
