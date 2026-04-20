@@ -85,12 +85,36 @@ export const mockMethods: DeviceMethod[] = [
 
   // --- REALME MTK ---
   {
-    id: 'realme-mtk-frp', brand: 'REALME MTK', model: 'FRP (Contas Google)', category: 'FRP',
+    id: 'realme-c65-frp', brand: 'REALME MTK', model: 'REALME C65', category: 'FRP',
     steps: [{ title: 'Passo 1', description: 'Modo BROM (Segurar Volume + e -).' }, { title: 'Passo 2', description: 'Erase FRP via MTK Universal.' }]
   },
   {
-    id: 'realme-mtk-mdm', brand: 'REALME MTK', model: 'MDM / PayJoy', category: 'MDM',
+    id: 'realme-c65-mdm', brand: 'REALME MTK', model: 'REALME C65', category: 'MDM',
     steps: [{ title: 'Passo 1', description: 'Reset MDM via Brom Mode MTK.' }]
+  },
+  {
+    id: 'realme-c75-frp', brand: 'REALME MTK', model: 'REALME C75', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Removal via MTK Auth.' }]
+  },
+  {
+    id: 'realme-c75-mdm', brand: 'REALME MTK', model: 'REALME C75', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass C75.' }]
+  },
+  {
+    id: 'realme-c75x-frp', brand: 'REALME MTK', model: 'REALME C75X', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Erase FRP (New Security).' }]
+  },
+  {
+    id: 'realme-c75x-mdm', brand: 'REALME MTK', model: 'REALME C75X', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Unlock PayJoy C75X.' }]
+  },
+  {
+    id: 'realme-14t-frp', brand: 'REALME MTK', model: 'REALME 14T', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Advanced FRP MTK 2026.' }]
+  },
+  {
+    id: 'realme-14t-mdm', brand: 'REALME MTK', model: 'REALME 14T', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Complete Bypass.' }]
   },
 
   // --- MOTOROLA ---
