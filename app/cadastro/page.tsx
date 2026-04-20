@@ -3,10 +3,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { isValidCPF, formatCPF } from "@/lib/utils/cpf-validator";
 
 export default function Cadastro() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,6 +18,13 @@ export default function Cadastro() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Validação de CPF
+    if (!isValidCPF(cpf)) {
+      setError("Por favor, insira um CPF válido.");
+      setLoading(false);
+      return;
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -34,9 +43,14 @@ export default function Cadastro() {
         // The trigger in Supabase should handle profile creation, 
         // but adding a manual check/insert is safer for now if trigger isn't ready
         const { error: profileError } = await supabase.from('profiles').insert([
-          { id: data.user.id, username: name, email }
+          { id: data.user.id, username: name, email, cpf: cpf.replace(/\D/g, "") }
         ]);
         if (profileError && profileError.code !== '23505') { // Ignore unique constraint if trigger already did it
+            if (profileError.code === '42703') {
+                setError("Erro no servidor: Coluna CPF não encontrada. Contate o suporte.");
+                setLoading(false);
+                return;
+            }
            console.error('Profile creation error:', profileError);
         }
       }
@@ -93,6 +107,19 @@ export default function Cadastro() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: João Silva" 
+                className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-5 text-white placeholder-gray-600 focus:outline-none focus:border-[#00D2AD] focus:ring-2 focus:ring-[#00D2AD]/30 focus:shadow-[0_0_20px_rgba(0,210,173,0.15)] transition-all font-medium"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[11px] font-black text-white/50 uppercase tracking-[0.2em] ml-1">CPF</label>
+              <input 
+                type="text" 
+                required
+                value={cpf}
+                onChange={(e) => setCpf(formatCPF(e.target.value))}
+                placeholder="000.000.000-00" 
+                maxLength={14}
                 className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-5 text-white placeholder-gray-600 focus:outline-none focus:border-[#00D2AD] focus:ring-2 focus:ring-[#00D2AD]/30 focus:shadow-[0_0_20px_rgba(0,210,173,0.15)] transition-all font-medium"
               />
             </div>
