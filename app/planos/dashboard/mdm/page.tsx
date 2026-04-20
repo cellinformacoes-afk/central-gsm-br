@@ -2,7 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { mockMethods, DeviceMethod } from '@/lib/mock-methods';
+
+interface Step {
+  title: string;
+  description: string;
+  image_url?: string;
+}
+
+interface DeviceMethod {
+  id: string;
+  brand: string;
+  model: string;
+  category: 'FRP' | 'MDM';
+  video_url?: string;
+  steps: Step[];
+  files?: { name: string; size: string; url?: string }[];
+}
 
 export default function MDMPage() {
   const [methods, setMethods] = useState<DeviceMethod[]>([]);
@@ -24,7 +39,17 @@ export default function MDMPage() {
     }
     fetchPlan();
     
-    setMethods(mockMethods.filter(m => m.category === 'MDM'));
+    async function fetchMethods() {
+      const { data, error } = await supabase
+        .from('tutorials')
+        .select('*')
+        .eq('category', 'MDM');
+      
+      if (!error && data) {
+        setMethods(data);
+      }
+    }
+    fetchMethods();
   }, []);
 
   const brands = ['REALME SPD', 'REALME MTK', 'MOTOROLA', 'INFINIX MTK', 'TECNO MTK', 'ITEL MTK', 'POCO', 'XIAOMI'];
@@ -107,7 +132,7 @@ export default function MDMPage() {
               <span className="text-lg text-gray-500 font-bold uppercase">{selectedMethod.brand}</span>
             </div>
 
-            {selectedMethod.videoUrl && (
+            {selectedMethod.video_url && (
               <div className="mb-10 w-full aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 relative group flex items-center justify-center">
                  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
                  <span className="absolute bottom-4 left-4 text-xs font-bold text-white/50 bg-black/50 px-2 py-1 rounded">Vídeo indisponível (Demo)</span>
@@ -123,7 +148,12 @@ export default function MDMPage() {
                   </div>
                   <div className="pt-2">
                     <h4 className="text-base font-bold text-gray-200 mb-1">{step.title}</h4>
-                    <p className="text-sm text-gray-400 leading-relaxed">{step.description}</p>
+                    <p className="text-sm text-gray-400 leading-relaxed mb-4">{step.description}</p>
+                    {step.image_url && (
+                      <div className="rounded-xl overflow-hidden border border-white/5 bg-black/20 max-w-md">
+                        <img src={step.image_url} alt={step.title} className="w-full h-auto" />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

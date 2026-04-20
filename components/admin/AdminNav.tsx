@@ -42,6 +42,7 @@ export default function AdminNav() {
     { href: '/admin/estoque', label: '📦 Gestão de Estoque' },
     { href: '/admin/servicos', label: '🛠️ Gerenciar Serviços' },
     { href: '/admin/assinaturas', label: '💎 Assinaturas' },
+    { href: '/admin/tutoriais', label: '📖 Tutoriais' },
     { href: '/admin/fraudes', label: '🚫 Fraudes' },
   ];
 
