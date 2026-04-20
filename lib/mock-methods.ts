@@ -177,12 +177,92 @@ export const mockMethods: DeviceMethod[] = [
 
   // --- INFINIX MTK ---
   {
-    id: 'infinix-frp', brand: 'INFINIX MTK', model: 'FRP (Contas Google)', category: 'FRP',
+    id: 'infinix-smart-8-pro-frp', brand: 'INFINIX MTK', model: 'Smart 8 Pro', category: 'FRP',
     steps: [{ title: 'Passo 1', description: 'Modo BROM (Vol + e -).' }, { title: 'Passo 2', description: 'Erase FRP via MTK Tool.' }]
   },
   {
-    id: 'infinix-mdm', brand: 'INFINIX MTK', model: 'MDM / PayJoy', category: 'MDM',
+    id: 'infinix-smart-8-pro-mdm', brand: 'INFINIX MTK', model: 'Smart 8 Pro', category: 'MDM',
     steps: [{ title: 'Passo 1', description: 'Reset MDM em modo BROM.' }]
+  },
+  {
+    id: 'infinix-smart-9-frp', brand: 'INFINIX MTK', model: 'Smart 9', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset 2026.' }]
+  },
+  {
+    id: 'infinix-smart-9-mdm', brand: 'INFINIX MTK', model: 'Smart 9', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass Smart 9.' }]
+  },
+  {
+    id: 'infinix-hot-40-pro-frp', brand: 'INFINIX MTK', model: 'Hot 40 Pro', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Removal BROM.' }]
+  },
+  {
+    id: 'infinix-hot-40-pro-mdm', brand: 'INFINIX MTK', model: 'Hot 40 Pro', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Unlock PayJoy Hot 40 Pro.' }]
+  },
+  {
+    id: 'infinix-hot-40i-frp', brand: 'INFINIX MTK', model: 'Hot 40i', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Reset FRP Special.' }]
+  },
+  {
+    id: 'infinix-hot-40i-mdm', brand: 'INFINIX MTK', model: 'Hot 40i', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Fix Hot 40i.' }]
+  },
+  {
+    id: 'infinix-hot-50-pro-frp', brand: 'INFINIX MTK', model: 'Hot 50 Pro', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'New Security FRP.' }]
+  },
+  {
+    id: 'infinix-hot-50-pro-mdm', brand: 'INFINIX MTK', model: 'Hot 50 Pro', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Complete Bypass.' }]
+  },
+  {
+    id: 'infinix-hot-50-pro-plus-frp', brand: 'INFINIX MTK', model: 'Hot 50 Pro+', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Removal Pro+.' }]
+  },
+  {
+    id: 'infinix-hot-50-pro-plus-mdm', brand: 'INFINIX MTK', model: 'Hot 50 Pro+', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass Pro+.' }]
+  },
+  {
+    id: 'infinix-hot-50i-frp', brand: 'INFINIX MTK', model: 'Hot 50i', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset 50i.' }]
+  },
+  {
+    id: 'infinix-hot-50i-mdm', brand: 'INFINIX MTK', model: 'Hot 50i', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Fix 50i.' }]
+  },
+  {
+    id: 'infinix-note-40x-5g-frp', brand: 'INFINIX MTK', model: 'Note 40X 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP 5G Security.' }]
+  },
+  {
+    id: 'infinix-note-40x-5g-mdm', brand: 'INFINIX MTK', model: 'Note 40X 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock 5G.' }]
+  },
+  {
+    id: 'infinix-note-40-5g-frp', brand: 'INFINIX MTK', model: 'Note 40 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Note 40 FRP.' }]
+  },
+  {
+    id: 'infinix-note-40-5g-mdm', brand: 'INFINIX MTK', model: 'Note 40 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Note 40 MDM.' }]
+  },
+  {
+    id: 'infinix-note-40-4g-frp', brand: 'INFINIX MTK', model: 'Note 40 4G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Note 40 4G FRP.' }]
+  },
+  {
+    id: 'infinix-note-40-4g-mdm', brand: 'INFINIX MTK', model: 'Note 40 4G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Note 40 4G MDM.' }]
+  },
+  {
+    id: 'infinix-note-50s-frp', brand: 'INFINIX MTK', model: 'Note 50S', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Note 50S FRP.' }]
+  },
+  {
+    id: 'infinix-note-50s-mdm', brand: 'INFINIX MTK', model: 'Note 50S', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Note 50S MDM.' }]
   },
 
   // --- TECNO MTK ---
