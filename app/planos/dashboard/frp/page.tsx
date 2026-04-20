@@ -44,7 +44,7 @@ export default function FRPPage() {
 
       {/* Abas de Fabricantes */}
       {!selectedMethod && (
-        <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar pb-2">
+        <div className="grid grid-cols-2 gap-2 mb-8">
           {brands.map(brand => (
             <button
               key={brand}
