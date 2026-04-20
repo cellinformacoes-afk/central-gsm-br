@@ -30,7 +30,7 @@ export default function FRPPage() {
     setMethods(mockMethods.filter(m => m.category === 'FRP'));
   }, []);
 
-  const brands = ['REALME', 'MOTOROLA', 'INFINIX MTK', 'TECNO MTK'];
+  const brands = ['REALME', 'MOTOROLA', 'INFINIX MTK', 'TECNO MTK', 'INTEL MTK', 'POCO', 'XIAOMI'];
   const filteredMethods = methods.filter(m => m.brand === selectedBrand);
 
   return (
