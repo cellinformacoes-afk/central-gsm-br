@@ -119,12 +119,60 @@ export const mockMethods: DeviceMethod[] = [
 
   // --- MOTOROLA ---
   {
-    id: 'motorola-frp', brand: 'MOTOROLA', model: 'FRP (Contas Google)', category: 'FRP',
+    id: 'moto-g04s-frp', brand: 'MOTOROLA', model: 'Moto G04s', category: 'FRP',
     steps: [{ title: 'Passo 1', description: 'Ative o Wi-Fi e mude o idioma.' }, { title: 'Passo 2', description: 'Desabilite Google Play Services.' }]
   },
   {
-    id: 'motorola-mdm', brand: 'MOTOROLA', model: 'MDM / PayJoy', category: 'MDM',
+    id: 'moto-g04s-mdm', brand: 'MOTOROLA', model: 'Moto G04s', category: 'MDM',
     steps: [{ title: 'Passo 1', description: 'Flashear persist via Fastboot.' }]
+  },
+  {
+    id: 'moto-g14-frp', brand: 'MOTOROLA', model: 'Moto G14', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Remoção FRP via RSA ou Manual.' }]
+  },
+  {
+    id: 'moto-g14-mdm', brand: 'MOTOROLA', model: 'Moto G14', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Bypass MDM G14.' }]
+  },
+  {
+    id: 'moto-e40-frp', brand: 'MOTOROLA', model: 'Moto E40', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Modo BROM Reset FRP.' }]
+  },
+  {
+    id: 'moto-e40-mdm', brand: 'MOTOROLA', model: 'Moto E40', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Unlock MDM E40.' }]
+  },
+  {
+    id: 'moto-e32-frp', brand: 'MOTOROLA', model: 'Moto E32', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP via Tool.' }]
+  },
+  {
+    id: 'moto-e32-mdm', brand: 'MOTOROLA', model: 'Moto E32', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass E32.' }]
+  },
+  {
+    id: 'moto-e13-frp', brand: 'MOTOROLA', model: 'Moto E13', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Manual FRP Bypass.' }]
+  },
+  {
+    id: 'moto-e13-mdm', brand: 'MOTOROLA', model: 'Moto E13', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'PayJoy Unlock E13.' }]
+  },
+  {
+    id: 'moto-g35-frp', brand: 'MOTOROLA', model: 'Moto G35', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'New Gen FRP Reset.' }]
+  },
+  {
+    id: 'moto-g35-mdm', brand: 'MOTOROLA', model: 'Moto G35', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Security Patch Bypass.' }]
+  },
+  {
+    id: 'moto-g20-frp', brand: 'MOTOROLA', model: 'Moto G20', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Remoção FRP via SPD Tool (G20 é Unisoc).' }]
+  },
+  {
+    id: 'moto-g20-mdm', brand: 'MOTOROLA', model: 'Moto G20', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Bypass MDM G20.' }]
   },
 
   // --- INFINIX MTK ---
