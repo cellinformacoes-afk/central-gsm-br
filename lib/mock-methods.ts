@@ -267,12 +267,52 @@ export const mockMethods: DeviceMethod[] = [
 
   // --- TECNO MTK ---
   {
-    id: 'tecno-frp', brand: 'TECNO MTK', model: 'FRP (Contas Google)', category: 'FRP',
+    id: 'tecno-spark-40-5g-frp', brand: 'TECNO MTK', model: 'Tecno Spark 40 5G', category: 'FRP',
     steps: [{ title: 'Passo 1', description: 'Modo BROM para conexão.' }, { title: 'Passo 2', description: 'Remoção via UnlockTool.' }]
   },
   {
-    id: 'tecno-mdm', brand: 'TECNO MTK', model: 'MDM / PayJoy', category: 'MDM',
+    id: 'tecno-spark-40-5g-mdm', brand: 'TECNO MTK', model: 'Tecno Spark 40 5G', category: 'MDM',
     steps: [{ title: 'Passo 1', description: 'Reset MDM via Tool DL.' }]
+  },
+  {
+    id: 'tecno-camon-30-5g-frp', brand: 'TECNO MTK', model: 'Tecno Camon 30 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Camon 30 FRP Reset.' }]
+  },
+  {
+    id: 'tecno-camon-30-5g-mdm', brand: 'TECNO MTK', model: 'Tecno Camon 30 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass Camon 30.' }]
+  },
+  {
+    id: 'tecno-spark-go-5g-frp', brand: 'TECNO MTK', model: 'Tecno Spark Go 5G', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Spark Go FRP.' }]
+  },
+  {
+    id: 'tecno-spark-go-5g-mdm', brand: 'TECNO MTK', model: 'Tecno Spark Go 5G', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Reset Spark Go.' }]
+  },
+  {
+    id: 'tecno-pova-6-neo-frp', brand: 'TECNO MTK', model: 'Tecno Pova 6 Neo', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Pova 6 Neo FRP.' }]
+  },
+  {
+    id: 'tecno-pova-6-neo-mdm', brand: 'TECNO MTK', model: 'Tecno Pova 6 Neo', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Unlock Pova 6 Neo.' }]
+  },
+  {
+    id: 'tecno-spark-10-pro-frp', brand: 'TECNO MTK', model: 'Tecno Spark 10 Pro', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Spark 10 Pro FRP.' }]
+  },
+  {
+    id: 'tecno-spark-10-pro-mdm', brand: 'TECNO MTK', model: 'Tecno Spark 10 Pro', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Fix Spark 10 Pro.' }]
+  },
+  {
+    id: 'tecno-spark-30c-frp', brand: 'TECNO MTK', model: 'Tecno Spark 30c', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Spark 30c FRP.' }]
+  },
+  {
+    id: 'tecno-spark-30c-mdm', brand: 'TECNO MTK', model: 'Tecno Spark 30c', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass Spark 30c.' }]
   },
 
   // --- INTEL MTK ---
