@@ -14,6 +14,23 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    const cleanCpf = cpf.replace(/\D/g, "");
+
+    // 0. Check if CPF is blacklisted
+    const { data: blacklisted, error: blacklistError } = await supabaseAdmin
+      .from('cpf_blacklist')
+      .select('cpf')
+      .eq('cpf', cleanCpf)
+      .maybeSingle();
+
+    if (blacklistError && blacklistError.code !== 'PGRST116') {
+      console.error('Blacklist Check Error:', blacklistError);
+    }
+
+    if (blacklisted) {
+      return NextResponse.json({ error: 'Este CPF está bloqueado por questões de segurança.' }, { status: 403 });
+    }
+
     // 1. Create the user in Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
