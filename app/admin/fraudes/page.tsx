@@ -43,6 +43,7 @@ export default function AdminFraudesPage() {
               <tr className="border-b border-white/5 bg-black/20">
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Data/Hora</th>
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">CPF</th>
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID Pagamento</th>
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Valor</th>
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Evento</th>
@@ -50,9 +51,9 @@ export default function AdminFraudesPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">Carregando histórico...</td></tr>
+                <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500">Carregando histórico...</td></tr>
               ) : logs.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">Nenhuma fraude detectada até o momento. ✅</td></tr>
+                <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500">Nenhuma fraude detectada até o momento. ✅</td></tr>
               ) : (
                 logs.map((log) => (
                   <tr key={log.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
@@ -66,6 +67,11 @@ export default function AdminFraudesPage() {
                         <span className="text-sm text-white font-bold">{log.user_email}</span>
                         <span className="text-[10px] text-gray-500 font-mono">{log.user_id}</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-400 font-mono">
+                        {log.user_cpf || '---'}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-xs text-[#00D2AD] font-mono bg-[#00D2AD]/10 px-2 py-1 rounded">
