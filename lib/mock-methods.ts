@@ -19,12 +19,68 @@ export interface DeviceMethod {
 export const mockMethods: DeviceMethod[] = [
   // --- REALME SPD ---
   {
-    id: 'realme-spd-frp', brand: 'REALME SPD', model: 'FRP (Contas Google)', category: 'FRP',
-    steps: [{ title: 'Passo 1', description: 'Conecte no Wi-Fi e acesse o menu de ajuda.' }, { title: 'Passo 2', description: 'UnlockTool via SPD Flash Tool.' }]
+    id: 'realme-note-50-frp', brand: 'REALME SPD', model: 'REALME NOTE 50', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Abrir UnlockTool e selecionar módulo SPD.' }, { title: 'Passo 2', description: 'Erase FRP via Test Point ou Download Mode.' }]
   },
   {
-    id: 'realme-spd-mdm', brand: 'REALME SPD', model: 'MDM / PayJoy', category: 'MDM',
-    steps: [{ title: 'Passo 1', description: 'Auth ID necessário para Reset MDM SPD.' }]
+    id: 'realme-note-50-mdm', brand: 'REALME SPD', model: 'REALME NOTE 50', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Reset MDM via Auth ID (Servidor).' }]
+  },
+  {
+    id: 'realme-note-60-frp', brand: 'REALME SPD', model: 'REALME NOTE 60', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Remoção de Conta Google via SPD Loader.' }]
+  },
+  {
+    id: 'realme-note-60-mdm', brand: 'REALME SPD', model: 'REALME NOTE 60', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Bypass MDM via SPD Special Tool.' }]
+  },
+  {
+    id: 'realme-note-60x-frp', brand: 'REALME SPD', model: 'REALME NOTE 60X', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Reset via UART/SPD.' }]
+  },
+  {
+    id: 'realme-note-60x-mdm', brand: 'REALME SPD', model: 'REALME NOTE 60X', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Unlock MDM PayJoy.' }]
+  },
+  {
+    id: 'realme-c61-frp', brand: 'REALME SPD', model: 'REALME C61', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'Reset FRP Unisoc Module.' }]
+  },
+  {
+    id: 'realme-c61-mdm', brand: 'REALME SPD', model: 'REALME C61', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Remove (New Security).' }]
+  },
+  {
+    id: 'realme-c63-frp', brand: 'REALME SPD', model: 'REALME C63', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Removal via Auth.' }]
+  },
+  {
+    id: 'realme-c63-mdm', brand: 'REALME SPD', model: 'REALME C63', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'Bypass PayJoy C63.' }]
+  },
+  {
+    id: 'realme-note-70-frp', brand: 'REALME SPD', model: 'REALME NOTE 70', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Special 2026.' }]
+  },
+  {
+    id: 'realme-note-70-mdm', brand: 'REALME SPD', model: 'REALME NOTE 70', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Patch Note 70.' }]
+  },
+  {
+    id: 'realme-c71-frp', brand: 'REALME SPD', model: 'REALME C71', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Removal.' }]
+  },
+  {
+    id: 'realme-c71-mdm', brand: 'REALME SPD', model: 'REALME C71', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM Bypass.' }]
+  },
+  {
+    id: 'realme-c73-frp', brand: 'REALME SPD', model: 'REALME C73', category: 'FRP',
+    steps: [{ title: 'Passo 1', description: 'FRP Generation 2026.' }]
+  },
+  {
+    id: 'realme-c73-mdm', brand: 'REALME SPD', model: 'REALME C73', category: 'MDM',
+    steps: [{ title: 'Passo 1', description: 'MDM New Gen.' }]
   },
 
   // --- REALME MTK ---
