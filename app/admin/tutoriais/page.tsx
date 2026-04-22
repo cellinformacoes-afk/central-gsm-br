@@ -24,6 +24,7 @@ interface Tutorial {
 export default function AdminTutoriaisPage() {
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
   const [formData, setFormData] = useState<Tutorial>({
@@ -115,6 +116,9 @@ export default function AdminTutoriaisPage() {
   };
 
   async function handleSave() {
+    if (uploading || saving) return;
+    
+    setSaving(true);
     try {
       if (editingTutorial?.id) {
         const { error } = await supabase
@@ -134,6 +138,8 @@ export default function AdminTutoriaisPage() {
       fetchTutorials();
     } catch (e: any) {
       alert("Erro ao salvar: " + e.message);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -374,9 +380,14 @@ export default function AdminTutoriaisPage() {
                 </button>
                 <button 
                   onClick={handleSave}
-                  className="flex-[2] bg-[#00D2AD] hover:bg-[#00b293] text-[#0f172a] font-black uppercase text-xs tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(0,210,173,0.3)]"
+                  disabled={uploading || saving}
+                  className={`flex-[2] font-black uppercase text-xs tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(0,210,173,0.3)] ${
+                    uploading || saving 
+                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed shadow-none' 
+                      : 'bg-[#00D2AD] hover:bg-[#00b293] text-[#0f172a]'
+                  }`}
                 >
-                  Salvar Tutorial
+                  {saving ? 'Gravando...' : uploading ? 'Aguarde Upload...' : 'Salvar Tutorial'}
                 </button>
               </div>
             </div>
