@@ -16,6 +16,7 @@ interface Tutorial {
   model: string;
   category: 'FRP' | 'MDM';
   video_url?: string;
+  attention?: string;
   steps: Step[];
   files: { name: string; size: string; url?: string }[];
 }
@@ -29,6 +30,7 @@ export default function AdminTutoriaisPage() {
     brand: '',
     model: '',
     category: 'FRP',
+    attention: '',
     steps: [{ title: '', description: '' }],
     files: []
   });
@@ -80,6 +82,7 @@ export default function AdminTutoriaisPage() {
         brand: '',
         model: '',
         category: 'FRP',
+        attention: '',
         steps: [{ title: '', description: '' }],
         files: []
       });
@@ -267,6 +270,17 @@ export default function AdminTutoriaisPage() {
                     placeholder="EX: S23 Ultra, Poco X5" 
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Atenção / Observações (Aparece antes dos passos)</label>
+                <textarea 
+                  value={formData.attention || ''}
+                  onChange={(e) => setFormData({...formData, attention: e.target.value})}
+                  className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-[#00D2AD]/50 outline-none transition-all placeholder:text-gray-700 font-bold"
+                  placeholder="EX: É necessário estar com a bateria acima de 50%..."
+                  rows={3}
+                />
               </div>
 
               <div className="space-y-2">

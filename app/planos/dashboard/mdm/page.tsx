@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { AlertCircle } from 'lucide-react';
 
 interface Step {
   title: string;
@@ -15,6 +16,7 @@ interface DeviceMethod {
   model: string;
   category: 'FRP' | 'MDM';
   video_url?: string;
+  attention?: string;
   steps: Step[];
   files?: { name: string; size: string; url?: string }[];
 }
@@ -140,6 +142,21 @@ export default function MDMPage() {
             )}
 
             <h3 className="text-xl font-black text-white mb-6">Passo a Passo</h3>
+
+            {selectedMethod.attention && (
+              <div className="mb-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl flex gap-4 items-start">
+                <div className="p-2 bg-yellow-500/20 rounded-lg">
+                  <AlertCircle className="w-5 h-5 text-yellow-500" />
+                </div>
+                <div>
+                  <h4 className="text-yellow-500 font-bold text-sm uppercase tracking-wider mb-1">Atenção</h4>
+                  <p className="text-yellow-500/80 text-sm font-medium leading-relaxed">
+                    {selectedMethod.attention}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-6">
               {selectedMethod.steps.map((step, idx) => (
                 <div key={idx} className="flex gap-4">

@@ -3,13 +3,14 @@
 
 -- 1. Criar tabela tutorials
 CREATE TABLE IF NOT EXISTS public.tutorials (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id TEXT PRIMARY KEY,
     brand TEXT NOT NULL,
     model TEXT NOT NULL,
     category TEXT NOT NULL CHECK (category IN ('FRP', 'MDM')),
     video_url TEXT,
     steps JSONB DEFAULT '[]'::jsonb,
     files JSONB DEFAULT '[]'::jsonb,
+    attention TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
