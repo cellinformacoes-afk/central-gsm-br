@@ -91,21 +91,27 @@ export default function AdminTutoriaisPage() {
   };
 
   const handleAddStep = () => {
-    setFormData({
-      ...formData,
-      steps: [...formData.steps, { title: '', description: '' }]
-    });
+    setFormData(prev => ({
+      ...prev,
+      steps: [...prev.steps, { title: '', description: '' }]
+    }));
   };
 
   const handleStepChange = (index: number, field: keyof Step, value: string) => {
-    const newSteps = [...formData.steps];
-    newSteps[index] = { ...newSteps[index], [field]: value };
-    setFormData({ ...formData, steps: newSteps });
+    setFormData(prev => {
+      const newSteps = [...prev.steps];
+      if (newSteps[index]) {
+        newSteps[index] = { ...newSteps[index], [field]: value };
+      }
+      return { ...prev, steps: newSteps };
+    });
   };
 
   const handleRemoveStep = (index: number) => {
-    const newSteps = formData.steps.filter((_, i) => i !== index);
-    setFormData({ ...formData, steps: newSteps });
+    setFormData(prev => ({
+      ...prev,
+      steps: prev.steps.filter((_, i) => i !== index)
+    }));
   };
 
   async function handleSave() {
