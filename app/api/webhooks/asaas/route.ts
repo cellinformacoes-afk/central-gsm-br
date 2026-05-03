@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       }
 
       // EXTRAIR VALOR ÚNICA E EXCLUSIVAMENTE DA RESPOSTA OFICIAL DO ASAAS
-      const amount = parseFloat(String(verifiedPayment.netValue || verifiedPayment.value || '0'));
+      const amount = parseFloat(String(verifiedPayment.value || '0'));
       const userId = verifiedPayment.externalReference;
 
       if (!userId) {
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     // Handle Chargebacks or Refunds (FRAUD PROTECTION)
     else if (event === 'PAYMENT_CHARGEBACK_REQUESTED' || event === 'PAYMENT_REFUNDED') {
       const paymentId = payment.id;
-      const amount = parseFloat(String(payment.netValue || payment.value || '0'));
+      const amount = parseFloat(String(payment.value || '0'));
       const userId = payment.externalReference;
       const eventType = event === 'PAYMENT_CHARGEBACK_REQUESTED' ? 'CHARGEBACK' : 'REFUND';
 
