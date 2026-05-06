@@ -2,6 +2,7 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import { Metadata } from 'next';
 import ClientLayout from '@/components/layout/ClientLayout';
+import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -38,6 +39,25 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className="dark">
+      <head>
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18049987745"
+        />
+        <Script
+          id="google-ads"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+
+              gtag('config', 'AW-18049987745');
+            `,
+          }}
+        />
+      </head>
       <body className={`${inter.className} min-h-screen bg-[#0f172a]`}>
         <ClientLayout>
           {children}
