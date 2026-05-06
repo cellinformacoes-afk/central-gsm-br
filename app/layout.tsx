@@ -39,7 +39,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className="dark">
-      <head>
+      <body className={`${inter.className} min-h-screen bg-[#0f172a]`}>
         <Script
           strategy="afterInteractive"
           src="https://www.googletagmanager.com/gtag/js?id=AW-18049987745"
@@ -57,8 +57,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className={`${inter.className} min-h-screen bg-[#0f172a]`}>
         <ClientLayout>
           {children}
         </ClientLayout>
