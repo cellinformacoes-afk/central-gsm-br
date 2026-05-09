@@ -38,8 +38,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Erro BD: ${dbError.message}` }, { status: 500 });
     }
 
-    // Código do Pix Estático do Asaas gerado (Chave: 04b916fe-a03c-42b3-a04a-420ce162682a)
-    const pixCopyPaste = "00020126580014br.gov.bcb.pix013604b916fe-a03c-42b3-a04a-420ce162682a5204000053039865802BR5923ISRAEL CANDIDO DA SILVA6009SAO PAULO62070503***63047E9B";
+    // Código do Pix Estático do Asaas gerado (Chave: 569ca170-dc32-4744-ab42-0d966b9db179)
+    const pixCopyPaste = "00020126580014br.gov.bcb.pix0136569ca170-dc32-4744-ab42-0d966b9db1795204000053039865802BR5923ISRAEL CANDIDO DA SILVA6009SAO PAULO62070503***63049C7F";
 
     return NextResponse.json({
       id: pendingId,
