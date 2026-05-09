@@ -127,7 +127,8 @@ export default function SaldoPage() {
           'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({ 
-          amount
+          amount,
+          payerName: payerName.trim()
         }),
       });
       

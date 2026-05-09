@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Usuário inválido ou sessão expirada' }, { status: 401 });
     }
 
-    const { amount } = await request.json();
+    const { amount, payerName } = await request.json();
     const parsedAmount = parseFloat(amount);
 
     if (!parsedAmount || parsedAmount < 5) {
@@ -38,8 +38,10 @@ export async function POST(request: Request) {
       .eq('id', user.id)
       .single();
 
-    if (!profile?.full_name) {
-       return NextResponse.json({ error: 'O nome do titular é obrigatório. Vá em Meu Perfil e preencha seus dados.' }, { status: 400 });
+    const customerName = profile?.full_name || payerName;
+
+    if (!customerName || customerName.trim().length < 3) {
+       return NextResponse.json({ error: 'O nome do titular é obrigatório. Preencha o campo "Seu Nome" corretamente.' }, { status: 400 });
     }
 
     const customerEmail = profile?.email || user.email;
@@ -47,12 +49,12 @@ export async function POST(request: Request) {
     // Criar ou recuperar cliente Asaas
     const customerId = await asaas.getOrCreateCustomer(
       customerEmail!,
-      profile?.full_name,
+      customerName,
       profile?.cpf || undefined
     );
 
     // Gerar pagamento UNDEFINED no Asaas (Para escolherem Cartão na tela)
-    const paymentDescription = `Adição de Saldo - ${profile?.full_name}`;
+    const paymentDescription = `Adição de Saldo - ${customerName}`;
     const paymentRes = await asaas.createCardPayment(
       customerId,
       finalCharge,
