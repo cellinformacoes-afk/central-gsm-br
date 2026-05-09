@@ -22,7 +22,7 @@ export default function AdminNav() {
         .from('transactions')
         .select('amount')
         .eq('status', 'success')
-        .eq('type', 'deposit')
+        .in('type', ['deposit', 'pix'])
         .gte('created_at', startOfDay)
         .lt('created_at', endOfDay);
 

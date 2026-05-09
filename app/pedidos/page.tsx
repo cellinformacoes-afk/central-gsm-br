@@ -99,30 +99,7 @@ export default function PedidosPage() {
         </div>
       </div>
 
-      {/* 🚀 DASHBOARD CLIENTE 🚀 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-         <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] p-5 rounded-3xl border border-[#334155] relative overflow-hidden group hover:border-blue-500/50 transition-all shadow-xl">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2"></div>
-            <div className="flex justify-between items-center relative z-10">
-               <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Concluídos</p>
-                  <h3 className="text-2xl font-black text-white">{completedOrders}</h3>
-               </div>
-               <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(59,130,246,0.2)] group-hover:scale-110 transition-transform">✅</div>
-            </div>
-         </div>
 
-         <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] p-5 rounded-3xl border border-[#334155] relative overflow-hidden group hover:border-[#FFC107]/50 transition-all shadow-xl">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#FFC107]/10 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2"></div>
-            <div className="flex justify-between items-center relative z-10">
-               <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Em Processamento</p>
-                  <h3 className="text-2xl font-black text-white">{pendingOrders}</h3>
-               </div>
-               <div className="w-12 h-12 bg-[#FFC107]/10 rounded-2xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(255,193,7,0.2)] group-hover:scale-110 transition-transform">⏳</div>
-            </div>
-         </div>
-      </div>
 
       <div className="bg-[#1e293b] rounded-[32px] border border-[#334155] overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">

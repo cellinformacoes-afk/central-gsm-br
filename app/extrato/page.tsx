@@ -37,8 +37,8 @@ export default function ExtratoPage() {
     }
   }
 
-  const totalDepositado = transactions.filter(t => t.type === 'deposit' && (t.status === 'success' || t.status === 'approved')).reduce((sum, current) => sum + (current.amount || 0), 0);
-  const totalGasto = transactions.filter(t => t.type !== 'deposit').reduce((sum, current) => sum + (current.amount || 0), 0);
+  const totalDepositado = transactions.filter(t => (t.type === 'deposit' || t.type === 'pix') && (t.status === 'success' || t.status === 'approved')).reduce((sum, current) => sum + (current.amount || 0), 0);
+  const totalGasto = transactions.filter(t => t.type !== 'deposit' && t.type !== 'pix').reduce((sum, current) => sum + (current.amount || 0), 0);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -89,16 +89,18 @@ export default function ExtratoPage() {
             {transactions.map((t) => (
               <div key={t.id} className="p-4 md:p-6 hover:bg-gradient-to-r hover:from-[#1e293b] hover:to-transparent transition-all flex items-center justify-between gap-4 group cursor-default">
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                    t.type === 'deposit' 
+                  <div className={`w-10 h-10 md:w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                    (t.type === 'deposit' || t.type === 'pix')
                       ? 'bg-green-500/10 text-green-500 border border-green-500/20' 
                       : 'bg-red-500/10 text-red-500 border border-red-500/20'
                   }`}>
-                    {t.type === 'deposit' ? <ArrowUpCircle size={24} /> : <ArrowDownCircle size={24} />}
+                    {(t.type === 'deposit' || t.type === 'pix') ? <ArrowUpCircle size={24} /> : <ArrowDownCircle size={24} />}
                   </div>
                   <div>
                     <h3 className="text-white font-bold text-sm md:text-base leading-tight">
-                      {t.description}
+                      {(t.type === 'pix' || t.type === 'deposit' || t.description?.startsWith('ftn_') || !t.description) 
+                        ? 'Adição de Saldo (PIX)' 
+                        : t.description}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
                       <Clock size={12} className="text-gray-500" />
@@ -119,9 +121,9 @@ export default function ExtratoPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <span className={`text-sm md:text-lg font-black italic tracking-tight ${
-                    t.type === 'deposit' ? 'text-green-500' : 'text-red-500'
+                    (t.type === 'deposit' || t.type === 'pix') ? 'text-green-500' : 'text-red-500'
                   }`}>
-                    {t.type === 'deposit' ? '+' : '-'} {formatCurrency(Math.abs(t.amount || 0))}
+                    {(t.type === 'deposit' || t.type === 'pix') ? '+' : '-'} {formatCurrency(Math.abs(t.amount || 0))}
                   </span>
                 </div>
               </div>
