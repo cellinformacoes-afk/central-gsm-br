@@ -11,6 +11,7 @@ export default function SaldoPage() {
   const [paymentStartTime, setPaymentStartTime] = useState<string | null>(null);
   const router = useRouter();
   const [cpf, setCpf] = useState('');
+  const [payerName, setPayerName] = useState('');
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
@@ -54,6 +55,11 @@ export default function SaldoPage() {
       return;
     }
 
+    if (!payerName || payerName.trim().length < 3) {
+      alert("Por favor, preencha o seu nome (como está no banco) para validação do PIX.");
+      return;
+    }
+
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -69,7 +75,8 @@ export default function SaldoPage() {
           amount, 
           description: `Recarga Central GSM - R$ ${amount}`,
           userId: session.user.id,
-          cpf: cpf.replace(/\D/g, '')
+          cpf: cpf.replace(/\D/g, ''),
+          payerName: payerName.trim()
         }),
       });
       
@@ -191,6 +198,18 @@ export default function SaldoPage() {
                 />
               </div>
             )}
+
+            <div className="mt-6">
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Seu Nome (Como está no seu banco)</label>
+              <input 
+                type="text" 
+                value={payerName}
+                onChange={(e) => setPayerName(e.target.value)}
+                placeholder="Ex: João da Silva"
+                className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-lg font-bold focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD] transition-all outline-none"
+              />
+              <p className="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-wider">Para confirmarmos seu pagamento rapidamente pelo seu nome.</p>
+            </div>
 
             <button 
               onClick={handleGeneratePix}
