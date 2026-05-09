@@ -41,8 +41,8 @@ export async function GET(request: Request) {
       const asaasUrl = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
       const asaasKey = process.env.ASAAS_API_KEY || '';
 
-      // Buscando transações de recebimento recentes
-      const asaasRes = await fetch(`${asaasUrl}/pix/transactions?status=DONE&type=CREDIT&limit=20`, {
+      // Buscando transações de recebimento recentes (sem filtros rígidos para evitar que o Asaas oculte)
+      const asaasRes = await fetch(`${asaasUrl}/pix/transactions?limit=10`, {
         headers: { 'access_token': asaasKey.trim() }
       });
 
@@ -51,15 +51,25 @@ export async function GET(request: Request) {
         console.log("Fallback para extrato financeiro...");
       }
 
-      const asaasData = await asaasRes.json();
-      const transactions = asaasData.data || [];
+      let asaasData = await asaasRes.json();
+      let transactions = asaasData.data || [];
+
+      // Se não vier nada ou for vazio, tenta o extrato financeiro geral
+      if (transactions.length === 0) {
+         const finRes = await fetch(`${asaasUrl}/financialTransactions?limit=10`, {
+           headers: { 'access_token': asaasKey.trim() }
+         });
+         const finData = await finRes.json();
+         transactions = finData.data || [];
+      }
 
       // 3. Procurar match de Valor e Nome
       let foundMatch = false;
       for (const t of transactions) {
-        // Tenta achar pelo nome do pagador e valor
-        const tValue = parseFloat(t.value);
-        const tName = (t.endToEndIdentifier || t.description || t.payer?.name || '').toUpperCase();
+        // Asaas pode retornar o valor em 'value' ou em 'payment.value' ou em negativo
+        // Se for extrato financeiro, transações de entrada têm valor positivo
+        const tValue = Math.abs(parseFloat(t.value));
+        const tName = (t.endToEndIdentifier || t.description || t.payer?.name || t.payment?.description || t.transfer?.description || '').toUpperCase();
 
         if (tValue === expectedAmount && payerName && tName.includes(payerName.split(' ')[0])) {
           foundMatch = true;
@@ -84,8 +94,8 @@ export async function GET(request: Request) {
         });
       }
 
-      // Se não achou ainda
-      return NextResponse.json({ status: 'pending' });
+      // Se não achou ainda, retornamos a lista temporariamente para você poder ver no painel (Network)
+      return NextResponse.json({ status: 'pending', debug: transactions });
     }
     // --- FIM LOGICA ESTÁTICA ---
 
