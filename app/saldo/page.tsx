@@ -136,8 +136,8 @@ export default function SaldoPage() {
       if (data.error) throw new Error(data.error);
       
       if (data.invoiceUrl) {
-         // Redirecionar para a página segura do Asaas
-         window.location.href = data.invoiceUrl;
+         // Abre em nova aba para o cliente não perder o site
+         window.open(data.invoiceUrl, '_blank');
       }
       
     } catch (error: any) {
