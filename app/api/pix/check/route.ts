@@ -79,18 +79,43 @@ export async function GET(request: Request) {
 
       // 4. Se achou, aprova
       if (foundMatch) {
-        const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('handle_payment_success', {
-          p_user_id: userId,
-          p_amount: expectedAmount,
-          p_payment_id: paymentId
-        });
+        console.log("Match encontrado! Atualizando transação e saldo diretamente...");
+        // Atualizar transação para success
+        const { error: updateTxError } = await supabaseAdmin
+          .from('transactions')
+          .update({ status: 'success' })
+          .eq('external_id', paymentId);
+          
+        if (updateTxError) {
+           console.error("Erro ao atualizar transação:", updateTxError);
+           throw updateTxError;
+        }
 
-        if (rpcError) throw rpcError;
+        // Buscar saldo atual do usuário
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('balance')
+          .eq('id', userId)
+          .single();
+          
+        const currentBalance = profile?.balance || 0;
+        const newBalance = currentBalance + expectedAmount;
+
+        // Atualizar saldo
+        const { error: updateProfileError } = await supabaseAdmin
+          .from('profiles')
+          .update({ balance: newBalance })
+          .eq('id', userId);
+          
+        if (updateProfileError) {
+           console.error("Erro ao atualizar saldo:", updateProfileError);
+           throw updateProfileError;
+        }
 
         return NextResponse.json({ 
           status: 'approved', 
           amount: expectedAmount, 
-          newBalance: rpcResult.newBalance 
+          newBalance: newBalance 
         });
       }
 
