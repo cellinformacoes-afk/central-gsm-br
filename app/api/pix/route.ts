@@ -29,7 +29,8 @@ export async function POST(request: Request) {
         user_id: userId,
         amount: parseFloat(amount),
         status: 'pending',
-        external_id: pendingId
+        external_id: pendingId,
+        type: 'pix'
       });
 
     if (dbError) {
