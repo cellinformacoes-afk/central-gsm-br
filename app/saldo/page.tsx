@@ -95,6 +95,57 @@ export default function SaldoPage() {
     }
   };
 
+  const handleGenerateCard = async () => {
+    if (!amount || parseFloat(amount) < 12) {
+      alert("Valor mínimo para recarga é R$ 12,00");
+      return;
+    }
+
+    if (!cpf || cpf.replace(/\D/g, '').length < 11) {
+      alert("Por favor, preencha um CPF ou CNPJ válido para continuar.");
+      return;
+    }
+
+    if (!payerName || payerName.trim().length < 3) {
+      alert("Por favor, preencha o seu nome (como está no banco) para validação.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("Sessão expirada. Por favor, faça login novamente.");
+        return;
+      }
+
+      const response = await fetch('/api/card', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          amount
+        }),
+      });
+      
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      
+      if (data.invoiceUrl) {
+         // Redirecionar para a página segura do Asaas
+         window.location.href = data.invoiceUrl;
+      }
+      
+    } catch (error: any) {
+      console.error(error);
+      alert("Erro ao gerar link de cartão: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const checkPaymentStatus = async (isAuto = false) => {
     if (!isAuto) setLoading(true);
     console.log("Iniciando verificação de pagamento. pixData:", pixData);
@@ -200,15 +251,31 @@ export default function SaldoPage() {
               <p className="text-xs text-gray-400 mt-2 font-bold uppercase tracking-wider">Preencha corretamente para confirmarmos seu pagamento rapidamente.</p>
             </div>
 
-            <button 
-              onClick={handleGeneratePix}
-              disabled={loading || !amount}
-              className={`w-full py-5 rounded-2xl font-black text-lg uppercase tracking-tighter transition-all ${
-                loading ? 'bg-gray-700 cursor-not-allowed' : 'bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] shadow-[0_10px_30px_rgba(0,210,173,0.3)]'
-              }`}
-            >
-              {loading ? 'GERANDO PIX...' : 'GERAR QR CODE PIX'}
-            </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button 
+                onClick={handleGeneratePix}
+                disabled={loading || !amount}
+                className={`w-full py-5 rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest transition-all border-2 border-transparent ${
+                  loading ? 'bg-gray-700 cursor-not-allowed' : 'bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] shadow-[0_10px_30px_rgba(0,210,173,0.3)] hover:-translate-y-1'
+                }`}
+              >
+                {loading ? 'GERANDO PIX...' : 'GERAR PIX (Sem Taxas)'}
+              </button>
+
+              <button 
+                onClick={handleGenerateCard}
+                disabled={loading || !amount}
+                className={`w-full py-5 rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest transition-all border-2 border-blue-500/50 ${
+                  loading ? 'bg-gray-700 border-gray-600 cursor-not-allowed text-gray-500' : 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:border-blue-400 shadow-[0_10px_30px_rgba(59,130,246,0.1)] hover:-translate-y-1'
+                }`}
+                title="Taxa de 1,89% + R$ 0,35 será cobrada no checkout"
+              >
+                {loading ? 'AGUARDE...' : 'CARTÃO DE CRÉDITO / DÉBITO'}
+              </button>
+            </div>
+            <p className="text-[10px] text-gray-500 text-center font-bold uppercase tracking-widest mt-2">
+              * Pagamentos no cartão possuem taxa do gateway (1,89% + 0,35)
+            </p>
           </div>
         ) : (
           <div className="text-center space-y-8 animate-in fade-in zoom-in duration-300 relative z-10">

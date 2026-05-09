@@ -50,19 +50,46 @@ export async function POST(request: Request) {
 
       console.log('Asaas processing webhook success:', { userId, amount, paymentId });
 
-      // Call the atomic balance update RPC
-      const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('handle_payment_success', {
-        p_user_id: userId,
-        p_amount: amount,
-        p_payment_id: paymentId
-      });
+      // Crédito Seguro Direto (Evitando RPC e usando o valor BASE que salvamos no banco)
+      // Buscar a transação original
+      const { data: tx, error: txError } = await supabaseAdmin
+        .from('transactions')
+        .select('*')
+        .eq('external_id', paymentId)
+        .single();
 
-      if (rpcError) {
-        console.error('Error calling handle_payment_success from Asaas webhook:', rpcError);
-        return NextResponse.json({ error: rpcError.message }, { status: 500 });
+      if (txError || !tx) {
+         console.error('Transação não encontrada no banco para o paymentId:', paymentId);
+         return NextResponse.json({ error: 'Transação não encontrada' }, { status: 404 });
       }
 
-      console.log('Asaas webhook RPC result:', rpcResult);
+      if (tx.status === 'success' || tx.status === 'approved') {
+         console.log('Transação já processada anteriormente:', paymentId);
+         return NextResponse.json({ received: true, note: 'already processed' });
+      }
+
+      // 1. Atualiza Transação
+      await supabaseAdmin
+        .from('transactions')
+        .update({ status: 'success' })
+        .eq('id', tx.id);
+
+      // 2. Busca Perfil
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('balance')
+        .eq('id', tx.user_id)
+        .single();
+
+      const newBalance = (profile?.balance || 0) + tx.amount;
+
+      // 3. Atualiza Saldo
+      await supabaseAdmin
+        .from('profiles')
+        .update({ balance: newBalance })
+        .eq('id', tx.user_id);
+
+      console.log(`Saldo creditado com sucesso: R$ ${tx.amount} para user ${tx.user_id}. Saldo atual: ${newBalance}`);
     } 
     // Handle Chargebacks or Refunds (FRAUD PROTECTION)
     else if (event === 'PAYMENT_CHARGEBACK_REQUESTED' || event === 'PAYMENT_REFUNDED') {

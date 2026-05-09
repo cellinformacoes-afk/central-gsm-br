@@ -143,6 +143,39 @@ export const asaas = {
     }
   },
 
+  async createCardPayment(customerId: string, amount: number, description: string, userId: string): Promise<any> {
+    try {
+      const response = await fetch(`${ASAAS_API_URL}/payments`, {
+        method: 'POST',
+        headers: {
+          'access_token': ASAAS_API_KEY.trim(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          customer: customerId,
+          billingType: 'UNDEFINED', // Deixa UNDEFINED para o cliente poder escolher cartão na tela do Asaas
+          value: amount,
+          dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString().split('T')[0], // Vence amanhã
+          description: description,
+          externalReference: userId
+        })
+      });
+      const data = await response.json();
+
+      if (data.errors) {
+        throw new Error(data.errors[0].description);
+      }
+
+      return {
+        id: data.id,
+        invoiceUrl: data.invoiceUrl, // URL de pagamento segura do Asaas
+      };
+    } catch (error: any) {
+      console.error('Error in asaas.createCardPayment:', error);
+      throw error;
+    }
+  },
+
   async getPaymentStatus(paymentId: string): Promise<string> {
     try {
       console.log(`Verificando status do pagamento ${paymentId} no Asaas...`);
