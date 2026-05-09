@@ -58,8 +58,8 @@ function PlanosContent() {
   const handleSubscribe = async (plan: string) => {
     if (!session) return;
     
-    // Check if R$ 9,99 or R$ 149,99
-    const cost = plan === 'premium' ? 149.99 : 9.99;
+    // Check if R$ 99,99 or R$ 149,99
+    const cost = plan === 'premium' ? 149.99 : 99.99;
 
     setLoading(true);
     try {
@@ -105,7 +105,7 @@ function PlanosContent() {
           <div className="mb-8">
             <h2 className="text-2xl font-black text-white mb-2">Básico</h2>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-black text-white">R$ 9,99</span>
+              <span className="text-4xl font-black text-white">R$ 99,99</span>
               <span className="text-gray-400 font-medium">/mês</span>
             </div>
           </div>

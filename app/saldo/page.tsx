@@ -173,18 +173,7 @@ export default function SaldoPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {[20, 50, 100].map((val) => (
-                <button 
-                  key={val}
-                  onClick={() => setAmount(val.toString())}
-                  className="bg-gradient-to-t from-[#0f172a] to-[#1e293b] border border-[#334155] hover:border-[#00D2AD] text-white py-3 rounded-xl font-black shadow-[0_5px_15px_rgba(0,0,0,0.3)] transition-all hover:-translate-y-2 hover:shadow-[0_10px_20px_rgba(0,210,173,0.15)] group relative overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#00D2AD]/10 to-transparent -translate-x-full group-hover:translate-x-full duration-1000 transition-transform"></div>
-                  + R$ {val}
-                </button>
-              ))}
-            </div>
+
 
             {!profile?.cpf && (
               <div>
@@ -199,8 +188,8 @@ export default function SaldoPage() {
               </div>
             )}
 
-            <div className="mt-6">
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Seu Nome (Como está no seu banco)</label>
+            <div className="mt-6 p-4 bg-[#1e293b] border-2 border-[#00D2AD] rounded-2xl shadow-[0_0_15px_rgba(0,210,173,0.2)]">
+              <label className="block text-lg font-black text-[#00D2AD] uppercase tracking-widest mb-3">⚠️ Seu Nome (Como está no seu banco)</label>
               <input 
                 type="text" 
                 value={payerName}
@@ -208,7 +197,7 @@ export default function SaldoPage() {
                 placeholder="Ex: João da Silva"
                 className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-lg font-bold focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD] transition-all outline-none"
               />
-              <p className="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-wider">Para confirmarmos seu pagamento rapidamente pelo seu nome.</p>
+              <p className="text-xs text-gray-400 mt-2 font-bold uppercase tracking-wider">Preencha corretamente para confirmarmos seu pagamento rapidamente.</p>
             </div>
 
             <button 
