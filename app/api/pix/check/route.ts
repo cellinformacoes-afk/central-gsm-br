@@ -64,10 +64,11 @@ export async function GET(request: Request) {
       }
 
       // Buscar transações que já foram usadas (salvamos o ID do asaas na descrição)
+      // Removemos o filtro de 'status' = 'success' para garantir que não reutilizamos IDs
+      // mesmo que a transação tenha sido cancelada ou falhada depois.
       const { data: usedTxs } = await supabaseAdmin
         .from('transactions')
         .select('description')
-        .eq('status', 'success')
         .not('description', 'is', null);
       
       const usedAsaasIds = usedTxs?.map(tx => tx.description) || [];
