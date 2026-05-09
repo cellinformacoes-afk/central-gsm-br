@@ -63,9 +63,23 @@ export async function GET(request: Request) {
          transactions = finData.data || [];
       }
 
+      // Buscar transações que já foram usadas (salvamos o ID do asaas na descrição)
+      const { data: usedTxs } = await supabaseAdmin
+        .from('transactions')
+        .select('description')
+        .eq('status', 'success')
+        .not('description', 'is', null);
+      
+      const usedAsaasIds = usedTxs?.map(tx => tx.description) || [];
+
       // 3. Procurar match de Valor e Nome
       let foundMatch = false;
+      let matchedAsaasId = null;
       for (const t of transactions) {
+        if (usedAsaasIds.includes(t.id)) {
+           continue; // Essa transferência já foi usada para dar saldo!
+        }
+
         // Asaas pode retornar o valor em 'value' ou em 'payment.value' ou em negativo
         // Se for extrato financeiro, transações de entrada têm valor positivo
         const tValue = Math.abs(parseFloat(t.value));
@@ -73,6 +87,7 @@ export async function GET(request: Request) {
 
         if (tValue === expectedAmount && payerName && tName.includes(payerName.split(' ')[0])) {
           foundMatch = true;
+          matchedAsaasId = t.id;
           break;
         }
       }
@@ -80,10 +95,13 @@ export async function GET(request: Request) {
       // 4. Se achou, aprova
       if (foundMatch) {
         console.log("Match encontrado! Atualizando transação e saldo diretamente...");
-        // Atualizar transação para success
+        // Atualizar transação para success e salvar o ID do Asaas para não reutilizar
         const { error: updateTxError } = await supabaseAdmin
           .from('transactions')
-          .update({ status: 'success' })
+          .update({ 
+            status: 'success',
+            description: matchedAsaasId
+          })
           .eq('external_id', paymentId);
           
         if (updateTxError) {
