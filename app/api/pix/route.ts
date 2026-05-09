@@ -18,8 +18,10 @@ export async function POST(request: Request) {
     console.log('Amount:', amount);
     console.log('Payer Name:', payerName);
 
-    // Salvar transação pendente no banco de dados para a rotina de conferência achar depois
-    const pendingId = `STATIC_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    // Salvar transação pendente no banco de dados
+    // Vamos embutir o nome no ID já que a coluna metadata não existe
+    const safeName = payerName.trim().replace(/[^a-zA-Z0-9]/g, '_');
+    const pendingId = `STATIC_${Date.now()}_${safeName}`;
 
     const { error: dbError } = await supabaseAdmin
       .from('transactions')
@@ -27,11 +29,7 @@ export async function POST(request: Request) {
         user_id: userId,
         amount: parseFloat(amount),
         status: 'pending',
-        external_id: pendingId,
-        metadata: {
-          payer_name: payerName,
-          type: 'static_pix'
-        }
+        external_id: pendingId
       });
 
     if (dbError) {

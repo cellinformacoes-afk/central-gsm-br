@@ -33,7 +33,9 @@ export async function GET(request: Request) {
       }
 
       const expectedAmount = parseFloat(tx.amount);
-      const payerName = tx.metadata?.payer_name?.toUpperCase() || '';
+      // O nome agora vem dentro do próprio paymentId (ex: STATIC_123456_NOME_DA_PESSOA)
+      const nameParts = paymentId.split('_').slice(2);
+      const payerName = nameParts.join(' ').toUpperCase();
 
       // 2. Consultar Extrato do Asaas (Últimas transações financeárias)
       const asaasUrl = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
