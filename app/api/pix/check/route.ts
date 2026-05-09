@@ -69,7 +69,9 @@ export async function GET(request: Request) {
       const { data: usedTxs } = await supabaseAdmin
         .from('transactions')
         .select('description')
-        .not('description', 'is', null);
+        .not('description', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(200);
       
       const usedAsaasIds = usedTxs?.map(tx => tx.description) || [];
 
