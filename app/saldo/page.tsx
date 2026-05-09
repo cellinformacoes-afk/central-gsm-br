@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 
 export default function SaldoPage() {
   const [amount, setAmount] = useState('');
-  const [step, setStep] = useState(1); // 1: Choose amount, 2: PIX QR Code
+  const [step, setStep] = useState(0); // 0: Method, 1: Amount, 2: QR Code
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | null>(null);
   const [loading, setLoading] = useState(false);
   const [pixData, setPixData] = useState<any>(null);
   const [paymentStartTime, setPaymentStartTime] = useState<string | null>(null);
@@ -200,8 +201,49 @@ export default function SaldoPage() {
         <h1 className="text-3xl font-black text-white mb-2 uppercase italic">ADICIONAR SALDO</h1>
         <p className="text-gray-400 text-sm mb-8 font-medium">Recarregue sua conta instantaneamente via PIX.</p>
 
-        {step === 1 ? (
-          <div className="space-y-6 relative z-10">
+        {step === 0 ? (
+          <div className="space-y-6 relative z-10 animate-in zoom-in duration-300">
+            <h2 className="text-xl font-black text-white uppercase tracking-widest text-center mb-6">Escolha a Forma de Pagamento</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <button 
+                onClick={() => { setPaymentMethod('pix'); setStep(1); }}
+                className="bg-[#1e293b] border-2 border-[#00D2AD]/50 hover:border-[#00D2AD] hover:bg-[#00D2AD]/10 p-8 rounded-3xl flex flex-col items-center justify-center gap-4 transition-all hover:-translate-y-2 shadow-xl group"
+              >
+                <div className="w-16 h-16 bg-[#00D2AD]/20 rounded-full flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+                  ⚡
+                </div>
+                <div className="text-center">
+                  <h3 className="text-white font-black text-lg uppercase tracking-widest">Via PIX</h3>
+                  <p className="text-[#00D2AD] text-xs font-bold uppercase mt-1">Sem Taxas • Instantâneo</p>
+                </div>
+              </button>
+
+              <button 
+                onClick={() => { setPaymentMethod('card'); setStep(1); }}
+                className="bg-[#1e293b] border-2 border-blue-500/50 hover:border-blue-500 hover:bg-blue-500/10 p-8 rounded-3xl flex flex-col items-center justify-center gap-4 transition-all hover:-translate-y-2 shadow-xl group"
+              >
+                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+                  💳
+                </div>
+                <div className="text-center">
+                  <h3 className="text-white font-black text-lg uppercase tracking-widest">Cartão</h3>
+                  <p className="text-blue-400 text-xs font-bold uppercase mt-1">Crédito ou Débito</p>
+                </div>
+              </button>
+            </div>
+            <p className="text-[10px] text-gray-500 text-center font-bold uppercase tracking-widest mt-6">
+              * Pagamentos via Cartão possuem taxa do gateway (1,89% + R$ 0,35)
+            </p>
+          </div>
+        ) : step === 1 ? (
+          <div className="space-y-6 relative z-10 animate-in slide-in-from-right duration-300">
+            <button 
+               onClick={() => setStep(0)} 
+               className="text-gray-500 hover:text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2 mb-4"
+            >
+               ← Voltar aos métodos
+            </button>
             <div>
               <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Quanto deseja adicionar?</label>
               <div className="relative">
@@ -251,31 +293,34 @@ export default function SaldoPage() {
               <p className="text-xs text-gray-400 mt-2 font-bold uppercase tracking-wider">Preencha corretamente para confirmarmos seu pagamento rapidamente.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button 
-                onClick={handleGeneratePix}
-                disabled={loading || !amount}
-                className={`w-full py-5 rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest transition-all border-2 border-transparent ${
-                  loading ? 'bg-gray-700 cursor-not-allowed' : 'bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] shadow-[0_10px_30px_rgba(0,210,173,0.3)] hover:-translate-y-1'
-                }`}
-              >
-                {loading ? 'GERANDO PIX...' : 'GERAR PIX (Sem Taxas)'}
-              </button>
-
-              <button 
-                onClick={handleGenerateCard}
-                disabled={loading || !amount}
-                className={`w-full py-5 rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest transition-all border-2 border-blue-500/50 ${
-                  loading ? 'bg-gray-700 border-gray-600 cursor-not-allowed text-gray-500' : 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:border-blue-400 shadow-[0_10px_30px_rgba(59,130,246,0.1)] hover:-translate-y-1'
-                }`}
-                title="Taxa de 1,89% + R$ 0,35 será cobrada no checkout"
-              >
-                {loading ? 'AGUARDE...' : 'CARTÃO DE CRÉDITO / DÉBITO'}
-              </button>
+            <div className="mt-8">
+              {paymentMethod === 'pix' ? (
+                <button 
+                  onClick={handleGeneratePix}
+                  disabled={loading || !amount}
+                  className={`w-full py-5 rounded-2xl font-black text-lg uppercase tracking-tighter transition-all ${
+                    loading ? 'bg-gray-700 cursor-not-allowed' : 'bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] shadow-[0_10px_30px_rgba(0,210,173,0.3)] hover:-translate-y-1'
+                  }`}
+                >
+                  {loading ? 'GERANDO PIX...' : 'GERAR PIX (Sem Taxas)'}
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <button 
+                    onClick={handleGenerateCard}
+                    disabled={loading || !amount}
+                    className={`w-full py-5 rounded-2xl font-black text-lg uppercase tracking-tighter transition-all ${
+                      loading ? 'bg-gray-700 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_10px_30px_rgba(37,99,235,0.3)] hover:-translate-y-1'
+                    }`}
+                  >
+                    {loading ? 'AGUARDE...' : 'IR PARA PAGAMENTO SEGURO'}
+                  </button>
+                  <p className="text-[10px] text-gray-500 text-center font-bold uppercase tracking-widest">
+                    Você será redirecionado para o Checkout Seguro do Asaas. A taxa (1,89% + R$ 0,35) será somada ao valor final.
+                  </p>
+                </div>
+              )}
             </div>
-            <p className="text-[10px] text-gray-500 text-center font-bold uppercase tracking-widest mt-2">
-              * Pagamentos no cartão possuem taxa do gateway (1,89% + 0,35)
-            </p>
           </div>
         ) : (
           <div className="text-center space-y-8 animate-in fade-in zoom-in duration-300 relative z-10">
