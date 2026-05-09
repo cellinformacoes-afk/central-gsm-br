@@ -215,6 +215,8 @@ export default function SaldoPage() {
             <div className="bg-white p-4 rounded-3xl w-64 h-64 mx-auto shadow-[0_0_40px_rgba(255,255,255,0.1)] flex items-center justify-center border-4 border-[#00D2AD]">
                {pixData?.qr_code_base64 ? (
                  <img src={`data:image/png;base64,${pixData.qr_code_base64}`} alt="QR Code Pix" className="w-full h-full object-contain" />
+               ) : pixData?.qr_code_url ? (
+                 <img src={pixData.qr_code_url} alt="QR Code Pix" className="w-full h-full object-contain" />
                ) : (
                  <div className="w-full h-full bg-[#1e293b] rounded-xl flex items-center justify-center relative overflow-hidden">
                     <span className="text-white font-black text-center text-xs opacity-20 uppercase tracking-[0.5em] rotate-12 absolute">PIX PIX PIX PIX PIX PIX</span>
@@ -226,8 +228,8 @@ export default function SaldoPage() {
             </div>
 
             <div className="space-y-4">
-               <h3 className="text-white font-black text-xl uppercase tracking-tighter"> Escaneie o QR Code acima</h3>
-               <p className="text-gray-400 text-sm max-w-xs mx-auto">Ou utilize o código Copia e Cola abaixo para realizar o pagamento no seu banco.</p>
+               <h3 className="text-white font-black text-xl uppercase tracking-tighter"> ⚠️ Transfira EXATAMENTE R$ {amount}</h3>
+               <p className="text-gray-400 text-sm max-w-xs mx-auto">Abra o seu banco, escaneie o código (ou use o Copia e Cola) e digite o valor exato de R$ {amount}.</p>
                
                <div className="bg-[#0f172a] border border-[#334155] p-4 rounded-xl flex items-center justify-between gap-4">
                   <code className="text-[#00D2AD] text-[10px] font-mono truncate">{pixData?.copy_paste || 'Gerando código...'}</code>

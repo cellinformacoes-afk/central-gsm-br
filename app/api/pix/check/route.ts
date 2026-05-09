@@ -15,6 +15,78 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'ID do pagamento ou do usuário faltando' }, { status: 400 });
     }
 
+    // --- NOVA LÓGICA PARA PIX ESTÁTICO ---
+    if (paymentId.startsWith('STATIC_')) {
+      // 1. Buscar a transação pendente no banco
+      const { data: tx } = await supabaseAdmin
+        .from('transactions')
+        .select('*')
+        .eq('external_id', paymentId)
+        .single();
+
+      if (!tx) {
+        return NextResponse.json({ error: 'Transação não encontrada' }, { status: 404 });
+      }
+
+      if (tx.status === 'success') {
+        return NextResponse.json({ status: 'approved' });
+      }
+
+      const expectedAmount = parseFloat(tx.amount);
+      const payerName = tx.metadata?.payer_name?.toUpperCase() || '';
+
+      // 2. Consultar Extrato do Asaas (Últimas transações financeárias)
+      const asaasUrl = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
+      const asaasKey = process.env.ASAAS_API_KEY || '';
+
+      // Buscando transações de recebimento recentes
+      const asaasRes = await fetch(`${asaasUrl}/pix/transactions?status=DONE&type=CREDIT&limit=20`, {
+        headers: { 'access_token': asaasKey.trim() }
+      });
+
+      if (!asaasRes.ok) {
+        // Fallback para extrato financeiro se o de cima falhar dependendo da permissão
+        console.log("Fallback para extrato financeiro...");
+      }
+
+      const asaasData = await asaasRes.json();
+      const transactions = asaasData.data || [];
+
+      // 3. Procurar match de Valor e Nome
+      let foundMatch = false;
+      for (const t of transactions) {
+        // Tenta achar pelo nome do pagador e valor
+        const tValue = parseFloat(t.value);
+        const tName = (t.endToEndIdentifier || t.description || t.payer?.name || '').toUpperCase();
+
+        if (tValue === expectedAmount && payerName && tName.includes(payerName.split(' ')[0])) {
+          foundMatch = true;
+          break;
+        }
+      }
+
+      // 4. Se achou, aprova
+      if (foundMatch) {
+        const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('handle_payment_success', {
+          p_user_id: userId,
+          p_amount: expectedAmount,
+          p_payment_id: paymentId
+        });
+
+        if (rpcError) throw rpcError;
+
+        return NextResponse.json({ 
+          status: 'approved', 
+          amount: expectedAmount, 
+          newBalance: rpcResult.newBalance 
+        });
+      }
+
+      // Se não achou ainda
+      return NextResponse.json({ status: 'pending' });
+    }
+    // --- FIM LOGICA ESTÁTICA ---
+
     let status = await asaas.getPaymentStatus(paymentId);
     // Se o pagamento atual estiver pendente, não fazemos mais fallback global
     // O webhook cuidará de atualizar o saldo se outros pagamentos forem confirmados.

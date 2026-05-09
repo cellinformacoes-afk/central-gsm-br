@@ -1,80 +1,57 @@
 import { NextResponse } from 'next/server';
-import { asaas } from '@/lib/asaas';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(request: Request) {
   try {
-    const { amount, description, userId, cpf } = await request.json();
+    const { amount, description, userId, cpf, payerName } = await request.json();
     
     if (!userId) {
       return NextResponse.json({ error: 'ID do usuário não fornecido' }, { status: 400 });
     }
 
-    console.log('--- Iniciando Geração de Pix Asaas ---');
+    if (!payerName) {
+      return NextResponse.json({ error: 'Nome do pagador não fornecido' }, { status: 400 });
+    }
+
+    console.log('--- Iniciando Geração de Pix Estático ---');
     console.log('User ID:', userId);
     console.log('Amount:', amount);
-    
-    // Check if admin key is present
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('ERRO CRÍTICO: SUPABASE_SERVICE_ROLE_KEY não encontrada no ambiente!');
-    } else {
-      console.log('SUPABASE_SERVICE_ROLE_KEY detectada (tamanho:', process.env.SUPABASE_SERVICE_ROLE_KEY.length, ')');
+    console.log('Payer Name:', payerName);
+
+    // Salvar transação pendente no banco de dados para a rotina de conferência achar depois
+    const pendingId = `STATIC_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+    const { error: dbError } = await supabaseAdmin
+      .from('transactions')
+      .insert({
+        user_id: userId,
+        amount: parseFloat(amount),
+        status: 'pending',
+        external_id: pendingId,
+        metadata: {
+          payer_name: payerName,
+          type: 'static_pix'
+        }
+      });
+
+    if (dbError) {
+      console.error('Erro ao salvar transação pendente:', dbError);
+      return NextResponse.json({ error: 'Erro ao registrar pagamento' }, { status: 500 });
     }
 
-    // 1. Get user profile using Admin client to ensure access
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('email, username, asaas_customer_id, cpf')
-      .eq('id', userId)
-      .single();
-
-    if (profileError) {
-      console.error('Erro RLS ao buscar perfil:', profileError);
-      return NextResponse.json({ error: profileError.message }, { status: 403 });
-    }
-
-    if (!profile) {
-      return NextResponse.json({ error: 'Perfil do usuário não encontrado' }, { status: 404 });
-    }
-
-    console.log('Perfil encontrado:', profile.email);
-    let customerId = profile.asaas_customer_id;
-
-    // 2. Ensure customer exists in Asaas and update profile
-    // We call getOrCreateCustomer even if customerId exists to handle CPF updates/sync
-    const newCustomerId = await asaas.getOrCreateCustomer(
-      profile.email, 
-      profile.username || profile.email.split('@')[0],
-      cpf || profile.cpf
-    );
-
-    if (!customerId || customerId !== newCustomerId || (cpf && profile.cpf !== cpf)) {
-      await supabaseAdmin
-        .from('profiles')
-        .update({ 
-          asaas_customer_id: newCustomerId,
-          cpf: cpf || profile.cpf
-        })
-        .eq('id', userId);
-      customerId = newCustomerId;
-    }
-
-    // 3. Create Pix Payment in Asaas
-    const result = await asaas.createPixPayment(
-      customerId,
-      parseFloat(amount),
-      description || 'Recarga de Saldo - Central GSM',
-      userId
-    );
+    // Código do Pix Estático do Asaas gerado (Chave: 04b916fe-a03c-42b3-a04a-420ce162682a)
+    const pixCopyPaste = "00020126580014br.gov.bcb.pix013604b916fe-a03c-42b3-a04a-420ce162682a5204000053039865802BR5923ISRAEL CANDIDO DA SILVA6009SAO PAULO62070503***63047E9B";
 
     return NextResponse.json({
-      id: result.id,
-      qr_code: result.copyPaste, // In asaas util, copyPaste is the payload
-      qr_code_base64: result.qrCode, // In asaas util, qrCode is the base64 image
-      copy_paste: result.copyPaste,
+      id: pendingId,
+      qr_code: pixCopyPaste,
+      // Passando uma URL pública para renderizar o QR Code no frontend
+      qr_code_base64: null,
+      qr_code_url: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pixCopyPaste)}`,
+      copy_paste: pixCopyPaste,
     });
   } catch (error: any) {
-    console.error('Erro ao gerar Pix no Asaas:', error);
+    console.error('Erro ao gerar Pix Estático:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
