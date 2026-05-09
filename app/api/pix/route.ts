@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     if (dbError) {
       console.error('Erro ao salvar transação pendente:', dbError);
-      return NextResponse.json({ error: 'Erro ao registrar pagamento' }, { status: 500 });
+      return NextResponse.json({ error: `Erro BD: ${dbError.message}` }, { status: 500 });
     }
 
     // Código do Pix Estático do Asaas gerado (Chave: 04b916fe-a03c-42b3-a04a-420ce162682a)
