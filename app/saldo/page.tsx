@@ -212,38 +212,36 @@ export default function SaldoPage() {
           </div>
         ) : (
           <div className="text-center space-y-8 animate-in fade-in zoom-in duration-300 relative z-10">
-            <div className="bg-white p-4 rounded-3xl w-64 h-64 mx-auto shadow-[0_0_40px_rgba(255,255,255,0.1)] flex items-center justify-center border-4 border-[#00D2AD]">
-               {pixData?.qr_code_base64 ? (
-                 <img src={`data:image/png;base64,${pixData.qr_code_base64}`} alt="QR Code Pix" className="w-full h-full object-contain" />
-               ) : pixData?.qr_code_url ? (
-                 <img src={pixData.qr_code_url} alt="QR Code Pix" className="w-full h-full object-contain" />
-               ) : (
-                 <div className="w-full h-full bg-[#1e293b] rounded-xl flex items-center justify-center relative overflow-hidden">
-                    <span className="text-white font-black text-center text-xs opacity-20 uppercase tracking-[0.5em] rotate-12 absolute">PIX PIX PIX PIX PIX PIX</span>
-                    <div className="w-16 h-16 bg-[#00D2AD] rounded-lg shadow-[0_0_20px_#00D2AD] flex items-center justify-center animate-pulse">
-                       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20 M2 12h20"/></svg>
-                    </div>
-                 </div>
-               )}
-            </div>
-
-            <div className="space-y-4">
-               <h3 className="text-white font-black text-xl uppercase tracking-tighter"> ⚠️ Transfira EXATAMENTE R$ {amount}</h3>
-               <p className="text-gray-400 text-sm max-w-xs mx-auto">Abra o seu banco, escaneie o código (ou use o Copia e Cola) e digite o valor exato de R$ {amount}.</p>
+            <div className="bg-[#1e293b] border-2 border-[#00D2AD] p-8 rounded-3xl mx-auto shadow-[0_0_30px_rgba(0,210,173,0.15)] flex flex-col items-center justify-center relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/5 rounded-full blur-2xl"></div>
                
-               <div className="bg-[#0f172a] border border-[#334155] p-4 rounded-xl flex items-center justify-between gap-4">
-                  <code className="text-[#00D2AD] text-[10px] font-mono truncate">{pixData?.copy_paste || 'Gerando código...'}</code>
+               <div className="w-16 h-16 bg-[#00D2AD]/10 rounded-full flex items-center justify-center mb-6">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00D2AD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+               </div>
+               
+               <h3 className="text-white font-black text-xl uppercase tracking-tighter mb-2"> CHAVE PIX ALEATÓRIA</h3>
+               <p className="text-gray-400 text-sm max-w-xs mx-auto mb-6">Esta é a nossa chave oficial. Abra o seu banco e escolha a opção de <strong className="text-white">Transferência PIX</strong>.</p>
+               
+               <div className="w-full bg-[#0f172a] border border-[#334155] p-4 rounded-xl flex items-center justify-between gap-4">
+                  <code className="text-[#00D2AD] text-[10px] md:text-xs font-mono break-all">{pixData?.copy_paste || 'Gerando chave...'}</code>
                   <button 
                     onClick={() => {
                         if (pixData?.copy_paste) {
                           navigator.clipboard.writeText(pixData.copy_paste);
-                          alert("Código Copiado!");
+                          alert("Chave Copiada!");
                         }
                     }}
-                    className="bg-[#00D2AD] text-[#0f172a] px-4 py-2 rounded-lg font-black text-xs uppercase whitespace-nowrap"
+                    className="bg-[#00D2AD] text-[#0f172a] px-4 py-2 rounded-lg font-black text-xs uppercase whitespace-nowrap shadow-md hover:bg-[#00BDA0] transition-colors"
                   >
                     Copiar
                   </button>
+               </div>
+            </div>
+
+            <div className="space-y-4">
+               <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl">
+                 <h3 className="text-amber-500 font-black text-lg uppercase tracking-tighter mb-1"> ⚠️ TRANSFIRA EXATAMENTE R$ {amount}</h3>
+                 <p className="text-amber-500/80 text-xs font-bold uppercase tracking-wider">O sistema só vai aprovar se o valor transferido for <strong className="text-amber-500 underline">exatamente</strong> igual ao valor gerado aqui no site.</p>
                </div>
             </div>
 
