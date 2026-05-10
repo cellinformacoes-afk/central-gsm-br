@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 
 export default function SaldoPage() {
   const [amount, setAmount] = useState('');
-  const [step, setStep] = useState(0); // 0: Method, 1: Amount, 2: QR Code
+  const [step, setStep] = useState(0); // 0: Method, 1: Amount, 2: PIX QR Code, 3: Card Waiting
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | null>(null);
+  const [cardPaymentId, setCardPaymentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pixData, setPixData] = useState<any>(null);
   const [paymentStartTime, setPaymentStartTime] = useState<string | null>(null);
@@ -33,17 +34,27 @@ export default function SaldoPage() {
     fetchProfile();
   }, []);
 
-  // Polling automático a cada 10 segundos quando o QR Code está visível
+  // Polling automático a cada 10 segundos quando o QR Code está visível (PIX)
   useEffect(() => {
     let interval: any;
     if (step === 2 && pixData?.id) {
       interval = setInterval(() => {
-        console.log("Polling automático para o pagamento:", pixData.id);
-        checkPaymentStatus(true); // pass true to avoid alert on fail
+        checkPaymentStatus(true);
       }, 10000);
     }
     return () => clearInterval(interval);
   }, [step, pixData]);
+
+  // Polling automático para Cartão (step 3)
+  useEffect(() => {
+    let interval: any;
+    if (step === 3 && cardPaymentId) {
+      interval = setInterval(() => {
+        checkCardStatus(true);
+      }, 8000);
+    }
+    return () => clearInterval(interval);
+  }, [step, cardPaymentId]);
 
   const handleGeneratePix = async () => {
     if (!amount || parseFloat(amount) < 12) {
@@ -136,8 +147,9 @@ export default function SaldoPage() {
       if (data.error) throw new Error(data.error);
       
       if (data.invoiceUrl) {
-         // Abre em nova aba para o cliente não perder o site
          window.open(data.invoiceUrl, '_blank');
+         setCardPaymentId(data.paymentId); // salva o ID para polling
+         setStep(3); // vai para tela de espera
       }
       
     } catch (error: any) {
@@ -188,6 +200,31 @@ export default function SaldoPage() {
       }
     } catch (error) {
       console.error('Erro ao verificar status:', error);
+    } finally {
+      if (!isAuto) setLoading(false);
+    }
+  };
+
+  const checkCardStatus = async (isAuto = false) => {
+    if (!isAuto) setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: transaction } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('external_id', cardPaymentId)
+        .maybeSingle();
+
+      if (transaction && (transaction.status === 'success' || transaction.status === 'approved')) {
+        router.push('/saldo/sucesso?amount=' + (transaction.amount || amount));
+      } else if (!isAuto) {
+        alert('Pagamento ainda não detectado. Aguarde alguns segundos e tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao verificar cartão:', error);
     } finally {
       if (!isAuto) setLoading(false);
     }
@@ -321,6 +358,43 @@ export default function SaldoPage() {
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+        ) : step === 3 ? (
+          // Tela de espera do Cartão
+          <div className="text-center space-y-8 animate-in fade-in zoom-in duration-300 relative z-10">
+            <div className="bg-[#1e293b] border-2 border-blue-500 p-8 rounded-3xl mx-auto shadow-[0_0_30px_rgba(37,99,235,0.15)] flex flex-col items-center justify-center relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl"></div>
+               
+               <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-6 text-3xl">
+                 💳
+               </div>
+               
+               <h3 className="text-white font-black text-xl uppercase tracking-tighter mb-2">CHECKOUT ABERTO</h3>
+               <p className="text-gray-400 text-sm max-w-xs mx-auto mb-4">
+                 A aba de pagamento do Asaas foi aberta. Complete o pagamento lá e clique em <strong className="text-white">"Já paguei"</strong> aqui.
+               </p>
+
+               <div className="w-full bg-[#0f172a] border border-blue-500/30 p-4 rounded-xl text-center">
+                 <p className="text-blue-400 text-xs font-bold uppercase tracking-widest">Valor a ser creditado</p>
+                 <p className="text-white font-black text-2xl mt-1">R$ {parseFloat(amount).toFixed(2)}</p>
+               </div>
+            </div>
+
+            <div className="pt-2 flex flex-col gap-3">
+               <button 
+                onClick={() => checkCardStatus()}
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black uppercase text-sm shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all"
+               >
+                {loading ? 'VERIFICANDO...' : 'JÁ PAGUEI / VERIFICAR AGORA'}
+               </button>
+               <button 
+                onClick={() => { setStep(1); setCardPaymentId(null); }}
+                className="text-gray-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
+               >
+                Voltar e Alterar Valor
+               </button>
             </div>
           </div>
         ) : (

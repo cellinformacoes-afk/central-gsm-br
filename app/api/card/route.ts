@@ -79,6 +79,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ 
       invoiceUrl: paymentRes.invoiceUrl,
+      paymentId: paymentRes.id,
       finalCharge: finalCharge
     });
 
