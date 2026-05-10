@@ -67,11 +67,6 @@ export default function SaldoPage() {
       return;
     }
 
-    if (!payerName || payerName.trim().length < 3) {
-      alert("Por favor, preencha o seu nome (como está no banco) para validação do PIX.");
-      return;
-    }
-
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -319,16 +314,24 @@ export default function SaldoPage() {
               </div>
             )}
 
-            <div className="mt-6 p-4 bg-[#1e293b] border-2 border-[#00D2AD] rounded-2xl shadow-[0_0_15px_rgba(0,210,173,0.2)]">
-              <label className="block text-lg font-black text-[#00D2AD] uppercase tracking-widest mb-3">⚠️ Seu Nome (Como está no seu banco)</label>
+            <div className="mt-4 p-4 bg-[#1e293b] border border-[#334155] rounded-2xl">
+              <label className="block text-sm font-black text-gray-400 uppercase tracking-widest mb-3">Seu Nome Completo</label>
               <input 
                 type="text" 
                 value={payerName}
                 onChange={(e) => setPayerName(e.target.value)}
                 placeholder="Ex: João da Silva"
-                className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-lg font-bold focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD] transition-all outline-none"
+                className={`w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-lg font-bold transition-all outline-none ${
+                  paymentMethod === 'card'
+                    ? 'focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                    : 'focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD]'
+                }`}
               />
-              <p className="text-xs text-gray-400 mt-2 font-bold uppercase tracking-wider">Preencha corretamente para confirmarmos seu pagamento rapidamente.</p>
+              <p className="text-xs text-gray-500 mt-2 font-bold uppercase tracking-wider">
+                {paymentMethod === 'pix' 
+                  ? 'Seu nome como cadastrado na conta bancária.'
+                  : 'Obrigatório para o checkout do cartão.'}
+              </p>
             </div>
 
             <div className="mt-8">

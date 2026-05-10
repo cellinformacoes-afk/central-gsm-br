@@ -18,16 +18,15 @@ export async function POST(request: Request) {
     console.log('Amount:', amount);
     console.log('Payer Name:', payerName);
 
-    // Salvar transação pendente no banco de dados
-    // Vamos embutir o nome no ID já que a coluna metadata não existe
-    const safeName = payerName.trim().replace(/[^a-zA-Z0-9]/g, '_');
+    const baseAmount = parseFloat(amount);
+    const safeName = payerName ? payerName.trim().replace(/[^a-zA-Z0-9]/g, '_') : 'ANONIMO';
     const pendingId = `STATIC_${Date.now()}_${safeName}`;
 
     const { error: dbError } = await supabaseAdmin
       .from('transactions')
       .insert({
         user_id: userId,
-        amount: parseFloat(amount),
+        amount: baseAmount,
         status: 'pending',
         external_id: pendingId,
         type: 'pix'

@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
     // --- NOVA LÓGICA PARA PIX ESTÁTICO ---
     if (paymentId.startsWith('STATIC_')) {
-      // 1. Buscar a transação pendente no banco
+      // 1. Buscar a transação pendente no banco (com data de criação)
       const { data: tx } = await supabaseAdmin
         .from('transactions')
         .select('*')
@@ -29,31 +29,23 @@ export async function GET(request: Request) {
       }
 
       if (tx.status === 'success') {
-        return NextResponse.json({ status: 'approved' });
+        return NextResponse.json({ status: 'approved', amount: tx.amount });
       }
 
       const expectedAmount = parseFloat(tx.amount);
-      // O nome agora vem dentro do próprio paymentId (ex: STATIC_123456_NOME_DA_PESSOA)
-      const nameParts = paymentId.split('_').slice(2);
-      const payerName = nameParts.join(' ').toUpperCase();
+      const createdAt = new Date(tx.created_at);
 
-      // 2. Consultar Extrato do Asaas (Últimas transações financeárias)
+      // 2. Consultar Extrato do Asaas
       const asaasUrl = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
       const asaasKey = process.env.ASAAS_API_KEY || '';
 
-      // Buscando transações de recebimento recentes (sem filtros rígidos para evitar que o Asaas oculte)
       const asaasRes = await fetch(`${asaasUrl}/pix/transactions?limit=50`, {
         headers: { 'access_token': asaasKey.trim() }
       });
 
-      if (!asaasRes.ok) {
-        console.log("Fallback para extrato financeiro...");
-      }
-
       let asaasData = await asaasRes.json();
       let transactions = asaasData.data || [];
 
-      // Se não vier nada ou for vazio, tenta o extrato financeiro geral
       if (transactions.length === 0) {
          const finRes = await fetch(`${asaasUrl}/financialTransactions?limit=50`, {
            headers: { 'access_token': asaasKey.trim() }
@@ -62,9 +54,7 @@ export async function GET(request: Request) {
          transactions = finData.data || [];
       }
 
-      // Buscar transações que já foram usadas (salvamos o ID do asaas na descrição)
-      // Removemos o filtro de 'status' = 'success' para garantir que não reutilizamos IDs
-      // mesmo que a transação tenha sido cancelada ou falhada depois.
+      // Buscar IDs já usados para evitar duplo crédito
       const { data: usedTxs } = await supabaseAdmin
         .from('transactions')
         .select('description')
@@ -74,68 +64,67 @@ export async function GET(request: Request) {
       
       const usedAsaasIds = usedTxs?.map(tx => tx.description) || [];
 
-      // 3. Procurar match de Valor e Nome
-      let foundMatch = false;
-      let matchedAsaasId = null;
+      const payerName = paymentId.split('_').slice(2).join(' ').replace(/_/g, ' ').toUpperCase();
+
+      // 3. Coletar todos os candidatos por valor + tempo
+      const candidates: any[] = [];
+
       for (const t of transactions) {
-        if (usedAsaasIds.includes(t.id)) {
-           continue;
-        }
+        if (usedAsaasIds.includes(t.id)) continue;
 
-        const tValue = Math.abs(parseFloat(t.value));
-        const tName = (t.endToEndIdentifier || t.description || t.payer?.name || t.payment?.description || t.transfer?.description || '').toUpperCase();
-
-        // Comparação de valor com tolerância de 1 centavo (evita bug de float)
+        const tValue = Math.abs(parseFloat(t.value || '0'));
         const valueMatches = Math.abs(tValue - expectedAmount) < 0.02;
 
-        // Nome: verifica se alguma palavra do nome aparece na descrição
-        const nameParts = payerName.split(' ').filter(p => p.length > 2);
-        const nameMatches = nameParts.length === 0 || nameParts.some(part => tName.includes(part));
+        const tDate = new Date(t.date || t.effectiveDate || t.created_at || 0);
+        const isRecent = tDate >= createdAt;
 
-        if (valueMatches && nameMatches) {
-          foundMatch = true;
-          matchedAsaasId = t.id;
-          break;
+        if (valueMatches && isRecent) {
+          candidates.push(t);
         }
       }
 
-      // 4. Se achou, aprova
-      if (foundMatch) {
-        console.log("Match encontrado! Atualizando transação e saldo diretamente...");
-        // Atualizar transação para success e salvar o ID do Asaas para não reutilizar
+      // 4. Escolher o melhor candidato
+      let matched = null;
+
+      if (candidates.length === 1) {
+        // Apenas um candidato — aprova direto
+        matched = candidates[0];
+      } else if (candidates.length > 1 && payerName) {
+        // Mais de um candidato — usa nome como desempate
+        const nameParts = payerName.split(' ').filter((p: string) => p.length > 2);
+        matched = candidates.find(t => {
+          const tName = (t.payer?.name || t.description || '').toUpperCase();
+          return nameParts.some((part: string) => tName.includes(part));
+        }) || candidates[0]; // se nenhum bateu o nome, pega o primeiro mesmo
+      }
+
+      // 5. Se achou, aprova
+      if (matched) {
+        console.log("Match encontrado! Aprovando...", matched.id);
         const { error: updateTxError } = await supabaseAdmin
           .from('transactions')
           .update({ 
             status: 'success',
-            description: matchedAsaasId
+            description: matched.id
           })
           .eq('external_id', paymentId);
           
-        if (updateTxError) {
-           console.error("Erro ao atualizar transação:", updateTxError);
-           throw updateTxError;
-        }
+        if (updateTxError) throw updateTxError;
 
-        // Buscar saldo atual do usuário
         const { data: profile } = await supabaseAdmin
           .from('profiles')
           .select('balance')
           .eq('id', userId)
           .single();
           
-        const currentBalance = profile?.balance || 0;
-        const newBalance = currentBalance + expectedAmount;
+        const newBalance = (profile?.balance || 0) + expectedAmount;
 
-        // Atualizar saldo
         const { error: updateProfileError } = await supabaseAdmin
           .from('profiles')
           .update({ balance: newBalance })
           .eq('id', userId);
           
-        if (updateProfileError) {
-           console.error("Erro ao atualizar saldo:", updateProfileError);
-           throw updateProfileError;
-        }
+        if (updateProfileError) throw updateProfileError;
 
         return NextResponse.json({ 
           status: 'approved', 
@@ -144,8 +133,7 @@ export async function GET(request: Request) {
         });
       }
 
-      // Se não achou ainda, retornamos a lista temporariamente para você poder ver no painel (Network)
-      return NextResponse.json({ status: 'pending', debug: transactions });
+      return NextResponse.json({ status: 'pending' });
     }
     // --- FIM LOGICA ESTÁTICA ---
 
