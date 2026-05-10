@@ -42,12 +42,11 @@ export async function GET(request: Request) {
       const asaasKey = process.env.ASAAS_API_KEY || '';
 
       // Buscando transações de recebimento recentes (sem filtros rígidos para evitar que o Asaas oculte)
-      const asaasRes = await fetch(`${asaasUrl}/pix/transactions?limit=10`, {
+      const asaasRes = await fetch(`${asaasUrl}/pix/transactions?limit=50`, {
         headers: { 'access_token': asaasKey.trim() }
       });
 
       if (!asaasRes.ok) {
-        // Fallback para extrato financeiro se o de cima falhar dependendo da permissão
         console.log("Fallback para extrato financeiro...");
       }
 
@@ -56,7 +55,7 @@ export async function GET(request: Request) {
 
       // Se não vier nada ou for vazio, tenta o extrato financeiro geral
       if (transactions.length === 0) {
-         const finRes = await fetch(`${asaasUrl}/financialTransactions?limit=10`, {
+         const finRes = await fetch(`${asaasUrl}/financialTransactions?limit=50`, {
            headers: { 'access_token': asaasKey.trim() }
          });
          const finData = await finRes.json();
@@ -80,15 +79,20 @@ export async function GET(request: Request) {
       let matchedAsaasId = null;
       for (const t of transactions) {
         if (usedAsaasIds.includes(t.id)) {
-           continue; // Essa transferência já foi usada para dar saldo!
+           continue;
         }
 
-        // Asaas pode retornar o valor em 'value' ou em 'payment.value' ou em negativo
-        // Se for extrato financeiro, transações de entrada têm valor positivo
         const tValue = Math.abs(parseFloat(t.value));
         const tName = (t.endToEndIdentifier || t.description || t.payer?.name || t.payment?.description || t.transfer?.description || '').toUpperCase();
 
-        if (tValue === expectedAmount && payerName && tName.includes(payerName.split(' ')[0])) {
+        // Comparação de valor com tolerância de 1 centavo (evita bug de float)
+        const valueMatches = Math.abs(tValue - expectedAmount) < 0.02;
+
+        // Nome: verifica se alguma palavra do nome aparece na descrição
+        const nameParts = payerName.split(' ').filter(p => p.length > 2);
+        const nameMatches = nameParts.length === 0 || nameParts.some(part => tName.includes(part));
+
+        if (valueMatches && nameMatches) {
           foundMatch = true;
           matchedAsaasId = t.id;
           break;
