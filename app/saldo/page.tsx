@@ -66,6 +66,7 @@ export default function SaldoPage() {
       alert("Por favor, preencha um CPF ou CNPJ válido para continuar.");
       return;
     }
+    // Nome é opcional para PIX — o sistema reconhece pelo valor automaticamente
 
     setLoading(true);
     try {
@@ -315,7 +316,13 @@ export default function SaldoPage() {
             )}
 
             <div className="mt-4 p-4 bg-[#1e293b] border border-[#334155] rounded-2xl">
-              <label className="block text-sm font-black text-gray-400 uppercase tracking-widest mb-3">Seu Nome Completo</label>
+              <label className="block text-sm font-black text-gray-400 uppercase tracking-widest mb-3">
+                Seu Nome 
+                {paymentMethod === 'pix' 
+                  ? <span className="text-gray-600 font-normal normal-case tracking-normal ml-1">(opcional)</span>
+                  : <span className="text-red-400 ml-1">*</span>
+                }
+              </label>
               <input 
                 type="text" 
                 value={payerName}
@@ -329,8 +336,8 @@ export default function SaldoPage() {
               />
               <p className="text-xs text-gray-500 mt-2 font-bold uppercase tracking-wider">
                 {paymentMethod === 'pix' 
-                  ? 'Seu nome como cadastrado na conta bancária.'
-                  : 'Obrigatório para o checkout do cartão.'}
+                  ? '💡 Opcional. O sistema detecta seu pagamento pelo valor automaticamente.'
+                  : '⚠️ Obrigatório para o checkout do cartão.'}
               </p>
             </div>
 

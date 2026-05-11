@@ -39,19 +39,28 @@ export async function GET(request: Request) {
       const asaasUrl = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
       const asaasKey = process.env.ASAAS_API_KEY || '';
 
-      const asaasRes = await fetch(`${asaasUrl}/pix/transactions?limit=50`, {
+      // Busca em pix/transactions E financialTransactions com limite maior
+      const asaasRes = await fetch(`${asaasUrl}/pix/transactions?limit=100`, {
         headers: { 'access_token': asaasKey.trim() }
       });
 
       let asaasData = await asaasRes.json();
       let transactions = asaasData.data || [];
 
-      if (transactions.length === 0) {
-         const finRes = await fetch(`${asaasUrl}/financialTransactions?limit=50`, {
-           headers: { 'access_token': asaasKey.trim() }
-         });
-         const finData = await finRes.json();
-         transactions = finData.data || [];
+      // Sempre busca também no extrato financeiro para garantir cobertura total
+      const finRes = await fetch(`${asaasUrl}/financialTransactions?limit=100`, {
+        headers: { 'access_token': asaasKey.trim() }
+      });
+      const finData = await finRes.json();
+      const finTransactions = finData.data || [];
+
+      // Mescla as duas listas removendo duplicatas por ID
+      const allIds = new Set(transactions.map((t: any) => t.id));
+      for (const t of finTransactions) {
+        if (!allIds.has(t.id)) {
+          transactions.push(t);
+          allIds.add(t.id);
+        }
       }
 
       // Buscar IDs já usados para evitar duplo crédito
@@ -62,8 +71,9 @@ export async function GET(request: Request) {
         .order('created_at', { ascending: false })
         .limit(200);
       
-      const usedAsaasIds = usedTxs?.map(tx => tx.description) || [];
+      const usedAsaasIds = usedTxs?.map((tx: any) => tx.description) || [];
 
+      // Nome do pagador (opcional — usado só como desempate)
       const payerName = paymentId.split('_').slice(2).join(' ').replace(/_/g, ' ').toUpperCase();
 
       // 3. Coletar todos os candidatos por valor + tempo
@@ -72,10 +82,10 @@ export async function GET(request: Request) {
       for (const t of transactions) {
         if (usedAsaasIds.includes(t.id)) continue;
 
-        const tValue = Math.abs(parseFloat(t.value || '0'));
-        const valueMatches = Math.abs(tValue - expectedAmount) < 0.02;
+        const tValue = Math.abs(parseFloat(t.value || t.netValue || '0'));
+        const valueMatches = Math.abs(tValue - expectedAmount) < 0.05; // tolerância de 5 centavos
 
-        const tDate = new Date(t.date || t.effectiveDate || t.created_at || 0);
+        const tDate = new Date(t.date || t.effectiveDate || t.paymentDate || t.created_at || 0);
         const isRecent = tDate >= createdAt;
 
         if (valueMatches && isRecent) {
@@ -87,15 +97,30 @@ export async function GET(request: Request) {
       let matched = null;
 
       if (candidates.length === 1) {
-        // Apenas um candidato — aprova direto
+        // Apenas 1 candidato com o valor certo no período → aprova direto, sem precisar do nome
         matched = candidates[0];
-      } else if (candidates.length > 1 && payerName) {
-        // Mais de um candidato — usa nome como desempate
-        const nameParts = payerName.split(' ').filter((p: string) => p.length > 2);
-        matched = candidates.find(t => {
-          const tName = (t.payer?.name || t.description || '').toUpperCase();
-          return nameParts.some((part: string) => tName.includes(part));
-        }) || candidates[0]; // se nenhum bateu o nome, pega o primeiro mesmo
+      } else if (candidates.length > 1) {
+        // Mais de 1 candidato com mesmo valor → tenta usar nome como desempate
+        if (payerName && payerName.trim().length > 2) {
+          const nameParts = payerName.split(' ').filter((p: string) => p.length > 2);
+          const nameMatch = candidates.find((t: any) => {
+            const tName = (t.payer?.name || t.description || '').toUpperCase();
+            return nameParts.some((part: string) => tName.includes(part));
+          });
+          // Se achou pelo nome, usa esse. Senão, pega o mais recente como fallback
+          matched = nameMatch || candidates.sort((a: any, b: any) => {
+            const dA = new Date(a.date || a.effectiveDate || 0).getTime();
+            const dB = new Date(b.date || b.effectiveDate || 0).getTime();
+            return dB - dA; // mais recente primeiro
+          })[0];
+        } else {
+          // Sem nome digitado → pega o mais recente
+          matched = candidates.sort((a: any, b: any) => {
+            const dA = new Date(a.date || a.effectiveDate || 0).getTime();
+            const dB = new Date(b.date || b.effectiveDate || 0).getTime();
+            return dB - dA;
+          })[0];
+        }
       }
 
       // 5. Se achou, aprova
