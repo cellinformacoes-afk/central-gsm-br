@@ -78,6 +78,8 @@ export async function GET(request: Request) {
 
       // 3. Coletar todos os candidatos por valor + tempo
       const candidates: any[] = [];
+      // Data de criação no formato YYYY-MM-DD (Brasil)
+      const createdDateStr = createdAt.toISOString().substring(0, 10);
 
       for (const t of transactions) {
         if (usedAsaasIds.includes(t.id)) continue;
@@ -85,13 +87,19 @@ export async function GET(request: Request) {
         const tValue = Math.abs(parseFloat(t.value || t.netValue || '0'));
         const valueMatches = Math.abs(tValue - expectedAmount) < 0.05; // tolerância de 5 centavos
 
-        // Asaas usa campos diferentes por endpoint:
-        // /pix/transactions  → dateCreated
-        // /financialTransactions → date
+        // Asaas /financialTransactions retorna date como "YYYY-MM-DD" (sem hora)
+        // Comparar só a data evita erro de fuso horário
         const tDateRaw = t.dateCreated || t.date || t.effectiveDate || t.paymentDate || t.created_at;
-        const tDate = tDateRaw ? new Date(tDateRaw) : null;
-        // Se não conseguiu parsear data, inclui mesmo assim (evitar perder pagamentos reais)
-        const isRecent = !tDate || tDate >= createdAt;
+        let isRecent = true; // se não tem data, inclui sempre
+        if (tDateRaw) {
+          if (String(tDateRaw).length === 10) {
+            // Apenas data (YYYY-MM-DD): compara só a parte da data
+            isRecent = String(tDateRaw) >= createdDateStr;
+          } else {
+            // Datetime completo: compara normalmente
+            isRecent = new Date(tDateRaw) >= createdAt;
+          }
+        }
 
         if (valueMatches && isRecent) {
           candidates.push(t);
