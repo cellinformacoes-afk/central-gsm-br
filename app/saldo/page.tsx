@@ -66,7 +66,11 @@ export default function SaldoPage() {
       alert("Por favor, preencha um CPF ou CNPJ válido para continuar.");
       return;
     }
-    // Nome é opcional para PIX — o sistema reconhece pelo valor automaticamente
+
+    if (!payerName || payerName.trim().length < 3) {
+      alert("⚠️ Preencha seu nome completo!\n\nO sistema usa seu nome para identificar o pagamento automaticamente e creditar o saldo.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -315,30 +319,33 @@ export default function SaldoPage() {
               </div>
             )}
 
-            <div className="mt-4 p-4 bg-[#1e293b] border border-[#334155] rounded-2xl">
-              <label className="block text-sm font-black text-gray-400 uppercase tracking-widest mb-3">
-                Seu Nome 
-                {paymentMethod === 'pix' 
-                  ? <span className="text-gray-600 font-normal normal-case tracking-normal ml-1">(opcional)</span>
-                  : <span className="text-red-400 ml-1">*</span>
-                }
+            {/* Campo de nome com aviso forte para PIX */}
+            <div className={`mt-4 p-4 rounded-2xl border-2 ${
+              paymentMethod === 'pix'
+                ? 'bg-amber-500/10 border-amber-500/50'
+                : 'bg-[#1e293b] border-[#334155]'
+            }`}>
+              <label className="block text-sm font-black uppercase tracking-widest mb-3">
+                <span className={paymentMethod === 'pix' ? 'text-amber-400' : 'text-gray-400'}>
+                  {paymentMethod === 'pix' ? '⚠️ Seu Nome Completo *' : 'Seu Nome Completo *'}
+                </span>
               </label>
+              {paymentMethod === 'pix' && (
+                <p className="text-amber-400 text-xs font-black uppercase tracking-wider mb-3 leading-relaxed">
+                  OBRIGATÓRIO — O sistema usa seu nome para identificar e creditar seu pagamento automaticamente. Use o mesmo nome do seu banco.
+                </p>
+              )}
               <input 
                 type="text" 
                 value={payerName}
                 onChange={(e) => setPayerName(e.target.value)}
-                placeholder="Ex: João da Silva"
-                className={`w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-lg font-bold transition-all outline-none ${
-                  paymentMethod === 'card'
-                    ? 'focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                    : 'focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD]'
+                placeholder={paymentMethod === 'pix' ? 'Ex: João da Silva (como no banco)' : 'Ex: João da Silva'}
+                className={`w-full bg-[#0f172a] rounded-xl py-4 px-4 text-white text-lg font-bold transition-all outline-none ${
+                  paymentMethod === 'pix'
+                    ? 'border-2 border-amber-500/70 focus:border-amber-400 focus:ring-1 focus:ring-amber-400'
+                    : 'border border-[#334155] focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
                 }`}
               />
-              <p className="text-xs text-gray-500 mt-2 font-bold uppercase tracking-wider">
-                {paymentMethod === 'pix' 
-                  ? '💡 Opcional. O sistema detecta seu pagamento pelo valor automaticamente.'
-                  : '⚠️ Obrigatório para o checkout do cartão.'}
-              </p>
             </div>
 
             <div className="mt-8">
