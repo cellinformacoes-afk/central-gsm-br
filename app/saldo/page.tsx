@@ -15,6 +15,7 @@ export default function SaldoPage() {
   const [cpf, setCpf] = useState('');
   const [payerName, setPayerName] = useState('');
   const [profile, setProfile] = useState<any>(null);
+  const [showNameConfirm, setShowNameConfirm] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -72,6 +73,11 @@ export default function SaldoPage() {
       return;
     }
 
+    setShowNameConfirm(true);
+  };
+
+  const confirmAndGeneratePix = async () => {
+    setShowNameConfirm(false);
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -357,7 +363,7 @@ export default function SaldoPage() {
                     loading ? 'bg-gray-700 cursor-not-allowed' : 'bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] shadow-[0_10px_30px_rgba(0,210,173,0.3)] hover:-translate-y-1'
                   }`}
                 >
-                  {loading ? 'GERANDO PIX...' : 'GERAR PIX (Sem Taxas)'}
+                  {loading ? 'PROCESSANDO...' : 'GERAR PIX (Sem Taxas)'}
                 </button>
               ) : (
                 <div className="space-y-3">
@@ -368,14 +374,56 @@ export default function SaldoPage() {
                       loading ? 'bg-gray-700 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_10px_30px_rgba(37,99,235,0.3)] hover:-translate-y-1'
                     }`}
                   >
-                    {loading ? 'AGUARDE...' : 'IR PARA PAGAMENTO SEGURO'}
+                    {loading ? 'PROCESSANDO...' : 'PAGAR COM CARTÃO'}
                   </button>
-                  <p className="text-[10px] text-gray-500 text-center font-bold uppercase tracking-widest">
-                    Você será redirecionado para o Checkout Seguro do Asaas. A taxa (1,89% + R$ 0,35) será somada ao valor final.
-                  </p>
                 </div>
               )}
             </div>
+
+            {/* Modal de Confirmação de Nome */}
+            {showNameConfirm && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-md animate-in fade-in duration-300">
+                <div className="bg-[#1e293b] border-2 border-amber-500/30 p-8 rounded-3xl max-w-md w-full shadow-[0_20px_50px_rgba(245,158,11,0.2)] animate-in zoom-in-95 duration-300">
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <span className="text-4xl">⚠️</span>
+                    </div>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-2">
+                      Confirme seu Nome
+                    </h2>
+                    <p className="text-gray-400 font-medium mb-8">
+                      O nome abaixo é o <span className="text-amber-400 font-bold italic">exato nome</span> da sua conta bancária?
+                    </p>
+
+                    <div className="bg-[#0f172a] p-5 rounded-2xl border border-[#334155] mb-8">
+                      <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1 text-left">Nome informado:</p>
+                      <p className="text-xl font-black text-[#00D2AD] break-words text-left">
+                        {payerName.toUpperCase()}
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <button 
+                        onClick={confirmAndGeneratePix}
+                        className="w-full py-5 bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] rounded-2xl font-black text-lg uppercase tracking-tighter shadow-lg transition-all active:scale-95"
+                      >
+                        SIM, ESTÁ CORRETO
+                      </button>
+                      <button 
+                        onClick={() => setShowNameConfirm(false)}
+                        className="w-full py-4 text-gray-400 hover:text-white font-bold uppercase text-sm tracking-widest transition-all"
+                      >
+                        NÃO, QUERO ALTERAR
+                      </button>
+                    </div>
+
+                    <p className="mt-6 text-[10px] text-gray-500 font-bold uppercase leading-relaxed">
+                      Se o nome estiver diferente do banco, seu saldo não será creditado automaticamente.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : step === 3 ? (
           // Tela de espera do Cartão
