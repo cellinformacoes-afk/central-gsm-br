@@ -85,8 +85,13 @@ export async function GET(request: Request) {
         const tValue = Math.abs(parseFloat(t.value || t.netValue || '0'));
         const valueMatches = Math.abs(tValue - expectedAmount) < 0.05; // tolerância de 5 centavos
 
-        const tDate = new Date(t.date || t.effectiveDate || t.paymentDate || t.created_at || 0);
-        const isRecent = tDate >= createdAt;
+        // Asaas usa campos diferentes por endpoint:
+        // /pix/transactions  → dateCreated
+        // /financialTransactions → date
+        const tDateRaw = t.dateCreated || t.date || t.effectiveDate || t.paymentDate || t.created_at;
+        const tDate = tDateRaw ? new Date(tDateRaw) : null;
+        // Se não conseguiu parsear data, inclui mesmo assim (evitar perder pagamentos reais)
+        const isRecent = !tDate || tDate >= createdAt;
 
         if (valueMatches && isRecent) {
           candidates.push(t);
