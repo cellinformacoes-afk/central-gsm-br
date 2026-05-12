@@ -61,7 +61,9 @@ export async function GET(request: Request) {
       for (const tx of pendingTxs) {
         const expectedAmount = parseFloat(tx.amount);
         const createdAt = new Date(tx.created_at);
-        const createdDateStr = createdAt.toISOString().substring(0, 10);
+        // Converter createdAt para data de Brasília para comparar com o Asaas
+        const brCreatedAt = new Date(createdAt.getTime() - 3 * 60 * 60 * 1000);
+        const createdDateStr = brCreatedAt.toISOString().substring(0, 10);
         const paymentId = tx.external_id || '';
         
         const payerName = paymentId.includes('_') 

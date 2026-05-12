@@ -79,7 +79,8 @@ export async function GET(request: Request) {
       // 3. Coletar todos os candidatos por valor + tempo
       const candidates: any[] = [];
       // Data de criação no formato YYYY-MM-DD (Brasil)
-      const createdDateStr = createdAt.toISOString().substring(0, 10);
+      const brCreatedAt = new Date(createdAt.getTime() - 3 * 60 * 60 * 1000);
+      const createdDateStr = brCreatedAt.toISOString().substring(0, 10);
 
       for (const t of transactions) {
         if (usedAsaasIds.includes(t.id)) continue;
