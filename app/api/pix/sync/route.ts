@@ -103,9 +103,16 @@ export async function GET(request: Request) {
           });
 
           if (!rpcError) {
-            await supabaseAdmin.from('transactions').update({ description: matched.id }).eq('id', tx.id);
+            // IMPORTANTE: Atualizar tanto a descrição quanto o STATUS para success
+            await supabaseAdmin.from('transactions')
+              .update({ 
+                description: matched.id,
+                status: 'success' 
+              })
+              .eq('id', tx.id);
+              
             processedCount++;
-            results.push({ txId: tx.id, status: 'success', asaasId: matched.id });
+            results.push({ txId: tx.id, status: 'success', asaasId: matched.id, name: matched.payer?.name || matched.description });
           }
         }
       }
