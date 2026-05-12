@@ -10,21 +10,23 @@ export default function AdminNav() {
 
   useEffect(() => {
     async function fetchRevenue() {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const startOfDay = today.toISOString();
+      // Ajuste para o fuso horário de Brasília (UTC-3)
+      const now = new Date();
+      const brTime = new Date(now.getTime() - (3 * 60 * 60 * 1000));
       
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const endOfDay = tomorrow.toISOString();
+      const startOfDay = new Date(brTime);
+      startOfDay.setUTCHours(3, 0, 0, 0); // 00:00 no Brasil = 03:00 UTC
+      
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setUTCHours(endOfDay.getUTCHours() + 24);
 
       const { data, error } = await supabase
         .from('transactions')
         .select('amount')
         .eq('status', 'success')
         .in('type', ['deposit', 'pix', 'credit_card'])
-        .gte('created_at', startOfDay)
-        .lt('created_at', endOfDay);
+        .gte('created_at', startOfDay.toISOString())
+        .lt('created_at', endOfDay.toISOString());
 
       if (!error && data) {
         const total = data.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
