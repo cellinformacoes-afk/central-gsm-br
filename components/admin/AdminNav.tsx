@@ -44,6 +44,7 @@ export default function AdminNav() {
     { href: '/admin/assinaturas', label: '💎 Assinaturas' },
     { href: '/admin/tutoriais', label: '📖 Tutoriais' },
     { href: '/admin/fraudes', label: '🚫 Fraudes' },
+    { href: '/admin/conciliacao', label: '⚡ Conciliação' },
   ];
 
   return (
