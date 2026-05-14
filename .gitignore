@@ -12,3 +12,7 @@ yarn-error.log*
 .env*.local
 build
 dist
+
+# Automation sessions
+scripts/automation/sessions/
+*.png
