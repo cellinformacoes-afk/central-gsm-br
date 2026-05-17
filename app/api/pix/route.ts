@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     }
 
     // Retornando apenas a chave PIX pura, pois o Asaas bloqueia QR codes genéricos.
-    const pixKey = "569ca170-dc32-4744-ab42-0d966b9db179";
+    const pixKey = "63138401000122"; // Chave CNPJ Asaas - cadastrada 17/05/2026
 
     return NextResponse.json({
       id: pendingId,
