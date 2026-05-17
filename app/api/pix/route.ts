@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(request: Request) {
+  // 🔴 PAGAMENTOS TEMPORARIAMENTE SUSPENSOS - INVESTIGAÇÃO EM CURSO
+  return NextResponse.json({ error: 'Pagamentos temporariamente suspensos para manutenção. Tente novamente em breve.' }, { status: 503 });
   try {
     const { amount, description, userId, cpf, payerName } = await request.json();
     
