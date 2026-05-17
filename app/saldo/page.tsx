@@ -463,53 +463,66 @@ export default function SaldoPage() {
             </div>
           </div>
         ) : (
-          <div className="text-center space-y-8 animate-in fade-in zoom-in duration-300 relative z-10">
+          <div className="text-center space-y-6 animate-in fade-in zoom-in duration-300 relative z-10">
             <div className="bg-[#1e293b] border-2 border-[#00D2AD] p-8 rounded-3xl mx-auto shadow-[0_0_30px_rgba(0,210,173,0.15)] flex flex-col items-center justify-center relative overflow-hidden">
                <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/5 rounded-full blur-2xl"></div>
-               
-               <div className="w-16 h-16 bg-[#00D2AD]/10 rounded-full flex items-center justify-center mb-6">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00D2AD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+
+               <h3 className="text-white font-black text-xl uppercase tracking-tighter mb-1">📱 Pague com PIX</h3>
+               <p className="text-gray-400 text-sm mb-4">Escaneie o QR Code ou copie o código abaixo</p>
+
+               {/* QR Code */}
+               {pixData?.qr_code_base64 ? (
+                 <div className="bg-white p-3 rounded-2xl mb-4 shadow-lg">
+                   <img
+                     src={`data:image/png;base64,${pixData.qr_code_base64}`}
+                     alt="QR Code PIX"
+                     className="w-52 h-52 object-contain"
+                   />
+                 </div>
+               ) : (
+                 <div className="w-52 h-52 bg-[#0f172a] border border-[#334155] rounded-2xl flex items-center justify-center mb-4">
+                   <p className="text-gray-500 text-xs">Carregando QR Code...</p>
+                 </div>
+               )}
+
+               {/* Valor */}
+               <div className="w-full bg-[#0f172a] border border-[#00D2AD]/30 p-3 rounded-xl mb-3 text-center">
+                 <p className="text-gray-400 text-xs uppercase tracking-widest">Valor exato</p>
+                 <p className="text-[#00D2AD] font-black text-2xl">R$ {parseFloat(amount).toFixed(2)}</p>
                </div>
-               
-               <h3 className="text-white font-black text-xl uppercase tracking-tighter mb-2"> CHAVE PIX ALEATÓRIA</h3>
-               <p className="text-gray-400 text-sm max-w-xs mx-auto mb-6">Esta é a nossa chave oficial. Abra o seu banco e escolha a opção de <strong className="text-white">Transferência PIX</strong>.</p>
-               
-               <div className="w-full bg-[#0f172a] border border-[#334155] p-4 rounded-xl flex items-center justify-between gap-4">
-                  <code className="text-[#00D2AD] text-[10px] md:text-xs font-mono break-all">{pixData?.copy_paste || 'Gerando chave...'}</code>
-                  <button 
-                    onClick={() => {
-                        if (pixData?.copy_paste) {
-                          navigator.clipboard.writeText(pixData.copy_paste);
-                          alert("Chave Copiada!");
-                        }
-                    }}
-                    className="bg-[#00D2AD] text-[#0f172a] px-4 py-2 rounded-lg font-black text-xs uppercase whitespace-nowrap shadow-md hover:bg-[#00BDA0] transition-colors"
-                  >
-                    Copiar
-                  </button>
+
+               {/* Copia e Cola */}
+               <div className="w-full bg-[#0f172a] border border-[#334155] p-3 rounded-xl flex items-center justify-between gap-3">
+                 <code className="text-[#00D2AD] text-[10px] md:text-xs font-mono break-all text-left">
+                   {pixData?.copy_paste || 'Gerando código...'}
+                 </code>
+                 <button
+                   onClick={() => {
+                     if (pixData?.copy_paste) {
+                       navigator.clipboard.writeText(pixData.copy_paste);
+                       alert("Código PIX Copiado!");
+                     }
+                   }}
+                   className="bg-[#00D2AD] text-[#0f172a] px-4 py-2 rounded-lg font-black text-xs uppercase whitespace-nowrap shadow-md hover:bg-[#00BDA0] transition-colors"
+                 >
+                   Copiar
+                 </button>
                </div>
             </div>
 
-            <div className="space-y-4">
-               <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl">
-                 <h3 className="text-amber-500 font-black text-lg uppercase tracking-tighter mb-1"> ⚠️ TRANSFIRA EXATAMENTE R$ {amount}</h3>
-                 <p className="text-amber-500/80 text-xs font-bold uppercase tracking-wider">O sistema só vai aprovar se o valor transferido for <strong className="text-amber-500 underline">exatamente</strong> igual ao valor gerado aqui no site.</p>
-               </div>
-            </div>
-
-            <div className="pt-4 flex flex-col gap-3">
-               <button 
+            <div className="pt-2 flex flex-col gap-3">
+               <button
                 onClick={() => checkPaymentStatus()}
                 disabled={loading}
                 className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-4 rounded-2xl font-black uppercase text-sm shadow-[0_10px_20px_rgba(0,210,173,0.2)] transition-all"
                >
-                 {loading ? 'VERIFICANDO...' : 'JÁ PAGUEI / VERIFICAR AGORA'}
+                {loading ? 'VERIFICANDO...' : 'JÁ PAGUEI / VERIFICAR AGORA'}
                </button>
-               <button 
+               <button
                 onClick={() => setStep(1)}
                 className="text-gray-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
                >
-                 Voltar e Alterar Valor
+                Voltar e Alterar Valor
                </button>
             </div>
           </div>
