@@ -4,8 +4,6 @@ import { asaas } from '@/lib/asaas';
 import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
-  // 🔴 PAGAMENTOS TEMPORARIAMENTE SUSPENSOS - INVESTIGAÇÃO EM CURSO
-  return NextResponse.json({ error: 'Pagamentos temporariamente suspensos para manutenção. Tente novamente em breve.' }, { status: 503 });
   try {
     // Pegar o token do header de authorization
     const authHeader = request.headers.get('Authorization');
