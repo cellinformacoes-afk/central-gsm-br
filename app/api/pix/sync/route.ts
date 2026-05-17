@@ -88,13 +88,36 @@ export async function GET(request: Request) {
 
         let matched = null;
         if (candidates.length === 1) {
-          matched = candidates[0];
+          // Único candidato: verifica nome se disponível
+          const singleCandidate = candidates[0];
+          const tName = (singleCandidate.payer?.name || singleCandidate.description || '').toUpperCase();
+          if (payerName) {
+            const nameParts = payerName.split(' ').filter((p: string) => p.length > 2);
+            const nameMatches = nameParts.some((part: string) => tName.includes(part));
+            if (nameMatches || tName === '') {
+              // Nome bate OU Asaas não retornou nome do pagador (aceita com ressalva)
+              matched = singleCandidate;
+            } else {
+              console.warn(`[SYNC] Nome NÃO confere: esperado "${payerName}", recebido "${tName}". Ignorando para segurança.`);
+            }
+          } else {
+            // Sem nome no external_id (legacy), aceita pelo valor
+            matched = singleCandidate;
+          }
         } else if (candidates.length > 1 && payerName) {
+          // Múltiplos candidatos: OBRIGATÓRIO bater o nome
           const nameParts = payerName.split(' ').filter((p: string) => p.length > 2);
           matched = candidates.find((t: any) => {
             const tName = (t.payer?.name || t.description || '').toUpperCase();
             return nameParts.some((part: string) => tName.includes(part));
-          }) || candidates[0];
+          }) || null; // NUNCA usa candidates[0] como fallback
+
+          if (!matched) {
+            console.warn(`[SYNC] ${candidates.length} candidatos para R$${expectedAmount} mas nenhum nome confere com "${payerName}". Deixando para revisão manual.`);
+          }
+        } else if (candidates.length > 1 && !payerName) {
+          // Múltiplos candidatos sem nome para distinguir: NÃO credita, vai para órfãos
+          console.warn(`[SYNC] ${candidates.length} candidatos para R$${expectedAmount} sem nome para distinguir. Deixando para revisão manual.`);
         }
 
         if (matched) {
@@ -105,7 +128,6 @@ export async function GET(request: Request) {
           });
 
           if (!rpcError) {
-            // IMPORTANTE: Atualizar tanto a descrição quanto o STATUS para success
             await supabaseAdmin.from('transactions')
               .update({ 
                 description: matched.id,

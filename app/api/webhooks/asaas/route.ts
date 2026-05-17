@@ -116,16 +116,58 @@ export async function POST(request: Request) {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      // Encontrar a que tem o valor mais próximo (tolerância de 5 centavos)
-      const matched = (pendingTxs || []).find((t: any) =>
+      // Nome do pagador vindo do Asaas
+      const pixPayerName = (pixData.payer?.name || pixData.description || '').toUpperCase().trim();
+
+      // Candidatos pelo valor (tolerância de 5 centavos)
+      const candidates = (pendingTxs || []).filter((t: any) =>
         Math.abs(parseFloat(String(t.amount)) - receivedAmount) < 0.05
       );
 
+      let matched = null;
+
+      if (candidates.length === 1) {
+        const tx = candidates[0];
+        // Verifica nome do pagador se disponível
+        const expectedPayerName = tx.external_id?.includes('_')
+          ? tx.external_id.split('_').slice(2).join(' ').replace(/_/g, ' ').toUpperCase()
+          : '';
+        
+        if (pixPayerName && expectedPayerName) {
+          const nameParts = expectedPayerName.split(' ').filter((p: string) => p.length > 2);
+          const nameMatches = nameParts.some((part: string) => pixPayerName.includes(part));
+          matched = nameMatches ? tx : null;
+          if (!nameMatches) {
+            console.warn(`[WEBHOOK] Nome NÃO confere: esperado "${expectedPayerName}", recebido "${pixPayerName}". Guardando como órfão.`);
+          }
+        } else {
+          // Sem nome para verificar: aceita pelo valor (legado)
+          matched = tx;
+        }
+      } else if (candidates.length > 1) {
+        // Múltiplos pendentes com mesmo valor: EXIGE verificação de nome
+        if (pixPayerName) {
+          matched = candidates.find((t: any) => {
+            const expectedPayerName = t.external_id?.includes('_')
+              ? t.external_id.split('_').slice(2).join(' ').replace(/_/g, ' ').toUpperCase()
+              : '';
+            const nameParts = expectedPayerName.split(' ').filter((p: string) => p.length > 2);
+            return nameParts.some((part: string) => pixPayerName.includes(part));
+          }) || null;
+
+          if (!matched) {
+            console.warn(`[WEBHOOK] ${candidates.length} candidatos para R$${receivedAmount} mas nenhum nome confere com "${pixPayerName}". Guardando como órfão.`);
+          }
+        } else {
+          console.warn(`[WEBHOOK] ${candidates.length} candidatos para R$${receivedAmount} sem nome do pagador disponível. Guardando como órfão.`);
+        }
+      }
+
       if (!matched) {
-        console.warn('Nenhuma transação pendente para valor:', receivedAmount);
+        console.warn('Nenhuma transação pendente correspondente para valor:', receivedAmount);
         // Salva para análise manual
         await supabaseAdmin.from('webhook_logs').insert({
-          payload: { ...body, note: 'PIX_SEM_MATCH', receivedAmount, asaasPixId },
+          payload: { ...body, note: 'PIX_SEM_MATCH', receivedAmount, asaasPixId, pixPayerName },
           source: 'pix_sem_match',
           created_at: new Date().toISOString()
         });
