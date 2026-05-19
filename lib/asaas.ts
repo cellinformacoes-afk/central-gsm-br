@@ -46,18 +46,19 @@ export const asaas = {
         const customer = searchData.data[0];
         console.log(`Cliente encontrado: ${customer.id}`);
         
-        // Se o cliente existe mas não tem CPF e nós temos um agora, vamos atualizar
-        if (!customer.cpfCnpj && cpfCnpj) {
-          console.log(`Atualizando CPF para o cliente ${customer.id}`);
-          await fetch(`${ASAAS_API_URL}/customers/${customer.id}`, {
-            method: 'POST',
-            headers: {
-              'access_token': ASAAS_API_KEY.trim(),
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ cpfCnpj })
-          });
-        }
+        // Sempre garantimos que a notificação está desativada no cliente existente e atualizamos o CPF se necessário
+        console.log(`Garantindo notificações desativadas para o cliente existente ${customer.id}`);
+        await fetch(`${ASAAS_API_URL}/customers/${customer.id}`, {
+          method: 'POST',
+          headers: {
+            'access_token': ASAAS_API_KEY.trim(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            ...(cpfCnpj && !customer.cpfCnpj ? { cpfCnpj } : {}),
+            notificationDisabled: true 
+          })
+        });
         
         return customer.id;
       }
@@ -74,7 +75,8 @@ export const asaas = {
         body: JSON.stringify({
           name: name || email.split('@')[0],
           email: email,
-          cpfCnpj: cpfCnpj
+          cpfCnpj: cpfCnpj,
+          notificationDisabled: true // Desativa todas as notificações (SMS/WhatsApp) na origem
         })
       });
 
