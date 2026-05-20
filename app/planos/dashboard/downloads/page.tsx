@@ -53,19 +53,26 @@ export default function DownloadsPage() {
       <div className="bg-[#0f172a]/50 p-8 rounded-3xl border border-white/5">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tools.map((tool, idx) => (
-            <div key={idx} className="bg-[#1e293b] border border-white/10 hover:border-[#00D2AD]/50 p-6 rounded-2xl flex flex-col group transition-all h-full">
-              <div className="w-12 h-12 bg-white/5 group-hover:bg-[#00D2AD]/20 rounded-xl flex items-center justify-center mb-4 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 group-hover:text-[#00D2AD] transition-colors"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <div
+              key={idx}
+              className="bg-[#0f172a]/50 hover:bg-[#00D2AD]/10 border border-white/5 hover:border-[#00D2AD]/30 p-6 rounded-2xl flex flex-col items-start transition-all group h-full"
+            >
+              <div className="w-full flex justify-between items-start mb-4">
+                <span className="text-[10px] font-black text-[#00D2AD] bg-[#00D2AD]/10 px-2 py-1 rounded-lg uppercase tracking-widest">
+                  DOWNLOAD
+                </span>
+                <span className="text-xs text-gray-500 font-bold uppercase tracking-widest group-hover:text-white transition-colors">{tool.size}</span>
               </div>
-              <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#00D2AD] transition-colors">{tool.name}</h3>
-              <p className="text-sm text-gray-400 mb-6 flex-1">{tool.desc}</p>
+
+              <span className="text-xl font-black text-white text-left group-hover:text-[#00D2AD] transition-colors">{tool.name}</span>
+              <p className="text-gray-500 text-[11px] mt-2 font-medium leading-relaxed flex-1">
+                {tool.desc}
+              </p>
               
-              <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-auto">
-                <span className="text-xs font-bold text-gray-500">{tool.size}</span>
-                <button className="text-xs font-bold bg-[#00D2AD]/10 text-[#00D2AD] hover:bg-[#00D2AD] hover:text-[#0f172a] px-4 py-2 rounded-lg transition-all shadow-[0_0_10px_rgba(0,210,173,0.1)]">
-                  Baixar Agora
-                </button>
-              </div>
+              <button className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#00D2AD]/60 group-hover:text-[#00D2AD] transition-all">
+                Fazer Download
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-y-1 transition-transform"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              </button>
             </div>
           ))}
         </div>
