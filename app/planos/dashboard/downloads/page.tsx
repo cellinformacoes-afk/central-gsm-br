@@ -2,23 +2,35 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 export default function DownloadsPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const id = Object.keys(localStorage).find(k => k.startsWith('userPlan_'));
-    const plan = id ? localStorage.getItem(id) : null;
-    
-    if (plan !== 'premium') {
-      router.push('/planos/dashboard/frp');
-    } else {
-      setLoading(false);
+    async function checkPlan() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('plan')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (profile?.plan !== 'premium') {
+        router.push('/planos/dashboard/frp');
+      } else {
+        setLoading(false);
+      }
     }
+    checkPlan();
   }, [router]);
 
-  if (loading) return null;
+  if (loading) return <div className="h-full flex items-center justify-center"><span className="animate-spin text-4xl text-[#00D2AD]">⚙</span></div>;
 
   const tools = [
     { name: 'SamFw Tool v4.9', desc: 'Ferramenta completa para Samsung FRP e muito mais.', size: '15 MB' },
