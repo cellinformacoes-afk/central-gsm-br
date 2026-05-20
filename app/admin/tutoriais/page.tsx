@@ -14,7 +14,7 @@ interface Tutorial {
   id?: string;
   brand: string;
   model: string;
-  category: 'FRP' | 'MDM';
+  category: 'FRP' | 'MDM' | 'DOWNLOADS';
   video_url?: string;
   attention?: string;
   steps: Step[];
@@ -298,10 +298,13 @@ export default function AdminTutoriaisPage() {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Categoria</label>
                 <div className="flex gap-2">
-                  {['FRP', 'MDM'].map(cat => (
+                  {['FRP', 'MDM', 'DOWNLOADS'].map(cat => (
                     <button
                       key={cat}
-                      onClick={() => setFormData({...formData, category: cat as any})}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setFormData({...formData, category: cat as any});
+                      }}
                       className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
                         formData.category === cat 
                           ? 'bg-[#00D2AD] text-[#0f172a]' 
