@@ -168,12 +168,6 @@ export default function MDMPage() {
                         <img src={step.image_url} alt={step.title} className="w-full h-auto object-contain transform group-hover:scale-[1.02] transition-transform duration-500" />
                       </div>
                     ) : (
-                      <div className="rounded-2xl overflow-hidden border-2 border-dashed border-[#FFC107]/20 bg-[#FFC107]/5 mt-5 max-w-2xl flex flex-col items-center justify-center py-10 px-4 text-center transition-all hover:bg-[#FFC107]/10 hover:border-[#FFC107]/40">
-                        <div className="bg-[#FFC107]/10 p-4 rounded-full mb-4">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFC107" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        </div>
-                        <p className="text-[#FFC107] font-black text-sm uppercase tracking-widest mb-2">Imagem do {step.title || 'Passo'}</p>
-                        <p className="text-gray-400 text-xs max-w-sm mx-auto leading-relaxed">
                           O sistema já está preparado para exibir imagens aqui. Adicione a URL no seu banco de dados ou me envie a imagem que quer colocar fixa!
                         </p>
                       </div>
