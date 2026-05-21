@@ -63,7 +63,6 @@ export default function MDMPage() {
         <h1 className="text-3xl font-black text-white uppercase flex items-center gap-3">
           <span className="text-[#FFC107]">🔒</span> Desbloqueio MDM
         </h1>
-        <p className="text-gray-400 mt-2">Drible bloqueios corporativos e de pagamento (PayJoy, Knox) com nossos métodos de exclusividade.</p>
       </div>
 
       {/* Abas de Fabricantes */}
