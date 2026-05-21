@@ -77,7 +77,14 @@ export default function PlanosDashboardLayout({
   // Wait! Let's add a [role, setRole] state to layout.tsx!
   // Yes, adding const [role, setRole] = useState<string | null>(null); makes it easy to check in links array.
 
-  const links = [
+  type NavLink = {
+  name: string;
+  href: string;
+  icon: string;
+  disabled?: boolean;
+};
+
+const links: NavLink[] = [
     { name: 'FRP (Desbloqueio)', href: '/planos/dashboard/frp', icon: '📱' },
     { name: 'MDM (Desbloqueio)', href: '/planos/dashboard/mdm', icon: '🔒' },
     { name: 'Mini Curso', href: '/planos/dashboard/curso', icon: '🎓' },
