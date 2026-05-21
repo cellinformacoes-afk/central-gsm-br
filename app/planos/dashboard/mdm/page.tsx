@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { AlertCircle } from 'lucide-react';
 
@@ -27,6 +28,21 @@ export default function MDMPage() {
   const [plan, setPlan] = useState<string>('free');
   const [role, setRole] = useState<string>('user');
   const [selectedBrand, setSelectedBrand] = useState<string>('REALME SPD');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (selectedImage) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [selectedImage]);
 
   useEffect(() => {
     async function fetchPlan() {
@@ -165,9 +181,16 @@ export default function MDMPage() {
                     <h4 className="text-base font-bold text-white mb-1 drop-shadow-md">{step.title}</h4>
                     <p className="text-sm text-gray-400 leading-relaxed font-medium">{step.description}</p>
                     {step.image_url && (
-                      <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/40 mt-5 max-w-2xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] group relative">
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <img src={step.image_url} alt={step.title} className="w-full h-auto object-contain transform group-hover:scale-[1.02] transition-transform duration-500" />
+                      <div 
+                        onClick={() => setSelectedImage(step.image_url || null)}
+                        className="rounded-2xl overflow-hidden border border-white/10 bg-black/40 mt-5 max-w-2xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] group relative cursor-pointer hover:scale-[1.02] hover:border-[#FFC107]/50 transition-all duration-300"
+                      >
+                        <div className="absolute inset-0 bg-[#FFC107]/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                          <span className="text-white text-xs font-black uppercase tracking-widest bg-black/60 px-3 py-2 rounded-xl backdrop-blur-sm border border-white/10 shadow-lg">
+                            Ampliar Imagem 🔍
+                          </span>
+                        </div>
+                        <img src={step.image_url} alt={step.title} className="w-full h-auto object-contain transform transition-transform duration-500" />
                       </div>
                     )}
                   </div>
@@ -211,6 +234,28 @@ export default function MDMPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Fullscreen Image Modal */}
+      {selectedImage && mounted && createPortal(
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md cursor-pointer"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 text-white hover:text-red-500 transition-colors z-50 bg-black/20 hover:bg-black/40 rounded-full p-2"
+            onClick={(e) => { e.stopPropagation(); setSelectedImage(null); }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          <img 
+            src={selectedImage} 
+            alt="Fullscreen View" 
+            className="w-full h-full object-contain cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>,
+        document.body
       )}
     </div>
   );

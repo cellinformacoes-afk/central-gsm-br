@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { AlertCircle } from 'lucide-react';
 
@@ -29,6 +30,21 @@ export default function FRPPage() {
   const [sessionUser, setSessionUser] = useState<any>(null);
 
   const [selectedBrand, setSelectedBrand] = useState<string>('REALME SPD');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (selectedImage) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [selectedImage]);
 
   useEffect(() => {
     // 1. Get plan from database
@@ -172,8 +188,16 @@ export default function FRPPage() {
                     <h4 className="text-base font-bold text-gray-200 mb-1">{step.title}</h4>
                     <p className="text-sm text-gray-400 leading-relaxed mb-4">{step.description}</p>
                     {step.image_url && (
-                      <div className="rounded-xl overflow-hidden border border-white/5 bg-black/20 max-w-md">
-                        <img src={step.image_url} alt={step.title} className="w-full h-auto" />
+                      <div 
+                        onClick={() => setSelectedImage(step.image_url || null)}
+                        className="rounded-xl overflow-hidden border border-white/5 bg-black/20 max-w-md cursor-pointer hover:scale-[1.02] hover:border-[#00D2AD]/50 transition-all duration-300 relative group"
+                      >
+                        <div className="absolute inset-0 bg-[#00D2AD]/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-white text-xs font-black uppercase tracking-widest bg-black/60 px-3 py-2 rounded-xl backdrop-blur-sm border border-white/10 shadow-lg">
+                            Ampliar Imagem 🔍
+                          </span>
+                        </div>
+                        <img src={step.image_url} alt={step.title} className="w-full h-auto object-contain" />
                       </div>
                     )}
                   </div>
@@ -218,6 +242,28 @@ export default function FRPPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Fullscreen Image Modal */}
+      {selectedImage && mounted && createPortal(
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md cursor-pointer"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 text-white hover:text-[#00D2AD] transition-colors z-50 bg-black/20 hover:bg-black/40 rounded-full p-2"
+            onClick={(e) => { e.stopPropagation(); setSelectedImage(null); }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          <img 
+            src={selectedImage} 
+            alt="Fullscreen View" 
+            className="w-full h-full object-contain cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>,
+        document.body
       )}
     </div>
   );
