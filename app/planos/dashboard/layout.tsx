@@ -81,7 +81,12 @@ export default function PlanosDashboardLayout({
     { name: 'FRP (Desbloqueio)', href: '/planos/dashboard/frp', icon: '📱' },
     { name: 'MDM (Desbloqueio)', href: '/planos/dashboard/mdm', icon: '🔒' },
     { name: 'Mini Curso', href: '/planos/dashboard/curso', icon: '🎓' },
-    ...(plan === 'premium' || role === 'admin' ? [{ name: 'Downloads Extras', href: '/planos/dashboard/downloads', icon: '💾' }] : []),
+    { 
+      name: 'Downloads Extras', 
+      href: '/planos/dashboard/downloads', 
+      icon: '💾',
+      disabled: plan !== 'premium' && role !== 'admin'
+    },
   ];
 
   return (
@@ -110,6 +115,19 @@ export default function PlanosDashboardLayout({
         <nav className="bg-[#1e293b]/60 backdrop-blur-xl border border-white/5 rounded-2xl p-2 flex flex-col gap-1">
           {links.map((link) => {
             const isActive = pathname?.startsWith(link.href);
+            if ('disabled' in link && link.disabled) {
+              return (
+                <div 
+                  key={link.name}
+                  className="flex items-center gap-3 p-3 rounded-xl font-bold text-sm text-gray-500/50 cursor-not-allowed border border-transparent select-none"
+                  title="Disponível apenas no Plano Premium"
+                >
+                  <span className="text-lg opacity-40">{link.icon}</span>
+                  <span className="line-through">{link.name}</span>
+                  <span className="ml-auto text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded font-black tracking-wider uppercase">PREMIUM</span>
+                </div>
+              )
+            }
             return (
               <Link 
                 key={link.name} 
