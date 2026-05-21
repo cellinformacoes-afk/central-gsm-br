@@ -102,9 +102,6 @@ export default function MDMPage() {
                 </div>
 
                 <span className="text-xl font-black text-white text-left group-hover:text-[#FFC107] transition-colors">{method.model}</span>
-                <p className="text-gray-500 text-[11px] mt-2 font-medium leading-relaxed">
-                  Bypass avançado de bloqueios PayJoy, Knox e empresariais.
-                </p>
                 
                 <div className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#FFC107]/60 group-hover:text-[#FFC107] transition-all">
                   Abrir Tutorial

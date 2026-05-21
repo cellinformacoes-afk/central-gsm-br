@@ -106,9 +106,6 @@ export default function FRPPage() {
                 </div>
                 
                 <span className="text-xl font-black text-white group-hover:text-[#00D2AD] transition-colors">{method.model}</span>
-                <p className="text-gray-500 text-[11px] mt-2 font-medium leading-relaxed">
-                  Método via UnlockTool, Pandora ou Manual (Bug de Sistema).
-                </p>
                 
                 <div className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#00D2AD]/60 group-hover:text-[#00D2AD] transition-all">
                   Abrir Tutorial
