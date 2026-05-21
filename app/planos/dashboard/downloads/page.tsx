@@ -18,11 +18,11 @@ export default function DownloadsPage() {
       }
       const { data: profile } = await supabase
         .from('profiles')
-        .select('plan')
+        .select('plan, role')
         .eq('id', session.user.id)
         .single();
         
-      if (profile?.plan !== 'premium') {
+      if (profile?.plan !== 'premium' && profile?.role !== 'admin') {
         router.push('/planos/dashboard/frp');
       } else {
         setLoading(false);

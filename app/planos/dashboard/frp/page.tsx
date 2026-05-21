@@ -24,7 +24,8 @@ interface DeviceMethod {
 export default function FRPPage() {
   const [methods, setMethods] = useState<DeviceMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<DeviceMethod | null>(null);
-  const [plan, setPlan] = useState<string>('basico');
+  const [plan, setPlan] = useState<string>('free');
+  const [role, setRole] = useState<string>('user');
   const [sessionUser, setSessionUser] = useState<any>(null);
 
   const [selectedBrand, setSelectedBrand] = useState<string>('REALME SPD');
@@ -36,10 +37,11 @@ export default function FRPPage() {
       if (session) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('plan')
+          .select('plan, role')
           .eq('id', session.user.id)
           .single();
         setPlan(profile?.plan || 'free');
+        setRole(profile?.role || 'user');
       }
     }
     fetchPlan();
@@ -187,11 +189,11 @@ export default function FRPPage() {
                   Arquivos Necessários
                 </h3>
 
-                {plan === 'basico' ? (
+                {plan !== 'premium' && role !== 'admin' ? (
                   <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="text-red-400">
                       <p className="font-bold mb-1">Acesso Bloqueado</p>
-                      <p className="text-sm opacity-80">O Plano Básico não permite baixar arquivos. Faça upgrade para o Premium para liberar os downloads.</p>
+                      <p className="text-sm opacity-80">Seu plano atual não permite baixar arquivos. Faça upgrade para o Premium para liberar os downloads.</p>
                     </div>
                     <a href="/planos" className="shrink-0 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold px-4 py-2 rounded-xl transition-colors">
                       Fazer Upgrade

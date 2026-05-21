@@ -24,7 +24,8 @@ interface DeviceMethod {
 export default function MDMPage() {
   const [methods, setMethods] = useState<DeviceMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<DeviceMethod | null>(null);
-  const [plan, setPlan] = useState<string>('basico');
+  const [plan, setPlan] = useState<string>('free');
+  const [role, setRole] = useState<string>('user');
   const [selectedBrand, setSelectedBrand] = useState<string>('REALME SPD');
 
   useEffect(() => {
@@ -33,10 +34,11 @@ export default function MDMPage() {
       if (session) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('plan')
+          .select('plan, role')
           .eq('id', session.user.id)
           .single();
         setPlan(profile?.plan || 'free');
+        setRole(profile?.role || 'user');
       }
     }
     fetchPlan();
@@ -162,14 +164,10 @@ export default function MDMPage() {
                   <div className="pt-2">
                     <h4 className="text-base font-bold text-white mb-1 drop-shadow-md">{step.title}</h4>
                     <p className="text-sm text-gray-400 leading-relaxed font-medium">{step.description}</p>
-                    {step.image_url ? (
+                    {step.image_url && (
                       <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/40 mt-5 max-w-2xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] group relative">
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         <img src={step.image_url} alt={step.title} className="w-full h-auto object-contain transform group-hover:scale-[1.02] transition-transform duration-500" />
-                      </div>
-                    ) : (
-                          O sistema já está preparado para exibir imagens aqui. Adicione a URL no seu banco de dados ou me envie a imagem que quer colocar fixa!
-                        </p>
                       </div>
                     )}
                   </div>
@@ -184,11 +182,11 @@ export default function MDMPage() {
                   Arquivos Necessários
                 </h3>
 
-                {plan === 'basico' ? (
+                {plan !== 'premium' && role !== 'admin' ? (
                   <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="text-red-400">
                       <p className="font-bold mb-1">Acesso Bloqueado</p>
-                      <p className="text-sm opacity-80">O Plano Básico não permite baixar arquivos. Faça upgrade para o Premium para liberar os downloads.</p>
+                      <p className="text-sm opacity-80">Seu plano atual não permite baixar arquivos. Faça upgrade para o Premium para liberar os downloads.</p>
                     </div>
                     <a href="/planos" className="shrink-0 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold px-4 py-2 rounded-xl transition-colors">
                       Fazer Upgrade

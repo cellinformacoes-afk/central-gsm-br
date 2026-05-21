@@ -12,6 +12,7 @@ export default function PlanosDashboardLayout({
 }) {
   const [session, setSession] = useState<any>(null);
   const [plan, setPlan] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [expiryDate, setExpiryDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function PlanosDashboardLayout({
         // Fetch plan from database with safety fallback
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('plan, plan_expiration_date')
+          .select('plan, plan_expiration_date, role')
           .eq('id', session.user.id)
           .single();
 
@@ -36,6 +37,7 @@ export default function PlanosDashboardLayout({
 
         const userPlan = profile?.plan || 'free';
         const expiration = profile?.plan_expiration_date;
+        const userRole = profile?.role || 'user';
         
         // 1. Check for expiration
         if (userPlan !== 'free' && expiration) {
@@ -51,11 +53,12 @@ export default function PlanosDashboardLayout({
         }
 
         setPlan(userPlan);
+        setRole(userRole);
         setExpiryDate(expiration);
         setLoading(false);
         
-        // Protect downloads route for basic plan
-        if (pathname === '/planos/dashboard/downloads' && userPlan !== 'premium') {
+        // Protect downloads route for basic plan and non-admin
+        if (pathname === '/planos/dashboard/downloads' && userPlan !== 'premium' && userRole !== 'admin') {
           router.push('/planos/dashboard/frp');
         }
       } else {
@@ -68,11 +71,17 @@ export default function PlanosDashboardLayout({
 
   if (loading) return <div className="h-screen flex items-center justify-center text-white"><span className="animate-spin text-4xl text-[#00D2AD]">⚙</span></div>;
 
+  // Render navigation links
+  // Fetch user role if profile is available (we can do a simple client-side check if we had user role state, but since we didn't add userRole state, let's keep it simple or check plan)
+  // Wait, let's check if we can store role in state or check directly. Since we don't have a role state, let's add one or use session/db check.
+  // Wait! Let's add a [role, setRole] state to layout.tsx!
+  // Yes, adding const [role, setRole] = useState<string | null>(null); makes it easy to check in links array.
+
   const links = [
     { name: 'FRP (Desbloqueio)', href: '/planos/dashboard/frp', icon: '📱' },
     { name: 'MDM (Desbloqueio)', href: '/planos/dashboard/mdm', icon: '🔒' },
     { name: 'Mini Curso', href: '/planos/dashboard/curso', icon: '🎓' },
-    ...(plan === 'premium' ? [{ name: 'Downloads Extras', href: '/planos/dashboard/downloads', icon: '💾' }] : []),
+    ...(plan === 'premium' || role === 'admin' ? [{ name: 'Downloads Extras', href: '/planos/dashboard/downloads', icon: '💾' }] : []),
   ];
 
   return (
