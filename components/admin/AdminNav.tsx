@@ -51,8 +51,8 @@ export default function AdminNav() {
   ];
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 border-b border-[#334155] pb-4">
-      <div className="flex gap-4 overflow-x-auto no-scrollbar">
+    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 border-b border-[#334155] pb-6">
+      <div className="flex flex-wrap gap-x-2 gap-y-4 flex-1">
         {links.map((link) => {
           const isActive = pathname === link.href;
           return (
@@ -61,8 +61,8 @@ export default function AdminNav() {
               href={link.href} 
               className={
                 isActive 
-                  ? "text-[#00D2AD] border-b-2 border-[#00D2AD] font-black uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap" 
-                  : "text-gray-500 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap"
+                  ? "bg-[#00D2AD]/10 text-[#00D2AD] border border-[#00D2AD]/30 rounded-lg font-black uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap transition-all" 
+                  : "bg-transparent text-gray-400 hover:text-white hover:bg-white/5 border border-transparent rounded-lg font-bold uppercase text-xs tracking-widest px-4 py-2 whitespace-nowrap transition-all"
               }
             >
               {link.label}
