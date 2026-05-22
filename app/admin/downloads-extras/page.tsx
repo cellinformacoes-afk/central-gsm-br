@@ -208,7 +208,8 @@ export default function AdminDownloadsExtrasPage() {
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Marca / Categoria</label>
                   <input 
                     value={formData.brand}
-                    onChange={(e) => setFormData({...formData, brand: e.target.value.toUpperCase()})}
+                    onChange={(e) => setFormData({...formData, brand: e.target.value.toUpperCase().trimStart()})}
+                    onBlur={(e) => setFormData({...formData, brand: e.target.value.trim()})}
                     className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-[#00D2AD]/50 outline-none transition-all placeholder:text-gray-700 font-bold"
                     placeholder="EX: SAMSUNG, MOTOROLA" 
                   />

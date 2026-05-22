@@ -117,11 +117,11 @@ export default function DownloadsPage() {
       desc: d.description || 'Arquivo de download extra',
       size: d.size || 'N/A',
       url: d.url,
-      brand: d.brand.toUpperCase()
+      brand: (d.brand || '').toUpperCase().trim()
     }))
   ].sort((a, b) => a.name.localeCompare(b.name));
 
-  const tools = selectedBrand ? combinedTools.filter(t => t.brand === selectedBrand) : combinedTools;
+  const tools = selectedBrand ? combinedTools.filter(t => t.brand === selectedBrand.trim()) : combinedTools;
 
   return (
     <div className="h-full">
