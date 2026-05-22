@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 export default function DownloadsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [dbDownloads, setDbDownloads] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -25,6 +26,10 @@ export default function DownloadsPage() {
       if (profile?.plan !== 'premium' && profile?.role !== 'admin') {
         router.push('/planos/dashboard/frp');
       } else {
+        // Buscar downloads extras do banco
+        const { data: extras } = await supabase.from('extra_downloads').select('*');
+        if (extras) setDbDownloads(extras);
+        
         setLoading(false);
       }
     }
@@ -33,7 +38,8 @@ export default function DownloadsPage() {
 
   if (loading) return <div className="h-full flex items-center justify-center"><span className="animate-spin text-4xl text-[#00D2AD]">⚙</span></div>;
 
-  const brands = ['REALME SPD', 'REALME MTK', 'MOTOROLA', 'INFINIX MTK', 'TECNO MTK', 'ITEL MTK', 'POCO', 'XIAOMI'];
+  const hardcodedBrands = ['REALME SPD', 'REALME MTK', 'MOTOROLA', 'INFINIX MTK', 'TECNO MTK', 'ITEL MTK', 'POCO', 'XIAOMI'];
+  const brands = Array.from(new Set([...hardcodedBrands, ...dbDownloads.map(d => d.brand.toUpperCase())])).sort();
 
   const allTools = [
     { name: 'Hot 40 Pro', desc: 'Arquivos e ferramentas para Hot 40 Pro', size: 'N/A', url: '#', brand: 'INFINIX MTK' },
@@ -104,7 +110,18 @@ export default function DownloadsPage() {
     { name: 'Redmi Note 15 Pro', desc: 'Arquivos e ferramentas para Redmi Note 15 Pro', size: 'N/A', url: '#', brand: 'XIAOMI' },
   ];
 
-  const tools = selectedBrand ? allTools.filter(t => t.brand === selectedBrand) : allTools;
+  const combinedTools = [
+    ...allTools,
+    ...dbDownloads.map(d => ({
+      name: d.name,
+      desc: d.description || 'Arquivo de download extra',
+      size: d.size || 'N/A',
+      url: d.url,
+      brand: d.brand.toUpperCase()
+    }))
+  ].sort((a, b) => a.name.localeCompare(b.name));
+
+  const tools = selectedBrand ? combinedTools.filter(t => t.brand === selectedBrand) : combinedTools;
 
   return (
     <div className="h-full">
