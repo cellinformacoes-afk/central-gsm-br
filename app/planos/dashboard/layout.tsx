@@ -87,7 +87,6 @@ export default function PlanosDashboardLayout({
 const links: NavLink[] = [
     { name: 'FRP (Desbloqueio)', href: '/planos/dashboard/frp', icon: '📱' },
     { name: 'MDM (Desbloqueio)', href: '/planos/dashboard/mdm', icon: '🔒' },
-    { name: 'Mini Curso', href: '/planos/dashboard/curso', icon: '🎓' },
     { 
       name: 'Downloads Extras', 
       href: '/planos/dashboard/downloads', 
