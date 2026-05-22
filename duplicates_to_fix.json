@@ -1,0 +1,93 @@
+{
+  "usersToDeduct": {
+    "1403192b-714e-4427-8747-2f727fdd0536": {
+      "email": "grinformatica35@gmail.com",
+      "currentBalance": 2.06,
+      "totalDeduction": 12,
+      "duplicateIds": [
+        "09a54f4f-986a-47e5-aa85-539aa1448ff0"
+      ]
+    },
+    "77038709-4d3c-45af-bbe7-72d68fba0246": {
+      "email": "pvpsdw@gmail.com",
+      "currentBalance": 6.06,
+      "totalDeduction": 12,
+      "duplicateIds": [
+        "5be32c8b-1196-4b08-b88f-c52d9bef7441"
+      ]
+    },
+    "8510fcdc-5ae1-4736-a379-aaaa4690c073": {
+      "email": "vitorvscampos29@gmail.com",
+      "currentBalance": 2.01,
+      "totalDeduction": 24,
+      "duplicateIds": [
+        "016711bc-0eb1-4ef4-981e-98a6d8aaa732",
+        "2ef188fe-e6b0-4b10-bb40-83eb006e6359"
+      ]
+    },
+    "2bc6ea71-7778-4f23-86de-569cb91a6afc": {
+      "email": "jcmaciel668@gmail.com",
+      "currentBalance": 2.04,
+      "totalDeduction": 12,
+      "duplicateIds": [
+        "110d525e-a727-4398-be68-2970a63d27b6"
+      ]
+    },
+    "dfecb4c7-6337-4634-9100-d9186955d31b": {
+      "email": "soad_n@hotmail.com",
+      "currentBalance": 7.02,
+      "totalDeduction": 12,
+      "duplicateIds": [
+        "cd1c5a93-a195-420b-804c-7d8da2ca8ef7"
+      ]
+    },
+    "e656badd-d379-4e23-9ae7-48443dc890dc": {
+      "email": "vl2439677@gmail.com",
+      "currentBalance": 8.05,
+      "totalDeduction": 12,
+      "duplicateIds": [
+        "f67b2e1d-7ca8-41c5-ac64-9b0e21ddfe42"
+      ]
+    },
+    "3fae6dfb-9aec-41c1-94b4-b8471dde4e85": {
+      "email": "andersonboemek16@gmail.com",
+      "currentBalance": 6.03,
+      "totalDeduction": 12,
+      "duplicateIds": [
+        "0c4293f0-e00e-418b-af4e-eefe9053746e"
+      ]
+    },
+    "e3837ac0-d41f-4387-843d-c9564e9e4906": {
+      "email": "paulo_henrique_rosa@hotmail.com",
+      "currentBalance": 19.05,
+      "totalDeduction": 12,
+      "duplicateIds": [
+        "41a8af1e-7b0d-4a04-8f4d-130dd331c460"
+      ]
+    },
+    "dd287168-6b5a-49c5-a1bd-be7570a18343": {
+      "email": "2contajackson@gmail.com",
+      "currentBalance": 194.09,
+      "totalDeduction": 36,
+      "duplicateIds": [
+        "7b62bd11-0775-452b-beb1-1a1f4f3832ae",
+        "9fbd5ab8-166b-4f84-a984-0634990c682f",
+        "8fe34035-c2b0-49dd-bca9-2c83433c812a"
+      ]
+    }
+  },
+  "duplicateTxsToUpdate": [
+    "09a54f4f-986a-47e5-aa85-539aa1448ff0",
+    "5be32c8b-1196-4b08-b88f-c52d9bef7441",
+    "016711bc-0eb1-4ef4-981e-98a6d8aaa732",
+    "2ef188fe-e6b0-4b10-bb40-83eb006e6359",
+    "110d525e-a727-4398-be68-2970a63d27b6",
+    "cd1c5a93-a195-420b-804c-7d8da2ca8ef7",
+    "f67b2e1d-7ca8-41c5-ac64-9b0e21ddfe42",
+    "0c4293f0-e00e-418b-af4e-eefe9053746e",
+    "41a8af1e-7b0d-4a04-8f4d-130dd331c460",
+    "7b62bd11-0775-452b-beb1-1a1f4f3832ae",
+    "9fbd5ab8-166b-4f84-a984-0634990c682f",
+    "8fe34035-c2b0-49dd-bca9-2c83433c812a"
+  ]
+}

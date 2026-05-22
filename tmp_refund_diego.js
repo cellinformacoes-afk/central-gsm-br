@@ -1,0 +1,58 @@
+const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs');
+
+const envFile = fs.readFileSync('.env.local', 'utf8');
+const env = {};
+envFile.split('\n').forEach(line => {
+    const [key, ...rest] = line.split('=');
+    if (key && rest.length > 0) {
+        env[key.trim()] = rest.join('=').trim().replace(/'/g, '').replace(/"/g, '');
+    }
+});
+
+const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+async function refundUser() {
+  const email = 'diegogm2006@hotmail.com';
+  const amountToAdd = 9.99;
+
+  const { data: profile, error: pError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('email', email)
+    .single();
+
+  if (pError || !profile) {
+    console.error("Profile not found:", pError);
+    return;
+  }
+
+  console.log(`Current balance for ${email}:`, profile.balance);
+  const newBalance = profile.balance + amountToAdd;
+
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ balance: newBalance })
+    .eq('id', profile.id);
+
+  if (updateError) {
+    console.error("Failed to update balance:", updateError);
+    return;
+  }
+
+  console.log(`Successfully refunded ${amountToAdd}. New balance:`, newBalance);
+
+  // Insert a new transaction record for the refund
+  await supabase
+    .from('transactions')
+    .insert({
+      user_id: profile.id,
+      amount: amountToAdd,
+      status: 'success',
+      type: 'refund',
+      description: 'Reembolso de compra incorreta - 2 android multi tool (R$ 9,99)'
+    });
+  console.log("Inserted new successful transaction for the manual refund.");
+}
+
+refundUser();
