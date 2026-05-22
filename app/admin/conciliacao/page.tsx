@@ -5,19 +5,14 @@ import { useRouter } from 'next/navigation';
 import AdminNav from '@/components/admin/AdminNav';
 
 export default function ConciliacaoPage() {
-  const [orphans, setOrphans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [processingId, setProcessingId] = useState<string | null>(null);
-  const [emails, setEmails] = useState<{ [key: string]: string }>({});
-  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+  const [email, setEmail] = useState('');
+  const [amount, setAmount] = useState('');
+  const [isTest, setIsTest] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     checkAdmin();
-    fetchOrphans();
-    // Carregar IDs ignorados do localStorage
-    const savedHidden = localStorage.getItem('admin_hidden_orphans');
-    if (savedHidden) setHiddenIds(JSON.parse(savedHidden));
   }, []);
 
   async function checkAdmin() {
@@ -38,44 +33,24 @@ export default function ConciliacaoPage() {
     }
   }
 
-  async function fetchOrphans() {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/pix/sync');
-      const data = await response.json();
-      const list = data.unmatched_in_asaas || [];
-      setOrphans(list);
-      
-      // Preencher e-mails sugeridos
-      const newEmails: any = {};
-      list.forEach((o: any) => {
-        if (o.suggested_email) newEmails[o.id] = o.suggested_email;
-      });
-      setEmails(prev => ({ ...newEmails, ...prev }));
-    } catch (err) {
-      console.error('Erro ao buscar órfãos:', err);
-    }
-    setLoading(false);
-  }
-
-  async function handleCredit(orphan: any) {
-    const email = emails[orphan.id];
-    if (!email || !email.includes('@')) {
-      alert('Por favor, insira um e-mail válido.');
+  async function handleCredit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !amount) {
+      alert('Por favor, preencha o e-mail e o valor.');
       return;
     }
 
-    if (!confirm(`Deseja creditar R$ ${orphan.value} para o e-mail ${email}?`)) return;
+    if (!confirm(`Deseja adicionar R$ ${amount} na conta de ${email}?`)) return;
 
-    setProcessingId(orphan.id);
+    setLoading(true);
     try {
-      const response = await fetch('/api/admin/credit-orphan', {
+      const response = await fetch('/api/admin/credit-manual', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
-          amount: orphan.value,
-          asaasId: orphan.id
+          amount: parseFloat(amount),
+          isTest
         })
       });
 
@@ -83,143 +58,109 @@ export default function ConciliacaoPage() {
 
       if (result.success) {
         alert(result.message);
-        fetchOrphans(); 
+        setEmail('');
+        setAmount('');
+        setIsTest(false);
       } else {
         alert('Erro: ' + (result.error || 'Falha ao creditar'));
       }
     } catch (err: any) {
       alert('Erro técnico: ' + err.message);
     }
-    setProcessingId(null);
+    setLoading(false);
   }
-
-  function handleHide(id: string) {
-    const newHidden = [...hiddenIds, id];
-    setHiddenIds(newHidden);
-    localStorage.setItem('admin_hidden_orphans', JSON.stringify(newHidden));
-  }
-
-  const visibleOrphans = orphans.filter(o => !hiddenIds.includes(o.id));
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
       <AdminNav />
 
-      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">
-            CONCILIAÇÃO <span className="text-[#00D2AD]">MANUAL</span>
-          </h1>
-          <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-2">
-            Pagamentos do Asaas sem dono automático.
-          </p>
-        </div>
-        <button 
-          onClick={fetchOrphans}
-          className="text-[10px] font-black uppercase tracking-widest text-[#00D2AD] border border-[#00D2AD]/30 px-4 py-2 rounded-xl hover:bg-[#00D2AD]/10 transition-all"
-        >
-          🔄 Atualizar Lista
-        </button>
+      <div className="mb-10">
+        <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">
+          ADICIONAR SALDO <span className="text-[#00D2AD]">MANUAL</span>
+        </h1>
+        <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-2">
+          Adicione saldo diretamente na conta de um cliente de forma rápida.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {loading ? (
-          <div className="text-center py-20 text-gray-500 animate-pulse uppercase font-black tracking-widest">
-            Buscando no Asaas...
-          </div>
-        ) : visibleOrphans.length > 0 ? (
-          visibleOrphans.map((orphan) => (
-            <div key={orphan.id} className="bg-[#1e293b] p-6 rounded-3xl border border-[#334155] hover:border-[#00D2AD]/30 transition-all group relative overflow-hidden">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-2xl bg-[#0f172a] border border-[#334155] flex items-center justify-center text-3xl shadow-xl">
-                    💰
-                  </div>
-                  <div>
-                    <h3 className="text-white font-black uppercase italic tracking-tighter text-xl line-clamp-1">
-                      {orphan.payer || 'PAGADOR DESCONHECIDO'}
-                    </h3>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[#00D2AD] font-black text-lg italic">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orphan.value)}
-                      </span>
-                      <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest bg-[#0f172a] px-2 py-1 rounded-lg">
-                        {new Date(orphan.date).toLocaleDateString('pt-BR')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+      <div className="max-w-xl bg-[#0f172a]/50 p-8 rounded-3xl border border-white/5 relative overflow-hidden">
+        {/* Glow effect */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00D2AD]/5 blur-[100px] rounded-full pointer-events-none" />
 
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto bg-[#0f172a]/50 p-3 rounded-2xl border border-[#334155]/50">
-                  <div className="w-full sm:w-72 relative">
-                    <input 
-                      type="email" 
-                      placeholder="E-MAIL DO CLIENTE..."
-                      value={emails[orphan.id] || ''}
-                      onChange={(e) => setEmails({...emails, [orphan.id]: e.target.value})}
-                      className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-3 px-4 text-xs font-bold text-white uppercase tracking-widest focus:border-[#00D2AD] outline-none transition-all pr-10"
-                    />
-                    {orphan.suggested_email && !emails[orphan.id] && (
-                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] animate-bounce text-[#00D2AD]">✨</span>
-                    )}
-                  </div>
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <button 
-                      onClick={() => handleCredit(orphan)}
-                      disabled={processingId === orphan.id}
-                      className={`flex-1 sm:flex-none px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                        processingId === orphan.id 
-                          ? 'bg-gray-700 text-gray-500' 
-                          : 'bg-[#00D2AD] text-[#0f172a] hover:bg-[#00BDA0] shadow-[0_10px_20px_rgba(0,210,173,0.2)] hover:-translate-y-0.5'
-                      }`}
-                    >
-                      {processingId === orphan.id ? 'CREDITANDO...' : 'CREDITAR AGORA'}
-                    </button>
-                    <button 
-                      onClick={() => handleHide(orphan.id)}
-                      title="Já resolvi por fora / Ignorar"
-                      className="px-4 py-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all text-xs"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              {orphan.suggested_email && (
-                <div className="mt-4 flex items-center gap-2">
-                  <span className="text-[10px] bg-[#00D2AD]/20 text-[#00D2AD] px-2 py-0.5 rounded-md font-black uppercase tracking-tighter animate-pulse">Sugestão Detectada:</span>
-                  <span className="text-[10px] text-gray-400 font-bold italic">{orphan.suggested_email}</span>
-                </div>
-              )}
+        <form onSubmit={handleCredit} className="relative z-10 flex flex-col gap-6">
+          
+          <div>
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 mb-2 block">
+              E-mail do Cliente
+            </label>
+            <input 
+              type="email" 
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-[#00D2AD]/50 outline-none transition-all placeholder:text-gray-700 font-bold"
+              placeholder="cliente@email.com" 
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 mb-2 block">
+              Valor a Adicionar (R$)
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-black">R$</span>
+              <input 
+                type="number" 
+                required
+                min="0.01"
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full bg-black/40 border border-white/5 rounded-xl pl-12 pr-4 py-3 text-white focus:border-[#00D2AD]/50 outline-none transition-all placeholder:text-gray-700 font-black text-lg"
+                placeholder="0.00" 
+              />
             </div>
-          ))
-        ) : (
-          <div className="text-center py-20 bg-[#1e293b]/50 rounded-3xl border-2 border-dashed border-[#334155]">
-             <p className="text-gray-500 font-bold uppercase tracking-widest text-xs mb-2">Tudo limpo por aqui! ✅</p>
-             <button onClick={() => { setHiddenIds([]); localStorage.removeItem('admin_hidden_orphans'); fetchOrphans(); }} className="text-gray-600 text-[9px] font-black uppercase tracking-widest hover:text-[#00D2AD]">Mostrar itens ocultos</button>
           </div>
-        )}
+
+          <label className="flex items-center gap-3 p-4 bg-[#1e293b]/50 border border-white/5 rounded-xl cursor-pointer hover:bg-[#1e293b] transition-all">
+            <input 
+              type="checkbox" 
+              checked={isTest}
+              onChange={(e) => setIsTest(e.target.checked)}
+              className="w-5 h-5 accent-[#00D2AD] rounded bg-black/40 border-white/10"
+            />
+            <div>
+              <span className="block text-sm font-black text-white uppercase tracking-tighter">
+                Isso é um Teste ou Cortesia
+              </span>
+              <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">
+                Marque para NÃO contar nas vendas de hoje.
+              </span>
+            </div>
+          </label>
+
+          <button 
+            type="submit"
+            disabled={loading}
+            className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+              loading 
+                ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                : 'bg-[#00D2AD] text-[#0f172a] hover:bg-[#00BDA0] shadow-[0_10px_20px_rgba(0,210,173,0.2)] hover:-translate-y-1'
+            }`}
+          >
+            {loading ? 'PROCESSANDO...' : 'CREDITAR SALDO AGORA'}
+            {!loading && <span className="text-lg">💰</span>}
+          </button>
+        </form>
       </div>
-      
-      {/* Footer Info */}
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl">
-          <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest mb-2 flex items-center gap-2">
-            <span>🔍</span> Como funciona a sugestão?
-          </p>
-          <p className="text-gray-400 text-xs leading-relaxed font-medium">
-            O robô busca clientes que geraram um PIX do mesmo valor nas últimas 24h. Se houver apenas um, ele sugere o e-mail automaticamente para facilitar sua vida.
-          </p>
-        </div>
-        <div className="p-6 bg-red-500/5 border border-red-500/10 rounded-3xl">
-          <p className="text-red-400 text-[10px] font-black uppercase tracking-widest mb-2 flex items-center gap-2">
-            <span>🗑️</span> Botão Lixeira
-          </p>
-          <p className="text-gray-400 text-xs leading-relaxed font-medium">
-            Use a lixeira para pagamentos que você já creditou manualmente direto no perfil do cliente. Isso limpa sua lista de trabalho.
-          </p>
-        </div>
+
+      <div className="mt-10 p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl max-w-xl">
+        <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest mb-2 flex items-center gap-2">
+          <span>💡</span> Como usar esta tela
+        </p>
+        <p className="text-gray-400 text-xs leading-relaxed font-medium">
+          Se o cliente fez um PIX e o Asaas falhou em avisar o sistema, basta colocar o e-mail dele e o valor. Como foi uma venda real, deixe a caixinha <strong>desmarcada</strong> para que conte no seu "Entradas Hoje". Se for apenas um teste, marque a caixinha!
+        </p>
       </div>
     </div>
   );
