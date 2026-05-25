@@ -19,9 +19,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [accountEmail, setAccountEmail] = useState('');
-  
   // Purchase Modal State
+  const [plan, setPlan] = useState<string>('free');
+  const [role, setRole] = useState<string>('user');
   const [selectedService, setSelectedService] = useState<any>(null);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [imei, setImei] = useState('');
@@ -67,6 +67,24 @@ export default function Home() {
     } else {
       setServices(servData || []);
     }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('plan, role')
+          .eq('id', session.user.id)
+          .single();
+        if (profile) {
+          setPlan(profile.plan || 'free');
+          setRole(profile.role || 'user');
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching user profile:', e);
+    }
+
     setLoading(false);
   }
 
@@ -170,7 +188,9 @@ export default function Home() {
                         <div>
                            <h2 className="text-2xl font-black text-white uppercase italic">{selectedService.title}</h2>
                            <p className="text-[#00D2AD] font-bold text-lg">
-                              {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
+                              {selectedService.category_id === 9 || (selectedService.category_id === 5 && (plan === 'premium' || role === 'admin'))
+                                 ? 'GRÁTIS' 
+                                 : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
                            </p>
                         </div>
                         <button onClick={() => { setSelectedService(null); setAccountEmail(''); setImei(''); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
@@ -241,13 +261,13 @@ export default function Home() {
                           </div>
                         )}
 
-                        {selectedService.category_id !== 9 && (
+                        {selectedService.category_id !== 9 && !(selectedService.category_id === 5 && (plan === 'premium' || role === 'admin')) && (
                           <div className="bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/10 text-xs text-gray-400 font-medium">
                              📌 O prazo médio de entrega para este serviço é de <span className="text-[#FFC107] font-black">{selectedService.time_estimate || '30 MINUTOS'}</span>.
                           </div>
                         )}
 
-                        {selectedService.category_id === 9 ? (
+                        {selectedService.category_id === 9 || (selectedService.category_id === 5 && (plan === 'premium' || role === 'admin')) ? (
                           <button 
                             onClick={() => {
                               if (selectedService.download_url) {
@@ -452,7 +472,9 @@ export default function Home() {
                  <div className="flex items-end justify-between">
                     <div className="flex items-center gap-4">
                        <span className="text-[#00D2AD] font-black text-2xl drop-shadow-[0_0_5px_rgba(0,210,173,0.3)]">
-                         {service.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price)}
+                         {service.category_id === 9 || (service.category_id === 5 && (plan === 'premium' || role === 'admin'))
+                           ? 'GRÁTIS' 
+                           : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price)}
                        </span>
                        {service.category_id !== 9 && service.is_rental && service.duration_hours && (
                          <span className="text-[10px] font-black text-gray-500 uppercase tracking-tight mt-1">
