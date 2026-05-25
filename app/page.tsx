@@ -187,11 +187,9 @@ export default function Home() {
                      <div className="flex justify-between items-start mb-6">
                         <div>
                            <h2 className="text-2xl font-black text-white uppercase italic">{selectedService.title}</h2>
-                           <p className="text-[#00D2AD] font-bold text-lg">
-                              {selectedService.category_id === 9 || (selectedService.category_id === 5 && (plan === 'premium' || role === 'admin'))
-                                 ? 'GRÁTIS' 
-                                 : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
-                           </p>
+                            <p className="text-[#00D2AD] font-bold text-lg">
+                               {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
+                            </p>
                         </div>
                         <button onClick={() => { setSelectedService(null); setAccountEmail(''); setImei(''); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
                      </div>
@@ -261,13 +259,13 @@ export default function Home() {
                           </div>
                         )}
 
-                        {selectedService.category_id !== 9 && !(selectedService.category_id === 5 && (plan === 'premium' || role === 'admin')) && (
+                        {selectedService.category_id !== 9 && (
                           <div className="bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/10 text-xs text-gray-400 font-medium">
                              📌 O prazo médio de entrega para este serviço é de <span className="text-[#FFC107] font-black">{selectedService.time_estimate || '30 MINUTOS'}</span>.
                           </div>
                         )}
 
-                        {selectedService.category_id === 9 || (selectedService.category_id === 5 && (plan === 'premium' || role === 'admin')) ? (
+                        {selectedService.category_id === 9 ? (
                           <button 
                             onClick={() => {
                               if (selectedService.download_url) {
@@ -472,9 +470,7 @@ export default function Home() {
                  <div className="flex items-end justify-between">
                     <div className="flex items-center gap-4">
                        <span className="text-[#00D2AD] font-black text-2xl drop-shadow-[0_0_5px_rgba(0,210,173,0.3)]">
-                         {service.category_id === 9 || (service.category_id === 5 && (plan === 'premium' || role === 'admin'))
-                           ? 'GRÁTIS' 
-                           : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price)}
+                         {service.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price)}
                        </span>
                        {service.category_id !== 9 && service.is_rental && service.duration_hours && (
                          <span className="text-[10px] font-black text-gray-500 uppercase tracking-tight mt-1">
