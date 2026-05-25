@@ -19,38 +19,20 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [accountEmail, setAccountEmail] = useState('');
+  
   // Purchase Modal State
-  const [plan, setPlan] = useState<string>('free');
-  const [role, setRole] = useState<string>('user');
   const [selectedService, setSelectedService] = useState<any>(null);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [imei, setImei] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
+  
   const router = useRouter();
 
   useEffect(() => {
     fetchData();
   }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && categories.length > 0) {
-      const params = new URLSearchParams(window.location.search);
-      const cat = params.get('cat');
-      const search = params.get('search');
-      
-      if (cat) {
-        const found = categories.find(c => c.slug === cat || String(c.id) === cat);
-        if (found) {
-          setActiveCategoryId(found.id);
-        }
-      }
-      
-      if (search) {
-        setSearchTerm(search);
-      }
-    }
-  }, [categories]);
 
   async function fetchData() {
     setLoading(true);
@@ -67,24 +49,6 @@ export default function Home() {
     } else {
       setServices(servData || []);
     }
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('plan, role')
-          .eq('id', session.user.id)
-          .single();
-        if (profile) {
-          setPlan(profile.plan || 'free');
-          setRole(profile.role || 'user');
-        }
-      }
-    } catch (e) {
-      console.error('Error fetching user profile:', e);
-    }
-
     setLoading(false);
   }
 
@@ -92,11 +56,11 @@ export default function Home() {
     if (!selectedService) return;
 
     // Basic Validation
-    if (selectedService.categories?.slug === 'creditos' && !accountEmail) {
+    if (selectedService.categories?.slug === 'creditos' && (!accountEmail || accountEmail.trim() === '')) {
       alert("Por favor, informe o e-mail da conta onde os créditos serão adicionados.");
       return;
     }
-    if (selectedService.category_id === 4 && !imei) {
+    if (selectedService.category_id === 4 && (!imei || imei.trim() === '')) {
       alert("Por favor, informe o IMEI do aparelho.");
       return;
     }
@@ -110,18 +74,22 @@ export default function Home() {
         return;
       }
 
-      // Call Unified RPC with quantity
+      // Call Unified RPC with quantity and sanitized inputs
       const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
         p_user_id: session.user.id,
         p_service_id: selectedService.id,
-        p_input_data: { imei: imei, account_email: accountEmail },
+        p_input_data: { 
+          imei: imei || '', 
+          account_email: accountEmail || '' 
+        },
         p_quantity: quantity
       });
 
       if (rpcError) throw rpcError;
 
-      if (result.status === 'error') {
-        if (result.message === 'Saldo insuficiente') {
+      if (result?.status === 'error') {
+        const errorMessage = result.message || "Erro desconhecido ao processar o pagamento.";
+        if (errorMessage === 'Saldo insuficiente') {
           setSelectedService(null);
           setImei('');
           setQuantity(1);
@@ -129,7 +97,7 @@ export default function Home() {
           setShowInsufficientBalance(true);
           return;
         }
-        alert(result.message);
+        alert(errorMessage);
         setSelectedService(null);
         setImei('');
         setQuantity(1);
@@ -137,11 +105,9 @@ export default function Home() {
         return;
       }
 
-      const lastResult = result;
-
-      if (lastResult.type === 'rental' && lastResult.credentials) {
-        alert(`Aluguel realizado com sucesso! Suas credenciais:\n\n📧 ${lastResult.credentials.email}\n🔑 ${lastResult.credentials.password}\n\nVocê também pode vê-las na página 'Meus Pedidos'.`);
-      } else if (lastResult.type === 'rental_pending_stock') {
+      if (result?.type === 'rental' && result?.credentials) {
+        alert(`Aluguel realizado com sucesso! Suas credenciais:\n\n📧 ${result.credentials.email}\n🔑 ${result.credentials.password}\n\nVocê também pode vê-las na página 'Meus Pedidos'.`);
+      } else if (result?.type === 'rental_pending_stock') {
         alert("Pagamento aprovado! No momento estamos sem contas em estoque. O administrador enviará sua conta em breve.");
       } else {
         alert(quantity > 1 ? `Pedido de ${quantity} unidades realizado com sucesso!` : "Pedido realizado com sucesso!");
@@ -153,8 +119,8 @@ export default function Home() {
       setQuantity(1);
       router.push('/pedidos');
     } catch (error: any) {
-      console.error(error);
-      alert("Erro ao processar compra: " + (error.message || "Erro desconhecido"));
+      console.error("Critical Purchase Error:", error);
+      alert("Erro crítico ao processar compra: " + (error.message || "Tente novamente mais tarde."));
     } finally {
       setPurchaseLoading(false);
     }
@@ -187,9 +153,9 @@ export default function Home() {
                      <div className="flex justify-between items-start mb-6">
                         <div>
                            <h2 className="text-2xl font-black text-white uppercase italic">{selectedService.title}</h2>
-                            <p className="text-[#00D2AD] font-bold text-lg">
-                               {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
-                            </p>
+                           <p className="text-[#00D2AD] font-bold text-lg">
+                              {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
+                           </p>
                         </div>
                         <button onClick={() => { setSelectedService(null); setAccountEmail(''); setImei(''); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
                      </div>
