@@ -27,12 +27,30 @@ export default function Home() {
   const [imei, setImei] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
-  
   const router = useRouter();
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && categories.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const cat = params.get('cat');
+      const search = params.get('search');
+      
+      if (cat) {
+        const found = categories.find(c => c.slug === cat || String(c.id) === cat);
+        if (found) {
+          setActiveCategoryId(found.id);
+        }
+      }
+      
+      if (search) {
+        setSearchTerm(search);
+      }
+    }
+  }, [categories]);
 
   async function fetchData() {
     setLoading(true);

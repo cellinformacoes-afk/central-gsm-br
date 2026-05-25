@@ -17,7 +17,8 @@ async function migrate() {
         category: m.category,
         video_url: m.videoUrl || null,
         steps: m.steps,
-        files: m.files || []
+        files: m.files || [],
+        attention: m.attention || null
     }));
 
     // Insere em lotes para evitar erros de limite de dados
