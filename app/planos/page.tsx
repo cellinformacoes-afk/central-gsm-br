@@ -8,8 +8,12 @@ import Link from 'next/link';
 function PlanosContent() {
   const [session, setSession] = useState<any>(null);
   const [currentPlan, setCurrentPlan] = useState<string>('free');
+  const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [pendingPlan, setPendingPlan] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState<boolean>(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const isUpgrade = searchParams.get('upgrade') === 'true';
@@ -20,15 +24,16 @@ function PlanosContent() {
       setSession(session);
       
       if (session) {
-        // 1. Get current plan
+        // 1. Get current plan and balance
         const { data: profile } = await supabase
           .from('profiles')
-          .select('plan')
+          .select('plan, balance')
           .eq('id', session.user.id)
           .single();
 
         const userPlan = profile?.plan || 'free';
         setCurrentPlan(userPlan);
+        setBalance(profile?.balance || 0);
         
         // 2. Check for pending requests
         const { data: requests } = await supabase
@@ -55,16 +60,53 @@ function PlanosContent() {
     checkPlan();
   }, [router, isUpgrade]);
 
-  const handleSubscribe = async (plan: string) => {
-    if (!session) return;
-    
-    // Check if R$ 129,99 or R$ 199,99
-    const cost = plan === 'premium' ? 199.99 : 129.99;
+  const getPlanCost = (plan: string) => {
+    if (plan === 'premium' && currentPlan === 'basico') {
+      return 70.00;
+    }
+    return plan === 'premium' ? 199.99 : 129.99;
+  };
 
-    setLoading(true);
+  const handlePlanAction = (plan: string) => {
+    setSelectedPlan(plan);
+    setIsModalOpen(true);
+  };
+
+  const handleSubscribeAuto = async () => {
+    if (!session || !selectedPlan) return;
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase.rpc('purchase_plan_with_balance', {
+        p_user_id: session.user.id,
+        p_plan_name: selectedPlan
+      });
+
+      if (error) throw error;
+      if (data.success === false) {
+        alert(data.error);
+        return;
+      }
+
+      alert("Plano assinado e ativado com sucesso!");
+      setIsModalOpen(false);
+      // Recarregar a página ou empurrar para o painel
+      router.push('/planos/dashboard/frp');
+    } catch (e: any) {
+      console.error(e);
+      alert('Erro ao processar ativação: ' + (e.message || 'Erro desconhecido'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubscribeManual = async () => {
+    if (!session || !selectedPlan) return;
+    const cost = getPlanCost(selectedPlan);
+
+    setSubmitting(true);
     try {
       const { data, error } = await supabase.rpc('create_plan_purchase_request', {
-        p_plan_name: plan,
+        p_plan_name: selectedPlan,
         p_cost: cost
       });
 
@@ -75,12 +117,13 @@ function PlanosContent() {
       }
       
       setPendingPlan(true);
+      setIsModalOpen(false);
       alert(`Solicitação enviada com sucesso! O administrador irá revisar seu pedido em breve.`);
     } catch (e: any) {
       console.error(e);
       alert('Erro ao processar solicitação: ' + (e.message || 'Erro desconhecido'));
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -134,7 +177,7 @@ function PlanosContent() {
               if (currentPlan === 'basico' || currentPlan === 'premium') {
                 router.push('/planos/dashboard/frp');
               } else if (!pendingPlan) {
-                handleSubscribe('basico');
+                handlePlanAction('basico');
               }
             }}
             disabled={pendingPlan && (currentPlan !== 'basico' && currentPlan !== 'premium')}
@@ -195,7 +238,7 @@ function PlanosContent() {
               if (currentPlan === 'premium') {
                 router.push('/planos/dashboard/frp');
               } else if (!pendingPlan) {
-                handleSubscribe('premium');
+                handlePlanAction('premium');
               }
             }}
             disabled={pendingPlan && currentPlan !== 'premium'}
@@ -213,6 +256,95 @@ function PlanosContent() {
           </button>
         </div>
       </div>
+
+      {/* Modal de Confirmação de Compra */}
+      {isModalOpen && selectedPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-all duration-300">
+          <div className="bg-gradient-to-b from-[#1e293b] to-[#0f172a] border border-white/10 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-[0_0_50px_rgba(0,210,173,0.15)] animate-in fade-in zoom-in-95 duration-200 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/5 rounded-full blur-2xl"></div>
+            
+            <div className="flex justify-between items-start mb-6 relative z-10">
+              <h3 className="text-xl font-black text-white flex items-center gap-2">
+                {selectedPlan === 'premium' ? '👑' : '⭐'} Confirmar Assinatura
+              </h3>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-400 hover:text-white p-1 hover:bg-white/5 rounded-lg transition-all"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6 relative z-10">
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Plano Selecionado</p>
+                <p className="text-lg font-black text-white capitalize">{selectedPlan === 'basico' ? 'Básico' : 'Premium'}</p>
+                <p className="text-2xl font-black text-[#00D2AD] mt-1">
+                  R$ {getPlanCost(selectedPlan).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                {selectedPlan === 'premium' && currentPlan === 'basico' && (
+                  <p className="text-[10px] text-[#00D2AD] font-black mt-1.5 uppercase tracking-wider bg-[#00D2AD]/10 py-1 px-2 rounded border border-[#00D2AD]/20 inline-block">
+                    ✨ Upgrade Básico → Premium (Paga a diferença)
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Seu Saldo em Conta</p>
+                  <p className="text-lg font-black text-white">
+                    R$ {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                </div>
+                {balance >= getPlanCost(selectedPlan) ? (
+                  <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-1 rounded-full font-black uppercase tracking-wider">
+                    Saldo Suficiente
+                  </span>
+                ) : (
+                  <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-1 rounded-full font-black uppercase tracking-wider">
+                    Saldo Insuficiente
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 relative z-10">
+              {balance >= getPlanCost(selectedPlan) ? (
+                <button
+                  onClick={handleSubscribeAuto}
+                  disabled={submitting}
+                  className="w-full py-4 bg-gradient-to-r from-[#00D2AD] to-[#009077] hover:from-[#00BDA0] hover:to-[#007F69] text-[#0f172a] font-black rounded-xl uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(0,210,173,0.3)] hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  {submitting ? (
+                    <>
+                      <span className="animate-spin text-lg">⚙</span> Processando...
+                    </>
+                  ) : (
+                    <>
+                      <span>💳</span> Assinar com Saldo (Ativação Instantânea)
+                    </>
+                  )}
+                </button>
+              ) : (
+                <Link
+                  href="/saldo"
+                  className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-xl uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:scale-[1.02] active:scale-[0.98] text-center flex items-center justify-center gap-2"
+                >
+                  <span>⚡</span> Adicionar Saldo via Pix
+                </Link>
+              )}
+
+              <button
+                onClick={handleSubscribeManual}
+                disabled={submitting}
+                className="w-full py-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold rounded-xl uppercase tracking-wider transition-all text-xs"
+              >
+                {submitting ? 'Enviando Solicitação...' : 'Solicitar Manualmente (Aguardar Aprovação)'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
