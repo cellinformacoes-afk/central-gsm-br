@@ -79,9 +79,12 @@ export default function DownloadsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tools.length > 0 ? (
             tools.map((tool, idx) => (
-            <div
+            <a
               key={idx}
-              className="bg-[#0f172a]/50 hover:bg-[#00D2AD]/10 border border-white/5 hover:border-[#00D2AD]/30 p-6 rounded-2xl flex flex-col items-start transition-all group h-full"
+              href={tool.url}
+              target={tool.url && tool.url.startsWith('/') ? '_self' : '_blank'}
+              rel="noreferrer"
+              className="bg-[#0f172a]/50 hover:bg-[#00D2AD]/10 border border-white/5 hover:border-[#00D2AD]/30 p-6 rounded-2xl flex flex-col items-start transition-all group h-full cursor-pointer"
             >
               <div className="w-full flex justify-between items-start mb-4">
                 <span className="text-[10px] font-black text-[#00D2AD] bg-[#00D2AD]/10 px-2 py-1 rounded-lg uppercase tracking-widest">
@@ -95,16 +98,11 @@ export default function DownloadsPage() {
                 {tool.desc}
               </p>
               
-              <a 
-                href={tool.url} 
-                target={tool.url && tool.url.startsWith('/') ? '_self' : '_blank'} 
-                rel="noreferrer" 
-                className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#00D2AD]/60 group-hover:text-[#00D2AD] transition-all cursor-pointer"
-              >
+              <div className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#00D2AD]/60 group-hover:text-[#00D2AD] transition-all">
                 Fazer Download
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-y-1 transition-transform"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              </a>
-            </div>
+              </div>
+            </a>
             ))
           ) : (
             <div className="col-span-full py-20 text-center bg-[#1e293b]/30 rounded-3xl border-2 border-dashed border-white/5">
