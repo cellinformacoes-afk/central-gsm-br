@@ -287,6 +287,10 @@ export default function Home() {
                 <h3 className="text-[#00D2AD] font-bold mb-2 flex items-center gap-2 drop-shadow-[0_0_5px_rgba(0,210,173,0.5)] uppercase italic tracking-tighter"><span className="text-xl">🚨</span> RESPONSABILIDADE DO USUÁRIO</h3>
                 <p className="text-sm leading-relaxed">O uso inadequado das ferramentas após a compra é de <strong className="text-white underline underline-offset-4 decoration-[#00D2AD]">TOTAL responsabilidade do usuário</strong>, podendo responder civil e criminalmente.</p>
               </div>
+              <div className="bg-[#2a241b] border border-[#FFC107]/20 rounded-lg p-4 text-gray-300">
+                <h3 className="text-[#FFC107] font-bold mb-2 flex items-center gap-2 drop-shadow-[0_0_5px_rgba(255,193,7,0.5)] uppercase italic tracking-tighter"><span className="text-xl">💸</span> POLÍTICA DE DEPÓSITO E ESTORNO</h3>
+                <p className="text-sm leading-relaxed">Ao efetuar um depósito via <strong>Pix</strong>, o valor é convertido em saldo de uso e <strong className="text-white underline underline-offset-4 decoration-[#FFC107]">NÃO poderá ser estornado</strong>. A responsabilidade por conferir os valores e realizar a transação é <strong>totalmente sua</strong>.</p>
+              </div>
               <div className="border-2 border-dashed border-[#00D2AD]/40 bg-[#00D2AD]/5 rounded-2xl p-6 mt-6">
                 <label className="flex items-center gap-4 cursor-pointer group">
                   <input type="checkbox" checked={checkboxChecked} onChange={(e) => setCheckboxChecked(e.target.checked)} className="w-6 h-6 rounded-lg border-2 border-gray-600 text-[#00D2AD] focus:ring-[#00D2AD] bg-[#0f172a] transition-all" />

@@ -536,6 +536,14 @@ export default function SaldoPage() {
             <p className="text-gray-500 text-xs">Seu saldo é creditado instantaneamente após a confirmação do PIX.</p>
          </div>
       </div>
+
+      <div className="mt-4 bg-[#2a241b] border border-[#FFC107]/20 rounded-2xl p-6 flex items-center gap-4">
+         <div className="w-12 h-12 rounded-full bg-[#FFC107]/10 flex items-center justify-center text-2xl text-[#FFC107]">⚠️</div>
+         <div>
+            <h4 className="text-white font-black text-sm uppercase">Atenção sobre Depósitos</h4>
+            <p className="text-gray-400 text-xs">Depósitos via Pix são de sua inteira responsabilidade e <strong className="text-white">não possuem estorno/reembolso</strong>. Certifique-se dos valores antes de concluir.</p>
+         </div>
+      </div>
     </div>
   );
 }
