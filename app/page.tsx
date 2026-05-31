@@ -56,6 +56,10 @@ export default function Home() {
     if (!selectedService) return;
 
     // Basic Validation
+    if (quantity === undefined || quantity === null || quantity < 1) {
+      alert("Quantidade inválida.");
+      return;
+    }
     if (selectedService.categories?.slug === 'creditos' && (!accountEmail || accountEmail.trim() === '')) {
       alert("Por favor, informe o e-mail da conta onde os créditos serão adicionados.");
       return;
