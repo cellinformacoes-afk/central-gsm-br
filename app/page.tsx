@@ -64,6 +64,17 @@ export default function Home() {
       alert("Por favor, informe o e-mail da conta onde os créditos serão adicionados.");
       return;
     }
+    if (selectedService.category_id === 3) {
+      if (!accountEmail || accountEmail.trim() === '') {
+        alert("Por favor, digite o e-mail para ativação.");
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(accountEmail.trim())) {
+        alert("Por favor, insira um e-mail válido.");
+        return;
+      }
+    }
     if (selectedService.category_id === 4 && (!imei || imei.trim() === '')) {
       alert("Por favor, informe o IMEI do aparelho.");
       return;
@@ -225,6 +236,20 @@ export default function Home() {
                               onChange={(e) => setImei(e.target.value)}
                               placeholder="EX: 351234567890123"
                               className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-mono text-center tracking-[0.2em] focus:border-[#00D2AD] outline-none"
+                            />
+                          </div>
+                        )}
+
+                        {/* Conditional Input for Email (Only for Licenças / Ativação Category) */}
+                        {selectedService.category_id === 3 && (
+                          <div className="animate-in slide-in-from-top-2 duration-300">
+                            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Digite o E-mail para Ativação</label>
+                            <input 
+                              type="email" 
+                              value={accountEmail}
+                              onChange={(e) => setAccountEmail(e.target.value)}
+                              placeholder="EX: cliente@email.com"
+                              className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-bold text-center focus:border-[#00D2AD] outline-none transition-all"
                             />
                           </div>
                         )}

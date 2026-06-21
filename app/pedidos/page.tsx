@@ -70,7 +70,8 @@ export default function PedidosPage() {
   const filteredOrders = orders.filter(order => 
     order.services?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.input_data?.imei?.includes(searchTerm)
+    order.input_data?.imei?.includes(searchTerm) ||
+    order.input_data?.account_email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalSpent = orders.filter(o => o.status === 'Concluído').reduce((acc, curr) => acc + (curr.total_price || 0), 0);
