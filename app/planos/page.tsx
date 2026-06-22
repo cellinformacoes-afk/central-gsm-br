@@ -1,358 +1,411 @@
 "use client";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import Link from 'next/link';
-
-function PlanosContent() {
+export default function PlanosPage() {
   const [session, setSession] = useState<any>(null);
-  const [currentPlan, setCurrentPlan] = useState<string>('free');
-  const [balance, setBalance] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
-  const [pendingPlan, setPendingPlan] = useState<boolean>(false);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [selectedPlan, setSelectedPlan] = useState<{ name: string; label: string; cost: number } | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const isUpgrade = searchParams.get('upgrade') === 'true';
 
   useEffect(() => {
-    async function checkPlan() {
-      const { data: { session } } = await supabase.auth.getSession();
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      
+      if (session) fetchProfile(session.user.id);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
       if (session) {
-        // 1. Get current plan and balance
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('plan, balance')
-          .eq('id', session.user.id)
-          .single();
-
-        const userPlan = profile?.plan || 'free';
-        setCurrentPlan(userPlan);
-        setBalance(profile?.balance || 0);
-        
-        // 2. Check for pending requests
-        const { data: requests } = await supabase
-          .from('plan_purchase_requests')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .eq('status', 'pending')
-          .limit(1);
-
-        if (requests && requests.length > 0) {
-          setPendingPlan(true);
-        }
-
-        if (userPlan !== 'free' && !isUpgrade) {
-          router.push('/planos/dashboard/frp');
-        } else {
-          setLoading(false);
-        }
+        fetchProfile(session.user.id);
       } else {
-        router.push('/login');
+        setProfile(null);
       }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function fetchProfile(userId: string) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (!error && data) {
+      setProfile(data);
     }
+  }
 
-    checkPlan();
-  }, [router, isUpgrade]);
-
-  const getPlanCost = (plan: string) => {
-    if (plan === 'premium' && currentPlan === 'basico') {
-      return 70.00;
+  const handleOpenPurchase = (plan: { name: string; label: string; cost: number }) => {
+    if (!session) {
+      alert("Você precisa estar logado para adquirir um plano. Redirecionando para a página de login...");
+      router.push("/login?redirect=/planos");
+      return;
     }
-    return plan === 'premium' ? 199.99 : 129.99;
-  };
-
-  const handlePlanAction = (plan: string) => {
     setSelectedPlan(plan);
-    setIsModalOpen(true);
+    setAcceptedTerms(false);
   };
 
-  const handleSubscribeAuto = async () => {
-    if (!session || !selectedPlan) return;
-    setSubmitting(true);
-    try {
-      const { data, error } = await supabase.rpc('purchase_plan_with_balance', {
-        p_user_id: session.user.id,
-        p_plan_name: selectedPlan
-      });
+  const handleConfirmPurchase = async () => {
+    if (!selectedPlan || !session) return;
+    if (!acceptedTerms) {
+      alert("Você deve aceitar os Termos de Uso e Responsabilidade para prosseguir.");
+      return;
+    }
 
-      if (error) throw error;
-      if (data.success === false) {
-        alert(data.error);
-        return;
+    setPurchaseLoading(true);
+
+    try {
+      // 1. Fetch user IP address client-side
+      let userIp = "unknown";
+      try {
+        const ipRes = await fetch("https://api.ipify.org?format=json");
+        const ipData = await ipRes.json();
+        if (ipData && ipData.ip) {
+          userIp = ipData.ip;
+        }
+      } catch (ipErr) {
+        console.warn("Could not fetch user IP for terms log:", ipErr);
       }
 
-      alert("Plano assinado e ativado com sucesso!");
-      setIsModalOpen(false);
-      // Recarregar a página ou empurrar para o painel
-      router.push('/planos/dashboard/frp');
-    } catch (e: any) {
-      console.error(e);
-      alert('Erro ao processar ativação: ' + (e.message || 'Erro desconhecido'));
-    } finally {
-      setSubmitting(false);
-    }
-  };
+      const termsAcceptedAt = new Date().toISOString();
+      const termsAcceptedVersion = "v1.0";
 
-  const handleSubscribeManual = async () => {
-    if (!session || !selectedPlan) return;
-    const cost = getPlanCost(selectedPlan);
-
-    setSubmitting(true);
-    try {
-      const { data, error } = await supabase.rpc('create_plan_purchase_request', {
-        p_plan_name: selectedPlan,
-        p_cost: cost
+      // 2. Call RPC to create the plan purchase request
+      const { data: result, error: rpcError } = await supabase.rpc("create_plan_purchase_request", {
+        p_plan_name: selectedPlan.name,
+        p_cost: selectedPlan.cost,
       });
 
-      if (error) throw error;
-      if (data.success === false) {
-        alert(data.error);
-        return;
+      if (rpcError) throw rpcError;
+
+      // 3. Save terms acceptance in profiles (fails gracefully if migration not applied)
+      const { error: termsError } = await supabase.from("profiles").update({
+        terms_accepted_at: termsAcceptedAt,
+        terms_accepted_ip: userIp,
+        terms_accepted_version: termsAcceptedVersion
+      }).eq("id", session.user.id);
+
+      if (termsError) {
+        console.warn("Could not update profiles terms cols:", termsError);
       }
-      
-      setPendingPlan(true);
-      setIsModalOpen(false);
-      alert(`Solicitação enviada com sucesso! O administrador irá revisar seu pedido em breve.`);
-    } catch (e: any) {
-      console.error(e);
-      alert('Erro ao processar solicitação: ' + (e.message || 'Erro desconhecido'));
+
+      // 4. Update auth user metadata
+      await supabase.auth.updateUser({
+        data: {
+          terms_accepted_at: termsAcceptedAt,
+          terms_accepted_ip: userIp,
+          terms_accepted_version: termsAcceptedVersion,
+        }
+      });
+
+      alert(`Solicitação de plano ${selectedPlan.label} criada com sucesso! Aguarde a aprovação do administrador.`);
+      setSelectedPlan(null);
+      router.push("/pedidos");
+    } catch (err: any) {
+      console.error(err);
+      alert("Erro ao solicitar plano: " + (err.message || "Erro desconhecido"));
     } finally {
-      setSubmitting(false);
+      setPurchaseLoading(false);
     }
   };
-
-  if (loading) return <div className="h-screen flex items-center justify-center text-white"><span className="animate-spin text-4xl text-[#00D2AD]">⚙</span></div>;
 
   return (
-    <div className="max-w-5xl mx-auto py-10 px-4">
-      <div className="text-center mb-16 animate-in slide-in-from-bottom-8 duration-700">
-        <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 mb-4 capitalize">
-          Nossos Planos
+    <div className="max-w-6xl mx-auto py-10 px-4">
+      {/* Title */}
+      <div className="text-center mb-16 relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#00D2AD]/10 blur-[100px] rounded-full"></div>
+        <h1 className="text-5xl font-black text-white uppercase italic tracking-tight mb-4">
+          Nossos <span className="text-[#00D2AD] drop-shadow-[0_0_15px_rgba(0,210,173,0.4)]">Planos</span>
         </h1>
-        <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
+        <p className="text-gray-400 font-medium text-lg max-w-xl mx-auto">
           Tenha acesso aos melhores métodos de desbloqueio FRP e MDM do mercado.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        {/* Plano Básico */}
-        <div className="bg-[#1e293b]/60 backdrop-blur-xl border border-white/5 rounded-3xl p-8 flex flex-col relative overflow-hidden group hover:border-[#00D2AD]/30 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all"></div>
-          
-          <div className="mb-8">
-            <h2 className="text-2xl font-black text-white mb-2">Básico</h2>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-black text-white">R$ 129,99</span>
-              <span className="text-gray-400 font-medium">/mês</span>
+      {/* Plans Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-20">
+        {/* Basic Plan */}
+        <div className="bg-[#1e293b] rounded-3xl p-8 shadow-2xl border border-[#334155] flex flex-col justify-between hover:shadow-[0_0_40px_rgba(0,210,173,0.05)] hover:-translate-y-2 hover:border-[#334155]/80 transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/2 blur-[50px] rounded-full"></div>
+          <div>
+            <h3 className="text-2xl font-black text-white uppercase italic mb-2 tracking-tighter">Básico</h3>
+            <div className="flex items-baseline gap-1.5 mb-6">
+              <span className="text-4xl font-black text-[#00D2AD]">R$ 129,99</span>
+              <span className="text-gray-500 font-bold text-sm">/mês</span>
             </div>
-          </div>
 
-          <div className="space-y-4 mb-8 flex-1">
-            <div className="flex items-center gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              <span className="text-gray-300 text-sm font-medium">Acesso a todos os métodos</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              <span className="text-gray-300 text-sm font-medium">Desbloqueio FRP</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              <span className="text-gray-300 text-sm font-medium">Desbloqueio MDM</span>
-            </div>
-            <div className="flex items-center gap-3 opacity-50">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              <span className="text-gray-400 text-sm font-medium line-through">Sem acesso a arquivos (Download)</span>
-            </div>
+            <ul className="space-y-4 mb-8 text-sm font-semibold">
+              <li className="flex items-start gap-2 text-gray-200">
+                <span className="text-green-400 shrink-0">✔</span> Acesso aos métodos disponíveis.
+              </li>
+              <li className="flex items-start gap-2 text-gray-200">
+                <span className="text-green-400 shrink-0">✔</span> Atualizações durante a vigência da assinatura.
+              </li>
+              <li className="flex items-start gap-2 text-gray-200">
+                <span className="text-green-400 shrink-0">✔</span> Novos métodos adicionados durante a assinatura.
+              </li>
+              <li className="flex items-start gap-2 text-red-400 opacity-60">
+                <span className="shrink-0">❌</span> Arquivos especiais não inclusos.
+              </li>
+            </ul>
           </div>
-
-          <button 
-            onClick={() => {
-              if (currentPlan === 'basico' || currentPlan === 'premium') {
-                router.push('/planos/dashboard/frp');
-              } else if (!pendingPlan) {
-                handlePlanAction('basico');
-              }
-            }}
-            disabled={pendingPlan && (currentPlan !== 'basico' && currentPlan !== 'premium')}
-            className={`w-full py-4 rounded-xl font-bold border transition-all uppercase tracking-wider ${
-              currentPlan === 'basico' || currentPlan === 'premium'
-                ? 'bg-[#00D2AD]/10 text-[#00D2AD] border-[#00D2AD]/30 hover:bg-[#00D2AD]/20'
-                : pendingPlan 
-                  ? 'bg-orange-500/10 text-orange-500 border-orange-500/30 cursor-not-allowed'
-                  : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
-            }`}
+          <button
+            onClick={() => handleOpenPurchase({ name: "basico", label: "Básico", cost: 129.99 })}
+            className="w-full bg-[#1e293b] hover:bg-[#00D2AD] hover:text-[#0f172a] hover:shadow-[0_4px_20px_rgba(0,210,173,0.3)] text-[#00D2AD] border border-[#00D2AD] font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs"
           >
-            {currentPlan === 'basico' || currentPlan === 'premium' 
-              ? 'Acessar meu plano' 
-              : pendingPlan ? 'Aguardando Aprovação' : 'Solicitar Básico'}
+            ACESSAR MEU PLANO
           </button>
         </div>
 
-        {/* Plano Premium */}
-        <div className="bg-gradient-to-b from-[#0f172a] to-[#1e293b] border-2 border-[#00D2AD] rounded-3xl p-8 flex flex-col relative overflow-hidden shadow-[0_0_40px_rgba(0,210,173,0.15)] group scale-105 z-10">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#00D2AD]/10 rounded-full blur-3xl group-hover:bg-[#00D2AD]/20 transition-all"></div>
-          
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#00D2AD] text-[#0f172a] text-xs font-black px-4 py-1 rounded-b-lg uppercase tracking-widest">
+        {/* Premium Plan */}
+        <div className="bg-[#1e293b] rounded-3xl p-8 shadow-2xl border-2 border-[#00D2AD] flex flex-col justify-between hover:shadow-[0_0_40px_rgba(0,210,173,0.15)] hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/10 blur-[50px] rounded-full"></div>
+          <div className="absolute top-4 right-4 bg-[#00D2AD] text-[#0f172a] text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
             Mais Vantajoso
           </div>
-
-          <div className="mb-8 mt-4">
-            <h2 className="text-2xl font-black text-[#00D2AD] mb-2 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-[#FFC107]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              Premium
-            </h2>
-            <div className="flex items-baseline gap-2">
-              <span className="text-5xl font-black text-white">R$ 199,99</span>
-              <span className="text-gray-400 font-medium">/mês</span>
+          <div>
+            <h3 className="text-2xl font-black text-white uppercase italic mb-2 tracking-tighter flex items-center gap-2">
+              ⭐ Premium
+            </h3>
+            <div className="flex items-baseline gap-1.5 mb-6">
+              <span className="text-4xl font-black text-[#00D2AD]">R$ 199,99</span>
+              <span className="text-gray-500 font-bold text-sm">/mês</span>
             </div>
+
+            <ul className="space-y-4 mb-8 text-sm font-semibold">
+              <li className="flex items-start gap-2 text-gray-200">
+                <span className="text-green-400 shrink-0">✔</span> Acesso aos métodos disponíveis.
+              </li>
+              <li className="flex items-start gap-2 text-gray-200">
+                <span className="text-green-400 shrink-0">✔</span> Atualizações durante a vigência da assinatura.
+              </li>
+              <li className="flex items-start gap-2 text-gray-200">
+                <span className="text-green-400 shrink-0">✔</span> Novos métodos adicionados durante a assinatura.
+              </li>
+              <li className="flex items-start gap-2 text-gray-200">
+                <span className="text-green-400 shrink-0">✔</span> Arquivos compatíveis incluídos.
+              </li>
+              <li className="flex items-start gap-2 text-[#00D2AD]">
+                <span className="shrink-0">✔</span> Download dos arquivos disponibilizados na plataforma.
+              </li>
+            </ul>
           </div>
-
-          <div className="space-y-4 mb-8 flex-1">
-            <div className="flex items-center gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00D2AD" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              <span className="text-white text-sm font-medium">Acesso a todos os métodos</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00D2AD" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              <span className="text-white text-sm font-medium">Desbloqueio FRP</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00D2AD" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              <span className="text-white text-sm font-medium">Desbloqueio MDM</span>
-            </div>
-            <div className="flex items-center gap-3 bg-[#00D2AD]/10 p-2 rounded-lg border border-[#00D2AD]/20">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00D2AD" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              <span className="text-[#00D2AD] text-sm font-black uppercase">Download Ilimitado de Arquivos</span>
-            </div>
-          </div>
-
-          <button 
-            onClick={() => {
-              if (currentPlan === 'premium') {
-                router.push('/planos/dashboard/frp');
-              } else if (!pendingPlan) {
-                handlePlanAction('premium');
-              }
-            }}
-            disabled={pendingPlan && currentPlan !== 'premium'}
-            className={`w-full py-4 rounded-xl font-black uppercase tracking-widest transition-all ${
-              currentPlan === 'premium'
-                ? 'bg-[#00D2AD]/20 text-[#00D2AD] border border-[#00D2AD]/30 hover:bg-[#00D2AD]/30 shadow-[0_0_20px_rgba(0,210,173,0.1)]'
-                : pendingPlan
-                  ? 'bg-orange-500/20 text-orange-500 border border-orange-500/30 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-[#00D2AD] to-[#009077] hover:from-[#00BDA0] hover:to-[#007F69] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)] hover:shadow-[0_0_30px_rgba(0,210,173,0.5)] hover:scale-[1.02]'
-            }`}
+          <button
+            onClick={() => handleOpenPurchase({ name: "premium", label: "Premium", cost: 199.99 })}
+            className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] font-black py-4 rounded-xl shadow-[0_4px_25px_rgba(0,210,173,0.3)] hover:shadow-[0_4px_35px_rgba(0,210,173,0.5)] transition-all uppercase tracking-wider text-xs"
           >
-            {currentPlan === 'premium' 
-              ? 'Acessar meu plano' 
-              : pendingPlan ? 'Aguardando Aprovação' : 'Solicitar Premium'}
+            ACESSAR MEU PLANO
           </button>
         </div>
       </div>
 
-      {/* Modal de Confirmação de Compra */}
-      {isModalOpen && selectedPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-all duration-300">
-          <div className="bg-gradient-to-b from-[#1e293b] to-[#0f172a] border border-white/10 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-[0_0_50px_rgba(0,210,173,0.15)] animate-in fade-in zoom-in-95 duration-200 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/5 rounded-full blur-2xl"></div>
-            
-            <div className="flex justify-between items-start mb-6 relative z-10">
-              <h3 className="text-xl font-black text-white flex items-center gap-2">
-                {selectedPlan === 'premium' ? '👑' : '⭐'} Confirmar Assinatura
-              </h3>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-white p-1 hover:bg-white/5 rounded-lg transition-all"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
+      {/* Info Sections */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+        {/* Info Planos */}
+        <div className="bg-[#1e293b]/50 border border-[#334155]/60 rounded-3xl p-6 md:p-8">
+          <h4 className="text-lg font-black text-white uppercase italic tracking-tight mb-4 flex items-center gap-2">
+            📋 Informações dos Planos
+          </h4>
+          <div className="space-y-4 text-sm text-gray-300 font-medium">
+            <p>
+              <strong className="text-white">Assinatura Mensal:</strong> Todos os planos funcionam através de assinatura mensal. Ao término do período contratado, o acesso poderá ser suspenso caso a renovação não seja realizada.
+            </p>
+            <div className="border-t border-[#334155]/50 pt-4">
+              <h5 className="text-white font-bold mb-2">Benefícios para assinantes ativos:</h5>
+              <ul className="space-y-1.5 list-none pl-1">
+                <li><span className="text-[#00D2AD] mr-1">✔</span> Atualizações constantes dos métodos.</li>
+                <li><span className="text-[#00D2AD] mr-1">✔</span> Inclusão de novos modelos e procedimentos.</li>
+                <li><span className="text-[#00D2AD] mr-1">✔</span> Correções e melhorias nos conteúdos existentes.</li>
+                <li><span className="text-[#00D2AD] mr-1">✔</span> Acesso às novidades adicionadas na plataforma.</li>
+              </ul>
+              <p className="mt-2 text-xs text-gray-400 italic">
+                Caso a assinatura não seja renovada, o usuário perderá acesso às atualizações e novos conteúdos disponibilizados após o vencimento.
+              </p>
             </div>
+            <div className="border-t border-[#334155]/50 pt-4">
+              <p className="text-xs text-gray-400">
+                <strong className="text-gray-300 uppercase text-[10px] block mb-1">Nota sobre arquivos:</strong> Caso determinado procedimento exija arquivos adicionais fora do escopo padrão, no Plano Básico estes deverão ser adquiridos separadamente.
+              </p>
+            </div>
+          </div>
+        </div>
 
-            <div className="space-y-4 mb-6 relative z-10">
-              <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Plano Selecionado</p>
-                <p className="text-lg font-black text-white capitalize">{selectedPlan === 'basico' ? 'Básico' : 'Premium'}</p>
-                <p className="text-2xl font-black text-[#00D2AD] mt-1">
-                  R$ {getPlanCost(selectedPlan).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-                {selectedPlan === 'premium' && currentPlan === 'basico' && (
-                  <p className="text-[10px] text-[#00D2AD] font-black mt-1.5 uppercase tracking-wider bg-[#00D2AD]/10 py-1 px-2 rounded border border-[#00D2AD]/20 inline-block">
-                    ✨ Upgrade Básico → Premium (Paga a diferença)
-                  </p>
-                )}
+        {/* Conteudo e Suporte */}
+        <div className="bg-[#1e293b]/50 border border-[#334155]/60 rounded-3xl p-6 md:p-8 flex flex-col justify-between">
+          <div>
+            <h4 className="text-lg font-black text-white uppercase italic tracking-tight mb-4 flex items-center gap-2">
+              📚 Conteúdo da Plataforma
+            </h4>
+            <p className="text-sm text-gray-300 font-medium mb-6 leading-relaxed">
+              A plataforma foi desenvolvida para técnicos e usuários que já possuem conhecimento básico em desbloqueios FRP, MDM e procedimentos relacionados. <strong className="text-white">Não oferecemos treinamento individual ou acompanhamento personalizado para iniciantes.</strong> Todos os métodos são disponibilizados em formato de passo a passo detalhado.
+            </p>
+          </div>
+
+          <div className="border-t border-[#334155]/50 pt-4">
+            <h4 className="text-lg font-black text-white uppercase italic tracking-tight mb-3 flex items-center gap-2">
+              📞 Suporte via WhatsApp
+            </h4>
+            <p className="text-sm text-gray-300 font-medium leading-relaxed mb-3">
+              Suporte limitado exclusivamente para dúvidas relacionadas aos conteúdos da plataforma. Atendimento realizado por ordem de chegada.
+            </p>
+            <div className="bg-[#0f172a] border border-[#334155] rounded-2xl p-4 flex justify-around text-center">
+              <div>
+                <span className="text-[10px] text-gray-500 font-black uppercase tracking-wider block">Horário Tarde</span>
+                <span className="text-[#00D2AD] font-bold text-sm">🕐 13:00 às 14:30</span>
+              </div>
+              <div className="w-px bg-[#334155]"></div>
+              <div>
+                <span className="text-[10px] text-gray-500 font-black uppercase tracking-wider block">Horário Noite</span>
+                <span className="text-[#00D2AD] font-bold text-sm">🕗 20:00 às 21:30</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Termos e Responsabilidades Completo */}
+      <div className="bg-[#1e293b]/50 border border-[#334155]/60 rounded-3xl p-6 md:p-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Responsabilidade */}
+          <div>
+            <h4 className="text-lg font-black text-[#FFC107] uppercase italic tracking-tight mb-4 flex items-center gap-2">
+              ⚠️ Termo de Responsabilidade
+            </h4>
+            <p className="text-xs text-gray-400 mb-4 uppercase font-bold tracking-wider">
+              Ao contratar qualquer plano, o usuário declara estar ciente de que:
+            </p>
+            <ul className="space-y-2.5 text-xs text-gray-300 font-medium list-disc pl-4">
+              <li>Possui conhecimento básico sobre desbloqueios e procedimentos técnicos.</li>
+              <li>É responsável pela execução dos métodos disponibilizados.</li>
+              <li>Nem todos os aparelhos possuem o mesmo comportamento durante os procedimentos.</li>
+              <li>O resultado pode variar conforme versão de software, atualização do fabricante, estado do aparelho ou fatores externos.</li>
+              <li>O suporte fornecido possui horários limitados.</li>
+              <li>O pagamento refere-se ao acesso ao conteúdo disponibilizado na plataforma e não à garantia de sucesso em todos os procedimentos.</li>
+              <li>Não são realizados acessos remotos obrigatórios ou suporte individual ilimitado.</li>
+            </ul>
+          </div>
+
+          {/* Propriedade Intelectual */}
+          <div>
+            <h4 className="text-lg font-black text-red-400 uppercase italic tracking-tight mb-4 flex items-center gap-2">
+              🚫 Propriedade Intelectual
+            </h4>
+            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4 mb-4">
+              <span className="text-[10px] text-red-400 font-black uppercase tracking-wider block mb-2">É expressamente proibido:</span>
+              <ul className="space-y-1.5 text-xs text-gray-300 font-medium">
+                <li>❌ Gravar a tela da plataforma para fins comerciais.</li>
+                <li>❌ Revender métodos, arquivos ou conteúdos.</li>
+                <li>❌ Compartilhar login e senha de acesso.</li>
+                <li>❌ Reproduzir ou distribuir o conteúdo sem autorização.</li>
+              </ul>
+            </div>
+            <div className="bg-[#0f172a] border border-[#334155] rounded-2xl p-4">
+              <span className="text-[10px] text-gray-500 font-black uppercase tracking-wider block mb-2">O descumprimento poderá resultar em:</span>
+              <ul className="space-y-1 text-xs text-red-400 font-bold uppercase">
+                <li>• Banimento permanente da plataforma.</li>
+                <li>• Remoção dos grupos de suporte.</li>
+                <li>• Cancelamento da assinatura sem reembolso.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Confirmation Modal */}
+      {selectedPlan && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#0f172a]/95 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-[#1e293b] max-w-xl w-full rounded-[40px] border border-[#00D2AD]/50 shadow-[0_0_50px_rgba(0,210,173,0.3)] overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-8 overflow-y-auto flex-1 custom-scrollbar space-y-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[10px] text-[#00D2AD] font-black uppercase tracking-[0.2em]">Solicitação de Assinatura</span>
+                  <h3 className="text-3xl font-black text-white uppercase italic mt-1">Plano {selectedPlan.label}</h3>
+                </div>
+                <button onClick={() => setSelectedPlan(null)} className="text-gray-500 hover:text-white text-3xl font-bold leading-none">
+                  ×
+                </button>
               </div>
 
-              <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
-                <div>
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Seu Saldo em Conta</p>
-                  <p className="text-lg font-black text-white">
-                    R$ {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div className="bg-[#0f172a] p-5 rounded-2xl border border-[#334155] flex justify-between items-center">
+                <span className="text-gray-400 font-bold uppercase text-xs">Valor da Assinatura:</span>
+                <span className="text-[#00D2AD] text-2xl font-black">
+                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(selectedPlan.cost)}
+                  <span className="text-xs text-gray-500 font-bold"> /mês</span>
+                </span>
+              </div>
+
+              {/* Quick Terms Summary */}
+              <div className="space-y-3">
+                <h5 className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Declaração de Aceite de Termos</h5>
+                <div className="bg-[#112328] border border-[#00D2AD]/20 rounded-2xl p-5 text-xs text-gray-300 leading-relaxed max-h-48 overflow-y-auto custom-scrollbar space-y-3">
+                  <p>
+                    <strong>Responsabilidade Técnica:</strong> O usuário declara possuir conhecimento básico para execução dos procedimentos técnicos disponibilizados e assume total responsabilidade por sua execução.
+                  </p>
+                  <p>
+                    <strong>Suporte & Resultados:</strong> Nem todos os aparelhos possuem o mesmo comportamento. O suporte é limitado aos horários definidos (13h-14h30 e 20h-21h30) e não há garantia de sucesso absoluto em todos os aparelhos ou reembolso de pagamentos por insucesso técnico individual.
+                  </p>
+                  <p>
+                    <strong>Propriedade Intelectual:</strong> É expressamente proibida a gravação de tela, revenda de métodos ou compartilhamento de conta, passível de banimento permanente sem reembolso.
                   </p>
                 </div>
-                {balance >= getPlanCost(selectedPlan) ? (
-                  <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-1 rounded-full font-black uppercase tracking-wider">
-                    Saldo Suficiente
+              </div>
+
+              {/* Mandatory Checkbox */}
+              <div className="border-2 border-dashed border-[#00D2AD]/40 bg-[#00D2AD]/5 rounded-2xl p-5">
+                <label className="flex items-start gap-4 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="w-6 h-6 rounded-lg border-2 border-gray-600 text-[#00D2AD] focus:ring-[#00D2AD] bg-[#0f172a] mt-0.5 transition-all shrink-0 cursor-pointer"
+                  />
+                  <span className="text-xs text-gray-200 font-bold group-hover:text-white transition-colors leading-relaxed select-none">
+                    Declaro que <strong className="text-[#00D2AD] underline decoration-[#00D2AD]">Li e concordo</strong> integralmente com os Termos de Uso, Responsabilidade e Propriedade Intelectual da plataforma.
                   </span>
-                ) : (
-                  <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-1 rounded-full font-black uppercase tracking-wider">
-                    Saldo Insuficiente
-                  </span>
-                )}
+                </label>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 relative z-10">
-              {balance >= getPlanCost(selectedPlan) ? (
-                <button
-                  onClick={handleSubscribeAuto}
-                  disabled={submitting}
-                  className="w-full py-4 bg-gradient-to-r from-[#00D2AD] to-[#009077] hover:from-[#00BDA0] hover:to-[#007F69] text-[#0f172a] font-black rounded-xl uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(0,210,173,0.3)] hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-                >
-                  {submitting ? (
-                    <>
-                      <span className="animate-spin text-lg">⚙</span> Processando...
-                    </>
-                  ) : (
-                    <>
-                      <span>💳</span> Assinar com Saldo (Ativação Instantânea)
-                    </>
-                  )}
-                </button>
-              ) : (
-                <Link
-                  href="/saldo"
-                  className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-xl uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:scale-[1.02] active:scale-[0.98] text-center flex items-center justify-center gap-2"
-                >
-                  <span>⚡</span> Adicionar Saldo via Pix
-                </Link>
-              )}
-
+            <div className="bg-[#151e2e] p-6 border-t border-[#334155] flex gap-4">
               <button
-                onClick={handleSubscribeManual}
-                disabled={submitting}
-                className="w-full py-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold rounded-xl uppercase tracking-wider transition-all text-xs"
+                type="button"
+                onClick={() => setSelectedPlan(null)}
+                className="flex-1 bg-[#334155] hover:bg-[#475569] text-white py-4 rounded-xl font-bold uppercase text-xs transition-colors"
               >
-                {submitting ? 'Enviando Solicitação...' : 'Solicitar Manualmente (Aguardar Aprovação)'}
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmPurchase}
+                disabled={purchaseLoading || !acceptedTerms}
+                className={`flex-1 py-4 rounded-xl font-black uppercase text-xs transition-all flex justify-center items-center gap-2 ${
+                  acceptedTerms
+                    ? "bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] shadow-[0_4px_20px_rgba(0,210,173,0.3)]"
+                    : "bg-gray-700 text-gray-500 cursor-not-allowed opacity-50"
+                }`}
+              >
+                {purchaseLoading ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-[#0f172a]/30 border-t-[#0f172a] rounded-full animate-spin"></div>
+                    <span>Processando...</span>
+                  </>
+                ) : (
+                  "Confirmar Assinatura"
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  );
-}
-
-export default function PlanosPage() {
-  return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center text-white"><span className="animate-spin text-4xl text-[#00D2AD]">⚙</span></div>}>
-      <PlanosContent />
-    </Suspense>
   );
 }
