@@ -34,6 +34,39 @@ function CountdownTimer({ expiryDate }: { expiryDate: string }) {
   );
 }
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="ml-2 p-1.5 rounded-lg bg-[#0f172a] hover:bg-[#00D2AD]/20 text-gray-400 hover:text-[#00D2AD] border border-[#334155]/50 hover:border-[#00D2AD]/30 transition-all duration-200 focus:outline-none flex items-center justify-center shrink-0"
+      title="Copiar"
+    >
+      {copied ? (
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#25D366" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+          <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 export default function PedidosPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,16 +104,12 @@ export default function PedidosPage() {
     order.services?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.input_data?.imei?.includes(searchTerm) ||
-    order.input_data?.account_email?.toLowerCase().includes(searchTerm.toLowerCase())
+    order.input_data?.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const totalSpent = orders.filter(o => o.status === 'Concluído').reduce((acc, curr) => acc + (curr.total_price || 0), 0);
-  const completedOrders = orders.filter(o => o.status === 'Concluído').length;
-  const pendingOrders = orders.filter(o => o.status === 'Pendente' || o.status === 'Em Andamento').length;
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">MEUS <span className="text-[#00D2AD]">PEDIDOS</span></h1>
            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
@@ -94,13 +123,11 @@ export default function PedidosPage() {
             placeholder="Pesquisar por IMEI ou Serviço..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#1e293b] border border-[#334155] rounded-2xl py-4 pl-12 pr-4 text-white text-sm font-medium focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD]/50 outline-none transition-all shadow-[0_5px_15px_rgba(0,0,0,0.3)] hover:border-[#00D2AD]/30 hover:shadow-[0_0_20px_rgba(0,210,173,0.1)]"
+            className="w-full bg-[#1e293b] border border-[#334155] rounded-2xl py-4 pl-12 pr-4 text-white text-sm font-medium focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD]/30 outline-none transition-all shadow-xl"
           />
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:stroke-[#00D2AD] transition-colors"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         </div>
       </div>
-
-
 
       <div className="bg-[#1e293b] rounded-[32px] border border-[#334155] overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
@@ -123,7 +150,7 @@ export default function PedidosPage() {
                 ))
               ) : filteredOrders.length > 0 ? (
                 filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gradient-to-r hover:from-[#1e293b] hover:to-[#0f172a] hover:shadow-[0_5px_15px_rgba(0,210,173,0.05)] transition-all group relative border-b border-[#334155]/30 hover:border-transparent">
+                  <tr key={order.id} className="hover:bg-[#00D2AD]/5 transition-colors group">
                     <td className="px-8 py-7">
                        <div className="flex flex-col">
                           <span className="text-white font-black text-sm uppercase italic group-hover:text-[#00D2AD] transition-colors">{order.service_title || order.services?.title || 'Serviço Removido'}</span>
@@ -134,29 +161,24 @@ export default function PedidosPage() {
                        <span className="text-gray-400 text-xs font-bold">{new Date(order.created_at).toLocaleDateString('pt-BR')}</span>
                     </td>
                     <td className="px-6 py-7">
-                       <div className="flex flex-wrap gap-2">
-                          {order.input_data?.imei && (
-                            <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg">
-                               <p className="text-[8px] text-gray-500 font-black uppercase mb-0.5">IMEI</p>
-                               <span className="text-blue-400 text-xs font-mono font-bold tracking-wider">{order.input_data.imei}</span>
-                            </div>
-                          )}
-                          {order.input_data?.account_email && (
-                            <div className="bg-[#00D2AD]/10 border border-[#00D2AD]/20 px-3 py-1.5 rounded-lg">
-                               <p className="text-[8px] text-gray-500 font-black uppercase mb-0.5">E-mail Conta</p>
-                               <span className="text-[#00D2AD] text-[10px] font-black uppercase">{order.input_data.account_email}</span>
-                            </div>
-                          )}
-                          {order.input_data?.quantity && (
-                            <div className="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-lg">
-                               <p className="text-[8px] text-gray-500 font-black uppercase mb-0.5">Qtd</p>
-                               <span className="text-white text-xs font-black">{order.input_data.quantity}x</span>
-                            </div>
-                          )}
-                          {!order.input_data?.imei && !order.input_data?.account_email && !order.input_data?.quantity && (
-                             <span className="text-gray-500 text-xs font-bold uppercase tracking-widest italic opacity-50">S/ DETALHES</span>
-                          )}
-                       </div>
+                       {order.input_data?.imei || order.input_data?.email ? (
+                          <div className="flex flex-col gap-1.5 items-start">
+                             {order.input_data?.imei && (
+                                <div className="bg-[#0f172a] px-3 py-1.5 rounded-lg border border-[#334155] inline-block">
+                                   <span className="text-gray-500 text-[9px] uppercase font-black mr-1">IMEI:</span>
+                                   <span className="text-gray-300 text-xs font-mono">{order.input_data.imei}</span>
+                                </div>
+                             )}
+                             {order.input_data?.email && (
+                                <div className="bg-[#0f172a] px-3 py-1.5 rounded-lg border border-[#334155] inline-block">
+                                   <span className="text-gray-500 text-[9px] uppercase font-black mr-1">E-MAIL:</span>
+                                   <span className="text-gray-300 text-xs font-mono">{order.input_data.email}</span>
+                                </div>
+                             )}
+                          </div>
+                       ) : (
+                          <span className="text-gray-500 text-xs">N/A</span>
+                       )}
                     </td>
                     <td className="px-6 py-7">
                        <span className="text-white font-black text-sm">R$ {order.total_price.toFixed(2)}</span>
@@ -175,9 +197,21 @@ export default function PedidosPage() {
                           {order.rentals && order.rentals.length > 0 && (
                             <div className="mt-3 bg-[#0f172a] p-4 rounded-xl border border-[#00D2AD]/30 text-left min-w-[200px] animate-in zoom-in duration-300">
                                <p className="text-[#00D2AD] text-[10px] font-black uppercase tracking-tighter mb-2">🔑 Dados de Acesso</p>
-                               <div className="space-y-1">
-                                  <p className="text-white text-xs font-mono">Email: {order.rentals[0].credentials.email}</p>
-                                  <p className="text-white text-xs font-mono">Senha: {order.rentals[0].credentials.password}</p>
+                               <div className="space-y-2">
+                                  <div className="flex items-center justify-between bg-[#1e293b]/50 px-3 py-1.5 rounded-lg border border-[#334155]/50 gap-2">
+                                     <p className="text-white text-xs font-mono truncate select-all flex-1">
+                                        <span className="text-[#00D2AD] font-bold text-[9px] uppercase mr-1.5">Email:</span>
+                                        {order.rentals[0].credentials.email}
+                                     </p>
+                                     <CopyButton text={order.rentals[0].credentials.email} />
+                                  </div>
+                                  <div className="flex items-center justify-between bg-[#1e293b]/50 px-3 py-1.5 rounded-lg border border-[#334155]/50 gap-2">
+                                     <p className="text-white text-xs font-mono truncate select-all flex-1">
+                                        <span className="text-[#00D2AD] font-bold text-[9px] uppercase mr-1.5">Senha:</span>
+                                        {order.rentals[0].credentials.password}
+                                     </p>
+                                     <CopyButton text={order.rentals[0].credentials.password} />
+                                  </div>
                                </div>
                                <div className="mt-4 pt-4 border-t border-[#334155] flex items-center justify-between">
                                   <span className="text-gray-500 text-[9px] uppercase font-bold">Expira em:</span>
