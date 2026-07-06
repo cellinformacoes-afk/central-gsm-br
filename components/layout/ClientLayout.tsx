@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import DailyRevenueWidget from '@/components/admin/DailyRevenueWidget';
 
 
 export default function ClientLayout({
@@ -248,10 +247,7 @@ export default function ClientLayout({
         {children}
       </main>
 
-      {/* Admin Floating Widget - Daily Revenue */}
-      {profile?.role === 'admin' && (
-        <DailyRevenueWidget />
-      )}
+
 
       <footer className="w-full border-t border-[#334155] p-8 text-center text-gray-500 text-sm mt-12 bg-[#0f172a]">
         <p>© 2026 JACKSON & ISRAEL GSM - Todos os direitos reservados.</p>
