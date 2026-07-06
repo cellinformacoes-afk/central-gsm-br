@@ -114,7 +114,7 @@ export default function ClientLayout({
               <Link href="/extrato" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Ver extrato</Link>
               <Link href="/suporte" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Suporte</Link>
               {profile?.role === 'admin' && (
-                <Link href="/admin/expirados" className="flex items-center gap-2 text-xs md:text-sm font-black text-[#FFC107] hover:text-white transition-all border border-[#FFC107]/50 hover:border-[#FFC107] px-4 py-1.5 rounded-full uppercase ml-2 bg-[#FFC107]/10">
+                <Link href="/admin/estoque" className="flex items-center gap-2 text-xs md:text-sm font-black text-[#FFC107] hover:text-white transition-all border border-[#FFC107]/50 hover:border-[#FFC107] px-4 py-1.5 rounded-full uppercase ml-2 bg-[#FFC107]/10">
                   ADMIN
                   {pendingResets > 0 && (
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white animate-bounce">
