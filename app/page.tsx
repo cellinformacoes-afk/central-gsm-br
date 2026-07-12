@@ -74,7 +74,8 @@ export default function Home() {
       const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
         p_user_id: session.user.id,
         p_service_id: selectedService.id,
-        p_input_data: { imei: imei.trim(), email: email.trim() }
+        p_input_data: { imei: imei.trim(), email: email.trim() },
+        p_quantity: 1
       });
 
       if (rpcError) throw rpcError;
