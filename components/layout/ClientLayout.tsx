@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import DailyRevenueWidget from '@/components/admin/DailyRevenueWidget';
 
 
 export default function ClientLayout({
@@ -115,25 +114,14 @@ export default function ClientLayout({
               <Link href="/extrato" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Ver extrato</Link>
               <Link href="/suporte" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Suporte</Link>
               {profile?.role === 'admin' && (
-                <div className="flex items-center gap-2">
-                  <Link href="/admin/estoque" className="text-[10px] md:text-xs font-black text-gray-400 hover:text-[#FFC107] transition-all bg-white/5 px-2 md:px-3 py-1.5 rounded-lg border border-white/10 uppercase">
-                    Estoque
-                  </Link>
-                  <Link href="/admin/servicos" className="text-[10px] md:text-xs font-black text-gray-400 hover:text-[#00D2AD] transition-all bg-white/5 px-2 md:px-3 py-1.5 rounded-lg border border-white/10 uppercase">
-                    Serviços
-                  </Link>
-                  <Link href="/admin/planos" className="text-[10px] md:text-xs font-black text-gray-400 hover:text-[#00D2AD] transition-all bg-white/5 px-2 md:px-3 py-1.5 rounded-lg border border-white/10 uppercase">
-                    Planos
-                  </Link>
-                  <Link href="/admin/expirados" className="flex items-center gap-2 text-[10px] md:text-xs font-black text-[#FFC107] hover:text-white transition-all bg-[#FFC107]/10 px-2 md:px-3 py-1.5 rounded-lg border border-[#FFC107]/20 uppercase">
-                    Expirados
-                    {pendingResets > 0 && (
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white animate-bounce">
-                        {pendingResets}
-                      </span>
-                    )}
-                  </Link>
-                </div>
+                <Link href="/admin/estoque" className="flex items-center gap-2 text-xs md:text-sm font-black text-[#FFC107] hover:text-white transition-all border border-[#FFC107]/50 hover:border-[#FFC107] px-4 py-1.5 rounded-full uppercase ml-2 bg-[#FFC107]/10">
+                  ADMIN
+                  {pendingResets > 0 && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white animate-bounce">
+                      {pendingResets}
+                    </span>
+                  )}
+                </Link>
               )}
             </nav>
           )}
@@ -248,10 +236,7 @@ export default function ClientLayout({
         {children}
       </main>
 
-      {/* Admin Floating Widget - Daily Revenue */}
-      {profile?.role === 'admin' && (
-        <DailyRevenueWidget />
-      )}
+
 
       <footer className="w-full border-t border-[#334155] p-8 text-center text-gray-500 text-sm mt-12 bg-[#0f172a]">
         <p>© 2026 JACKSON & ISRAEL GSM - Todos os direitos reservados.</p>

@@ -19,18 +19,13 @@ export default function Support() {
         Falar com Suporte Agora
       </a>
       
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
-        <a 
-          href="/qr-gms" 
-          className="flex items-center justify-center gap-3 bg-[#1e293b] border border-[#334155] hover:border-[#00D2AD]/50 text-gray-300 hover:text-white py-4 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all group"
-        >
-          <div className="w-8 h-8 rounded-lg bg-[#00D2AD]/10 flex items-center justify-center group-hover:bg-[#00D2AD]/20 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#00D2AD]"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 7h.01"/><path d="M17 7h.01"/><path d="M7 17h.01"/><path d="M17 17h.01"/></svg>
+      <div className="mt-12 flex justify-center max-w-lg mx-auto">
+        <div className="w-full bg-[#1e293b] border-2 border-[#00D2AD]/50 p-6 rounded-2xl flex flex-col items-center justify-center text-gray-300 shadow-lg shadow-[#00D2AD]/10">
+          <span className="text-sm font-bold uppercase tracking-widest text-[#00D2AD] mb-3">Horário de Atendimento</span>
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-lg md:text-xl font-black uppercase tracking-wider text-white text-center">Seg a Sex, 09h às 22h</span>
+            <span className="text-lg md:text-xl font-black uppercase tracking-wider text-gray-400 text-center">Sab e Dom, 11h às 19h</span>
           </div>
-          Gerar QR Code GMS
-        </a>
-        <div className="bg-[#1e293b]/50 border border-[#334155]/50 p-4 rounded-2xl flex items-center justify-center text-[10px] text-gray-500 font-black uppercase tracking-widest text-center">
-          Horário: Seg a Sex, 09h às 18h
         </div>
       </div>
     </div>
