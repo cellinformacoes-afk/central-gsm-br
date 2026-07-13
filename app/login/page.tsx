@@ -4,7 +4,9 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Login() {
+import { Suspense } from "react";
+
+function LoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -110,5 +112,13 @@ export default function Login() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div className="min-h-screen w-full flex bg-[#09090b] items-center justify-center text-white">Carregando...</div>}>
+      <LoginContent />
+    </Suspense>
   )
 }
