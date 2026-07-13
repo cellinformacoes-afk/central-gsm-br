@@ -88,7 +88,7 @@ export default function PlanosPage() {
 
     // Check if user already has an active (approved) plan
     if (existingRequest?.status === "approved") {
-      router.push("/");
+      alert("Você já possui um plano ativo! Aproveite os serviços na página inicial.");
       return;
     }
 

@@ -4,7 +4,15 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(true);
+
+  useEffect(() => {
+    // Apenas rodar no lado do cliente
+    const isAccepted = localStorage.getItem("centralgsm_terms_accepted");
+    if (!isAccepted) {
+      setTermsAccepted(false);
+    }
+  }, []);
   const [checkboxChecked, setCheckboxChecked] = useState(false);
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -230,7 +238,18 @@ export default function Home() {
             </div>
             <div className="bg-[#151e2e] p-5 border-t border-[#334155] flex justify-between items-center gap-4">
               <button onClick={() => window.location.href = 'https://google.com'} className="bg-[#334155] hover:bg-[#475569] text-white px-8 py-3 rounded-xl font-bold transition-all uppercase text-xs">Sair</button>
-              <button onClick={() => checkboxChecked && setTermsAccepted(true)} disabled={!checkboxChecked} className={`px-10 py-3 rounded-xl font-black transition-all uppercase text-xs shadow-lg ${checkboxChecked ? 'bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a]' : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'}`}>Aceito os Termos</button>
+              <button 
+                onClick={() => {
+                  if (checkboxChecked) {
+                    setTermsAccepted(true);
+                    localStorage.setItem("centralgsm_terms_accepted", "true");
+                  }
+                }} 
+                disabled={!checkboxChecked} 
+                className={`px-10 py-3 rounded-xl font-black transition-all uppercase text-xs shadow-lg ${checkboxChecked ? 'bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a]' : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'}`}
+              >
+                Aceito os Termos
+              </button>
             </div>
           </div>
         </div>
