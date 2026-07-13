@@ -88,7 +88,7 @@ export default function PlanosPage() {
 
     // Check if user already has an active (approved) plan
     if (existingRequest?.status === "approved") {
-      alert("Você já possui um plano ativo! Seu plano atual: " + (existingRequest.plan_name === "premium" ? "Premium" : "Básico") + ".\n\nCaso precise alterar ou renovar, entre em contato com o suporte.");
+      router.push("/");
       return;
     }
 
