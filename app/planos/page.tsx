@@ -10,13 +10,20 @@ export default function PlanosPage() {
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; label: string; cost: number } | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [existingRequest, setExistingRequest] = useState<any>(null);
+  const [loadingRequest, setLoadingRequest] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchProfile(session.user.id);
+      if (session) {
+        fetchProfile(session.user.id);
+        fetchExistingRequest(session.user.id);
+      } else {
+        setLoadingRequest(false);
+      }
     });
 
     // Listen for auth changes
@@ -24,8 +31,11 @@ export default function PlanosPage() {
       setSession(session);
       if (session) {
         fetchProfile(session.user.id);
+        fetchExistingRequest(session.user.id);
       } else {
         setProfile(null);
+        setExistingRequest(null);
+        setLoadingRequest(false);
       }
     });
 
@@ -44,12 +54,50 @@ export default function PlanosPage() {
     }
   }
 
+  async function fetchExistingRequest(userId: string) {
+    setLoadingRequest(true);
+    try {
+      // Fetch the most recent approved or pending plan request for this user
+      const { data, error } = await supabase
+        .from("plan_purchase_requests")
+        .select("*")
+        .eq("user_id", userId)
+        .in("status", ["approved", "pending"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setExistingRequest(data);
+      } else {
+        setExistingRequest(null);
+      }
+    } catch (err) {
+      console.error("Error fetching existing plan request:", err);
+      setExistingRequest(null);
+    }
+    setLoadingRequest(false);
+  }
+
   const handleOpenPurchase = (plan: { name: string; label: string; cost: number }) => {
     if (!session) {
       alert("Você precisa estar logado para adquirir um plano. Redirecionando para a página de login...");
       router.push("/login?redirect=/planos");
       return;
     }
+
+    // Check if user already has an active (approved) plan
+    if (existingRequest?.status === "approved") {
+      alert("Você já possui um plano ativo! Seu plano atual: " + (existingRequest.plan_name === "premium" ? "Premium" : "Básico") + ".\n\nCaso precise alterar ou renovar, entre em contato com o suporte.");
+      return;
+    }
+
+    // Check if user already has a pending request
+    if (existingRequest?.status === "pending") {
+      alert("Você já possui uma solicitação de plano pendente! Aguarde a aprovação do administrador.\n\nCaso precise de ajuda, entre em contato com o suporte.");
+      return;
+    }
+
     setSelectedPlan(plan);
     setAcceptedTerms(false);
   };
@@ -160,9 +208,17 @@ export default function PlanosPage() {
           </div>
           <button
             onClick={() => handleOpenPurchase({ name: "basico", label: "Básico", cost: 129.99 })}
-            className="w-full bg-[#1e293b] hover:bg-[#00D2AD] hover:text-[#0f172a] hover:shadow-[0_4px_20px_rgba(0,210,173,0.3)] text-[#00D2AD] border border-[#00D2AD] font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs"
+            className={`w-full font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs ${
+              existingRequest?.status === 'approved' && existingRequest?.plan_name === 'basico'
+                ? 'bg-green-500/20 text-green-500 border border-green-500 cursor-default'
+                : existingRequest?.status === 'pending' && existingRequest?.plan_name === 'basico'
+                ? 'bg-amber-500/20 text-amber-500 border border-amber-500 cursor-default animate-pulse'
+                : 'bg-[#1e293b] hover:bg-[#00D2AD] hover:text-[#0f172a] hover:shadow-[0_4px_20px_rgba(0,210,173,0.3)] text-[#00D2AD] border border-[#00D2AD]'
+            }`}
           >
-            ACESSAR MEU PLANO
+            {existingRequest?.status === 'approved' && existingRequest?.plan_name === 'basico' ? 'PLANO ATIVO' : 
+             existingRequest?.status === 'pending' && existingRequest?.plan_name === 'basico' ? 'AGUARDANDO APROVAÇÃO' : 
+             'ACESSAR MEU PLANO'}
           </button>
         </div>
 
@@ -201,9 +257,17 @@ export default function PlanosPage() {
           </div>
           <button
             onClick={() => handleOpenPurchase({ name: "premium", label: "Premium", cost: 199.99 })}
-            className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] font-black py-4 rounded-xl shadow-[0_4px_25px_rgba(0,210,173,0.3)] hover:shadow-[0_4px_35px_rgba(0,210,173,0.5)] transition-all uppercase tracking-wider text-xs"
+            className={`w-full font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs ${
+              existingRequest?.status === 'approved' && existingRequest?.plan_name === 'premium'
+                ? 'bg-green-500/20 text-green-500 border border-green-500 cursor-default'
+                : existingRequest?.status === 'pending' && existingRequest?.plan_name === 'premium'
+                ? 'bg-amber-500/20 text-amber-500 border border-amber-500 cursor-default animate-pulse'
+                : 'bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] shadow-[0_4px_25px_rgba(0,210,173,0.3)] hover:shadow-[0_4px_35px_rgba(0,210,173,0.5)]'
+            }`}
           >
-            ACESSAR MEU PLANO
+            {existingRequest?.status === 'approved' && existingRequest?.plan_name === 'premium' ? 'PLANO ATIVO' : 
+             existingRequest?.status === 'pending' && existingRequest?.plan_name === 'premium' ? 'AGUARDANDO APROVAÇÃO' : 
+             'ACESSAR MEU PLANO'}
           </button>
         </div>
       </div>
