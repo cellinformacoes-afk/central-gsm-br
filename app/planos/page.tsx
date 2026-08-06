@@ -12,6 +12,10 @@ export default function PlanosPage() {
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [existingRequest, setExistingRequest] = useState<any>(null);
   const [loadingRequest, setLoadingRequest] = useState(true);
+  
+  const [services, setServices] = useState<any[]>([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -39,6 +43,8 @@ export default function PlanosPage() {
       }
     });
 
+    fetchServices();
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -52,6 +58,25 @@ export default function PlanosPage() {
     if (!error && data) {
       setProfile(data);
     }
+  }
+
+  async function fetchServices() {
+    setLoadingServices(true);
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*, categories(name, slug)')
+        .eq('active', true);
+      
+      if (!error && data) {
+        // Filter mainly for 'metodos' and 'arquivos' which belong to plans, or just show them if user wants "os metodos"
+        const metodos = data.filter((s: any) => s.categories?.slug === 'metodos' || s.categories?.slug === 'arquivos');
+        setServices(metodos.length > 0 ? metodos : data);
+      }
+    } catch(err) {
+      console.error(err);
+    }
+    setLoadingServices(false);
   }
 
   async function fetchExistingRequest(userId: string) {
@@ -269,6 +294,61 @@ export default function PlanosPage() {
              existingRequest?.status === 'pending' && existingRequest?.plan_name === 'premium' ? 'AGUARDANDO APROVAÇÃO' : 
              'ACESSAR MEU PLANO'}
           </button>
+        </div>
+      </div>
+
+      {/* NEW SECTION: Métodos Disponíveis */}
+      <div className="mb-16">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-black text-white uppercase italic tracking-tight mb-2">
+            Métodos e Arquivos <span className="text-[#00D2AD]">Inclusos</span>
+          </h2>
+          <p className="text-gray-400 font-medium text-sm">
+            Confira os procedimentos que você terá acesso como assinante.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {loadingServices ? (
+            [...Array(6)].map((_, i) => (
+              <div key={i} className="bg-[#1e293b] rounded-2xl p-6 border border-[#334155] h-28 animate-pulse shadow-xl"></div>
+            ))
+          ) : services.length > 0 ? (
+            services.map((service) => (
+              <div 
+                key={service.id} 
+                className="bg-[#1e293b] rounded-2xl p-5 shadow-xl border border-[#334155] flex items-center transition-all hover:border-[#00D2AD]/40 hover:-translate-y-1"
+              >
+                <div className={`w-14 h-14 shrink-0 rounded-xl flex items-center justify-center mr-4 overflow-hidden ${service.icon_color || 'bg-[#0f172a]'} text-white text-2xl font-black border border-white/5`}>
+                  {service.logo_url ? (
+                    <img 
+                      src={service.logo_url} 
+                      alt="" 
+                      className="w-full h-full object-contain p-2" 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).parentElement!.innerHTML = service.letter || 'S';
+                      }}
+                    />
+                  ) : (
+                    service.letter || 'S'
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                   <h3 className="text-sm font-black text-gray-100 leading-tight uppercase italic tracking-tighter truncate" title={service.title}>
+                     {service.title}
+                   </h3>
+                   <span className="text-[10px] text-[#00D2AD] font-bold uppercase tracking-widest mt-1 block">
+                     {service.categories?.name || 'Método'}
+                   </span>
+                </div>
+              </div>
+            ))
+          ) : (
+             <div className="col-span-full p-10 text-center bg-[#1e293b]/30 rounded-[30px] border-2 border-dashed border-[#334155]">
+               <p className="text-gray-500 font-black uppercase tracking-[0.2em] text-xs">Nenhum método listado no momento</p>
+             </div>
+          )}
         </div>
       </div>
 
