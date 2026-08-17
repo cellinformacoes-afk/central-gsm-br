@@ -320,28 +320,13 @@ export default function Home() {
             <div key={i} className="bg-[#1e293b] rounded-3xl p-6 border border-[#334155] h-32 animate-pulse shadow-2xl"></div>
           ))
         ) : filteredServices.length > 0 ? (
-          filteredServices.map((service) => {
-            const isCreditOffline = service.categories?.slug === 'creditos';
-            return (
+          filteredServices.map((service) => (
             <div 
               key={service.id} 
-              onClick={() => {
-                if (isCreditOffline) {
-                  alert('⚠️ Compra de créditos está temporariamente indisponível. Em breve voltaremos com essa opção!');
-                  return;
-                }
-                setSelectedService(service);
-              }}
-              className={`bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center transition-all relative overflow-hidden ${isCreditOffline ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-[0_0_40px_rgba(0,210,173,0.1)] hover:-translate-y-2 hover:border-[#00D2AD]/40 cursor-pointer'} group`}
+              onClick={() => setSelectedService(service)}
+              className="bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center transition-all relative overflow-hidden hover:shadow-[0_0_40px_rgba(0,210,173,0.1)] hover:-translate-y-2 hover:border-[#00D2AD]/40 cursor-pointer group"
             >
               <div className="absolute top-0 right-0 w-40 h-40 bg-[#00D2AD]/5 blur-[70px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
-
-              {/* OFFLINE Badge for Credits */}
-              {isCreditOffline && (
-                <div className="absolute top-3 right-3 z-20 bg-red-600/90 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-red-500/50 animate-pulse">
-                  ⛔ OFFLINE
-                </div>
-              )}
               
               <div className={`w-24 h-24 shrink-0 rounded-2xl flex items-center justify-center mr-6 overflow-hidden ${service.icon_color || 'bg-[#0f172a]'} text-white text-5xl font-black shadow-2xl border-2 border-white/5 relative z-10 group-hover:scale-110 transition-transform`}>
                 {service.logo_url ? (
@@ -375,7 +360,7 @@ export default function Home() {
                  </div>
               </div>
             </div>
-          )})
+          ))
         ) : (
           <div className="col-span-full p-28 text-center bg-[#1e293b]/30 rounded-[40px] border-4 border-dashed border-[#334155] flex flex-col items-center gap-6">
              <div className="w-24 h-24 rounded-full bg-[#1e293b] flex items-center justify-center text-4xl text-gray-700 shadow-inner">📦</div>
