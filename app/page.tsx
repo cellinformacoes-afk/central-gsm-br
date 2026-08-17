@@ -182,11 +182,14 @@ export default function Home() {
                             type="number" 
                             value={creditQuantity}
                             onChange={(e) => {
-                              const val = parseInt(e.target.value);
-                              if (isNaN(val) || val < 1) {
-                                setCreditQuantity(5);
+                              const raw = e.target.value;
+                              if (raw === '') {
+                                setCreditQuantity('' as any);
                               } else {
-                                setCreditQuantity(val);
+                                const val = parseInt(raw);
+                                if (!isNaN(val) && val >= 0) {
+                                  setCreditQuantity(val);
+                                }
                               }
                             }}
                             onBlur={() => {
@@ -396,6 +399,7 @@ export default function Home() {
               className={`bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center transition-all relative overflow-hidden hover:shadow-[0_0_40px_rgba(0,210,173,0.1)] hover:-translate-y-2 hover:border-[#00D2AD]/40 cursor-pointer group`}
             >
               <div className="absolute top-0 right-0 w-40 h-40 bg-[#00D2AD]/5 blur-[70px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
+
 
               
               <div className={`w-24 h-24 shrink-0 rounded-2xl flex items-center justify-center mr-6 overflow-hidden ${service.icon_color || 'bg-[#0f172a]'} text-white text-5xl font-black shadow-2xl border-2 border-white/5 relative z-10 group-hover:scale-110 transition-transform`}>
