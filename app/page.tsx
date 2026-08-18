@@ -87,6 +87,10 @@ export default function Home() {
         alert("O pedido mínimo é de 5 créditos.");
         return;
       }
+      const confirmEmail = window.confirm(`O e-mail "${email.trim()}" é o e-mail de destino para os créditos?`);
+      if (!confirmEmail) {
+        return;
+      }
     }
 
     setPurchaseLoading(true);
