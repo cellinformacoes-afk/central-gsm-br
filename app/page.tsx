@@ -374,7 +374,10 @@ export default function Home() {
             <h2 className="text-4xl font-black text-white uppercase italic leading-tight mb-4 tracking-tighter">PRECISA DE <span className="text-[#00D2AD]">SUPORTE</span> TÉCNICO?</h2>
             <p className="text-gray-400 font-medium">Nossa equipe de especialistas está pronta para ajudar você com qualquer dúvida ou ativação via WhatsApp.</p>
          </div>
-         <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" className="whitespace-nowrap bg-[#25D366] hover:bg-[#1fb356] text-white px-12 py-6 rounded-[30px] font-black uppercase text-lg shadow-[0_15px_35px_rgba(37,211,102,0.3)] hover:-translate-y-2 transition-all">Falar com Consultor</a>
+         <div className="flex flex-col sm:flex-row items-center gap-4">
+           <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" className="whitespace-nowrap bg-[#25D366] hover:bg-[#1fb356] text-white px-12 py-6 rounded-[30px] font-black uppercase text-lg shadow-[0_15px_35px_rgba(37,211,102,0.3)] hover:-translate-y-2 transition-all">Falar com Consultor</a>
+           <a href="https://chat.whatsapp.com/DELs1QYHUQAK83NpJwAjTD" target="_blank" rel="noopener noreferrer" className="whitespace-nowrap bg-white/10 hover:bg-white/20 text-white px-12 py-6 rounded-[30px] font-black uppercase text-lg border border-white/20 hover:-translate-y-2 transition-all">Entrar no Grupo</a>
+         </div>
       </div>
     </>
   )

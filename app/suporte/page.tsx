@@ -18,6 +18,16 @@ export default function Support() {
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
         Falar com Suporte Agora
       </a>
+
+      <a
+        href="https://chat.whatsapp.com/DELs1QYHUQAK83NpJwAjTD"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1fb356] text-white font-bold py-4 px-8 rounded-full transition-all hover:scale-105 shadow-lg shadow-[#25D366]/30 mt-4"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+        Entrar no Grupo do WhatsApp
+      </a>
       
       <div className="mt-12 flex justify-center max-w-lg mx-auto">
         <div className="w-full bg-[#1e293b] border-2 border-[#00D2AD]/50 p-6 rounded-2xl flex flex-col items-center justify-center text-gray-300 shadow-lg shadow-[#00D2AD]/10">

@@ -225,7 +225,12 @@ export default function ClientLayout({
       </header>
 
 
-      {/* WhatsApp Float */}
+      {/* WhatsApp Floats */}
+      <div className="fixed right-4 bottom-20 z-40">
+        <a href="https://chat.whatsapp.com/DELs1QYHUQAK83NpJwAjTD" target="_blank" className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform" title="Entrar no Grupo WhatsApp">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+        </a>
+      </div>
       <div className="fixed right-4 bottom-4 z-40">
         <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" target="_blank" className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform">
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
@@ -238,8 +243,19 @@ export default function ClientLayout({
 
 
 
-      <footer className="w-full border-t border-[#334155] p-8 text-center text-gray-500 text-sm mt-12 bg-[#0f172a]">
-        <p>© 2026 JACKSON & ISRAEL GSM - Todos os direitos reservados.</p>
+      <footer className="w-full border-t border-[#334155] p-8 text-gray-500 text-sm mt-12 bg-[#0f172a]">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center">
+          <p>© 2026 JACKSON & ISRAEL GSM - Todos os direitos reservados.</p>
+          <a
+            href="https://chat.whatsapp.com/DELs1QYHUQAK83NpJwAjTD"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-[#25D366] hover:text-[#1fb356] font-bold transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+            Entre no nosso Grupo do WhatsApp
+          </a>
+        </div>
       </footer>
     </div>
   );
