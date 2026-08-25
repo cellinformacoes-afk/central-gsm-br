@@ -23,6 +23,7 @@ export default function Home() {
   const [selectedService, setSelectedService] = useState<any>(null);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [imei, setImei] = useState('');
+  const [creditQuantity, setCreditQuantity] = useState(5);
   const [email, setEmail] = useState('');
   
   const router = useRouter();
@@ -49,6 +50,8 @@ export default function Home() {
     setLoading(false);
   }
 
+  const isCreditService = (service: any) => service?.categories?.slug === 'creditos';
+
   const handlePurchase = async () => {
     if (!selectedService) return;
 
@@ -69,6 +72,27 @@ export default function Home() {
       }
     }
 
+    // Validação para créditos
+    if (isCreditService(selectedService)) {
+      if (!email.trim()) {
+        alert("Por favor, digite o e-mail que receberá os créditos.");
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        alert("Por favor, insira um e-mail válido.");
+        return;
+      }
+      if (!creditQuantity || creditQuantity < 5) {
+        alert("O pedido mínimo é de 5 créditos.");
+        return;
+      }
+      const confirmEmail = window.confirm(`O e-mail "${email.trim()}" é o e-mail de destino para os créditos?`);
+      if (!confirmEmail) {
+        return;
+      }
+    }
+
     setPurchaseLoading(true);
 
     try {
@@ -79,11 +103,12 @@ export default function Home() {
       }
 
       // Call Unified RPC
+      const qty = isCreditService(selectedService) ? creditQuantity : 1;
       const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
         p_user_id: session.user.id,
         p_service_id: selectedService.id,
         p_input_data: { imei: imei.trim(), email: email.trim() },
-        p_quantity: 1
+        p_quantity: qty
       });
 
       if (rpcError) throw rpcError;
@@ -105,6 +130,7 @@ export default function Home() {
       setSelectedService(null);
       setImei('');
       setEmail('');
+      setCreditQuantity(5);
       router.push('/pedidos');
     } catch (error: any) {
       console.error(error);
@@ -141,15 +167,58 @@ export default function Home() {
                     <div>
                        <h2 className="text-2xl font-black text-white uppercase italic">{selectedService.title}</h2>
                        <p className="text-[#00D2AD] font-bold text-lg">
-                          {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
+                          {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isCreditService(selectedService) ? selectedService.price * creditQuantity : selectedService.price)}
                        </p>
                     </div>
-                    <button onClick={() => { setSelectedService(null); setImei(''); setEmail(''); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
+                    <button onClick={() => { setSelectedService(null); setImei(''); setEmail(''); setCreditQuantity(5); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
                  </div>
 
                  <div className="space-y-6">
                     <p className="text-gray-400 text-sm leading-relaxed">{selectedService.description || "Compre agora este serviço com ativação rápida e suporte garantido."}</p>
                     
+                    {/* Quantity Input for Credits */}
+                    {isCreditService(selectedService) && (
+                      <div className="animate-in slide-in-from-top-2 duration-300 space-y-4">
+                        <div>
+                          <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Quantidade de Créditos</label>
+                          <p className="text-[10px] text-[#FFC107] font-bold mb-3">Pedido mínimo: 05 créditos</p>
+                          <input 
+                            type="number" 
+                            value={creditQuantity}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              if (raw === '') {
+                                setCreditQuantity('' as any);
+                              } else {
+                                const val = parseInt(raw);
+                                if (!isNaN(val) && val >= 0) {
+                                  setCreditQuantity(val);
+                                }
+                              }
+                            }}
+                            onBlur={() => {
+                              if (creditQuantity < 5) setCreditQuantity(5);
+                            }}
+                            min={5}
+                            step={1}
+                            placeholder="Mínimo 5 créditos"
+                            className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-mono text-center tracking-[0.2em] focus:border-[#00D2AD] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                          <p className="text-[10px] text-gray-500 mt-2 text-center">Total: <span className="text-[#00D2AD] font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price * creditQuantity)}</span></p>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">E-mail que receberá os créditos</label>
+                          <input 
+                            type="email" 
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="EX: cliente@email.com"
+                            className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {/* Conditional Input for IMEI (Only for IMEI Category) */}
                     {selectedService.category_id === 4 && (
                       <div className="animate-in slide-in-from-top-2 duration-300">
@@ -320,13 +389,22 @@ export default function Home() {
             <div key={i} className="bg-[#1e293b] rounded-3xl p-6 border border-[#334155] h-32 animate-pulse shadow-2xl"></div>
           ))
         ) : filteredServices.length > 0 ? (
-          filteredServices.map((service) => (
+          filteredServices.map((service) => {
+            return (
             <div 
               key={service.id} 
-              onClick={() => setSelectedService(service)}
-              className="bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center transition-all relative overflow-hidden hover:shadow-[0_0_40px_rgba(0,210,173,0.1)] hover:-translate-y-2 hover:border-[#00D2AD]/40 cursor-pointer group"
+              onClick={() => {
+                if (isCreditService(service)) {
+                  setCreditQuantity(5);
+                  setEmail('');
+                }
+                setSelectedService(service);
+              }}
+              className={`bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center transition-all relative overflow-hidden hover:shadow-[0_0_40px_rgba(0,210,173,0.1)] hover:-translate-y-2 hover:border-[#00D2AD]/40 cursor-pointer group`}
             >
               <div className="absolute top-0 right-0 w-40 h-40 bg-[#00D2AD]/5 blur-[70px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
+
+
               
               <div className={`w-24 h-24 shrink-0 rounded-2xl flex items-center justify-center mr-6 overflow-hidden ${service.icon_color || 'bg-[#0f172a]'} text-white text-5xl font-black shadow-2xl border-2 border-white/5 relative z-10 group-hover:scale-110 transition-transform`}>
                 {service.logo_url ? (
@@ -360,7 +438,7 @@ export default function Home() {
                  </div>
               </div>
             </div>
-          ))
+          )})
         ) : (
           <div className="col-span-full p-28 text-center bg-[#1e293b]/30 rounded-[40px] border-4 border-dashed border-[#334155] flex flex-col items-center gap-6">
              <div className="w-24 h-24 rounded-full bg-[#1e293b] flex items-center justify-center text-4xl text-gray-700 shadow-inner">📦</div>
@@ -374,9 +452,15 @@ export default function Home() {
             <h2 className="text-4xl font-black text-white uppercase italic leading-tight mb-4 tracking-tighter">PRECISA DE <span className="text-[#00D2AD]">SUPORTE</span> TÉCNICO?</h2>
             <p className="text-gray-400 font-medium">Nossa equipe de especialistas está pronta para ajudar você com qualquer dúvida ou ativação via WhatsApp.</p>
          </div>
-         <div className="flex flex-col sm:flex-row items-center gap-4">
-           <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" className="whitespace-nowrap bg-[#25D366] hover:bg-[#1fb356] text-white px-12 py-6 rounded-[30px] font-black uppercase text-lg shadow-[0_15px_35px_rgba(37,211,102,0.3)] hover:-translate-y-2 transition-all">Falar com Consultor</a>
-           <a href="https://chat.whatsapp.com/DELs1QYHUQAK83NpJwAjTD" target="_blank" rel="noopener noreferrer" className="whitespace-nowrap bg-white/10 hover:bg-white/20 text-white px-12 py-6 rounded-[30px] font-black uppercase text-lg border border-white/20 hover:-translate-y-2 transition-all">Entrar no Grupo</a>
+         <div className="flex flex-col sm:flex-row gap-4">
+            <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" className="whitespace-nowrap bg-[#25D366] hover:bg-[#1fb356] text-white px-8 py-5 rounded-[30px] font-black uppercase text-base shadow-[0_15px_35px_rgba(37,211,102,0.3)] hover:-translate-y-2 transition-all flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+              Falar com Consultor
+            </a>
+            <a href="https://chat.whatsapp.com/DELs1QYHUQAK83NpJwAjTD" target="_blank" rel="noopener noreferrer" className="whitespace-nowrap bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] px-8 py-5 rounded-[30px] font-black uppercase text-base shadow-[0_15px_35px_rgba(0,210,173,0.3)] hover:-translate-y-2 transition-all flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+              Entrar no Grupo VIP
+            </a>
          </div>
       </div>
     </>
