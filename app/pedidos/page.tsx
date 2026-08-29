@@ -104,6 +104,7 @@ export default function PedidosPage() {
     order.services?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.input_data?.imei?.includes(searchTerm) ||
+    order.input_data?.whatsapp?.includes(searchTerm) ||
     order.input_data?.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -161,7 +162,7 @@ export default function PedidosPage() {
                        <span className="text-gray-400 text-xs font-bold">{new Date(order.created_at).toLocaleDateString('pt-BR')}</span>
                     </td>
                     <td className="px-6 py-7">
-                       {order.input_data?.imei || order.input_data?.email ? (
+                       {order.input_data?.imei || order.input_data?.email || order.input_data?.whatsapp ? (
                           <div className="flex flex-col gap-1.5 items-start">
                              {order.input_data?.imei && (
                                 <div className="bg-[#0f172a] px-3 py-1.5 rounded-lg border border-[#334155] inline-block">
@@ -169,12 +170,18 @@ export default function PedidosPage() {
                                    <span className="text-gray-300 text-xs font-mono">{order.input_data.imei}</span>
                                 </div>
                              )}
-                             {order.input_data?.email && (
-                                <div className="bg-[#0f172a] px-3 py-1.5 rounded-lg border border-[#334155] inline-block">
-                                   <span className="text-gray-500 text-[9px] uppercase font-black mr-1">E-MAIL:</span>
-                                   <span className="text-gray-300 text-xs font-mono">{order.input_data.email}</span>
-                                </div>
-                             )}
+{order.input_data?.email && (
+                                 <div className="bg-[#0f172a] px-3 py-1.5 rounded-lg border border-[#334155] inline-block">
+                                    <span className="text-gray-500 text-[9px] uppercase font-black mr-1">E-MAIL:</span>
+                                    <span className="text-gray-300 text-xs font-mono">{order.input_data.email}</span>
+                                 </div>
+                              )}
+                              {order.input_data?.whatsapp && (
+                                 <div className="bg-[#0f172a] px-3 py-1.5 rounded-lg border border-[#00D2AD]/30 inline-block">
+                                    <span className="text-gray-500 text-[9px] uppercase font-black mr-1">WHATSAPP:</span>
+                                    <span className="text-[#00D2AD] text-xs font-mono">{order.input_data.whatsapp}</span>
+                                 </div>
+                              )}
                           </div>
                        ) : (
                           <span className="text-gray-500 text-xs">N/A</span>

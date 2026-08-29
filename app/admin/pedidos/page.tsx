@@ -114,6 +114,7 @@ export default function AdminPedidosPage() {
       order.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.service_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.input_data?.imei?.includes(searchTerm) ||
+      order.input_data?.whatsapp?.includes(searchTerm) ||
       order.input_data?.account_email?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = activeCategoryId === null || order.services?.category_id === activeCategoryId;
@@ -242,6 +243,19 @@ export default function AdminPedidosPage() {
                           <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg">
                             <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">IMEI:</p>
                             <p className="text-blue-400 font-black text-xs font-mono tracking-widest">{order.input_data.imei}</p>
+                          </div>
+                        )}
+                        {order.input_data?.whatsapp && (
+                          <div className="bg-[#25D366]/10 border border-[#25D366]/30 px-3 py-1.5 rounded-lg">
+                            <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">WhatsApp Cliente:</p>
+                            <a
+                              href={`https://wa.me/${order.input_data.whatsapp}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#25D366] font-black text-xs underline underline-offset-2"
+                            >
+                              {order.input_data.whatsapp}
+                            </a>
                           </div>
                         )}
                         {order.input_data?.quantity && (

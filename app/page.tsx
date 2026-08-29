@@ -140,9 +140,12 @@ export default function Home() {
     }
   };
 
-  const filteredServices = activeCategoryId 
-    ? services.filter(s => s.category_id === activeCategoryId)
-    : services;
+  const DESBLOQUEIO_SLUGS = ['desbloqueio-frp', 'desbloqueio-mdm'];
+  const homeCategories = categories.filter(c => !DESBLOQUEIO_SLUGS.includes(c.slug));
+  const homeServices = services.filter(s => s.categories?.slug && !DESBLOQUEIO_SLUGS.includes(s.categories.slug));
+  const displayedServices = activeCategoryId
+    ? homeServices.filter(s => s.category_id === activeCategoryId)
+    : homeServices;
 
   const getIcon = (slug: string) => {
     switch(slug) {
@@ -347,7 +350,7 @@ export default function Home() {
             TODOS
           </button>
 
-          {categories.map((cat) => (
+          {homeCategories.map((cat) => (
             <button 
               key={cat.id}
               onClick={() => setActiveCategoryId(activeCategoryId === cat.id ? null : cat.id)}
@@ -375,11 +378,11 @@ export default function Home() {
         <div className="flex items-center gap-4">
            <div className="w-1.5 h-8 bg-[#00D2AD] rounded-full shadow-[0_0_10px_#00D2AD]"></div>
            <h2 className="text-2xl font-black text-white uppercase italic tracking-tight">
-              {activeCategoryId ? categories.find(c => c.id === activeCategoryId)?.name : 'Programas Disponíveis'}
+              {activeCategoryId ? homeCategories.find(c => c.id === activeCategoryId)?.name : 'Programas Disponíveis'}
            </h2>
         </div>
         <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-          {filteredServices.length} {filteredServices.length === 1 ? 'Resultado' : 'Resultados'}
+          {displayedServices.length} {displayedServices.length === 1 ? 'Resultado' : 'Resultados'}
         </div>
       </div>
 
@@ -388,8 +391,8 @@ export default function Home() {
           [...Array(6)].map((_, i) => (
             <div key={i} className="bg-[#1e293b] rounded-3xl p-6 border border-[#334155] h-32 animate-pulse shadow-2xl"></div>
           ))
-        ) : filteredServices.length > 0 ? (
-          filteredServices.map((service) => {
+        ) : displayedServices.length > 0 ? (
+          displayedServices.map((service) => {
             return (
             <div 
               key={service.id} 
