@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import AdminNav from "@/components/admin/AdminNav";
 
 export default function AdminPlanosPage() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -117,17 +117,7 @@ export default function AdminPlanosPage() {
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
       {/* Admin Nav */}
-      <div className="flex gap-4 mb-10 border-b border-[#334155] pb-4">
-        <Link href="/admin/estoque" className="text-gray-500 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2">
-          📦 Gestão de Estoque
-        </Link>
-        <Link href="/admin/servicos" className="text-gray-500 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2">
-          🛠️ Gerenciar Serviços
-        </Link>
-        <Link href="/admin/planos" className="text-[#00D2AD] border-b-2 border-[#00D2AD] font-black uppercase text-xs tracking-widest px-4 py-2">
-          💳 Solicitações de Planos
-        </Link>
-      </div>
+      <AdminNav />
 
       <div className="mb-10">
         <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">

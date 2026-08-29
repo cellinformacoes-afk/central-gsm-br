@@ -1,7 +1,7 @@
 "use client";
 import { Inter } from 'next/font/google';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import DailyRevenueWidget from '@/components/admin/DailyRevenueWidget';
@@ -16,7 +16,23 @@ export default function ClientLayout({
   const [profile, setProfile] = useState<any>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pendingResets, setPendingResets] = useState(0);
+  const [isAdmOpen, setIsAdmOpen] = useState(false);
+  const admRef = useRef<HTMLDivElement>(null);
+  const admMobileRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        admRef.current && !admRef.current.contains(e.target as Node) &&
+        admMobileRef.current && !admMobileRef.current.contains(e.target as Node)
+      ) {
+        setIsAdmOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     // Check current session
@@ -119,24 +135,40 @@ export default function ClientLayout({
                 Grupo VIP
               </a>
               {profile?.role === 'admin' && (
-                <div className="flex items-center gap-2">
-                  <Link href="/admin/estoque" className="text-[10px] md:text-xs font-black text-gray-400 hover:text-[#FFC107] transition-all bg-white/5 px-2 md:px-3 py-1.5 rounded-lg border border-white/10 uppercase">
-                    Estoque
-                  </Link>
-                  <Link href="/admin/servicos" className="text-[10px] md:text-xs font-black text-gray-400 hover:text-[#00D2AD] transition-all bg-white/5 px-2 md:px-3 py-1.5 rounded-lg border border-white/10 uppercase">
-                    Serviços
-                  </Link>
-                  <Link href="/admin/planos" className="text-[10px] md:text-xs font-black text-gray-400 hover:text-[#00D2AD] transition-all bg-white/5 px-2 md:px-3 py-1.5 rounded-lg border border-white/10 uppercase">
-                    Planos
-                  </Link>
-                  <Link href="/admin/expirados" className="flex items-center gap-2 text-[10px] md:text-xs font-black text-[#FFC107] hover:text-white transition-all bg-[#FFC107]/10 px-2 md:px-3 py-1.5 rounded-lg border border-[#FFC107]/20 uppercase">
-                    Expirados
-                    {pendingResets > 0 && (
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white animate-bounce">
-                        {pendingResets}
-                      </span>
-                    )}
-                  </Link>
+                <div className="relative" ref={admRef}>
+                  <button
+                    onClick={() => setIsAdmOpen(!isAdmOpen)}
+                    className={`flex items-center gap-1.5 text-[10px] md:text-xs font-black transition-all bg-white/5 px-2 md:px-3 py-1.5 rounded-lg border uppercase ${isAdmOpen ? 'text-[#00D2AD] border-[#00D2AD]/40' : 'text-gray-300 hover:text-[#00D2AD] border-white/10'}`}
+                  >
+                    <span>🛡️ ADM</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${isAdmOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6" /></svg>
+                  </button>
+
+                  {isAdmOpen && (
+                    <div className="absolute right-0 top-full mt-2 z-50 bg-[#0f172a] border border-[#334155] rounded-xl shadow-2xl p-2 min-w-[200px]">
+                      <Link href="/admin/estoque" onClick={() => setIsAdmOpen(false)} className="block text-[10px] md:text-xs font-black text-gray-300 hover:text-[#FFC107] hover:bg-white/5 px-3 py-2 rounded-lg uppercase">
+                        📦 Estoque
+                      </Link>
+                      <Link href="/admin/servicos" onClick={() => setIsAdmOpen(false)} className="block text-[10px] md:text-xs font-black text-gray-300 hover:text-[#00D2AD] hover:bg-white/5 px-3 py-2 rounded-lg uppercase">
+                        🛠️ Serviços
+                      </Link>
+                      <Link href="/admin/planos" onClick={() => setIsAdmOpen(false)} className="block text-[10px] md:text-xs font-black text-gray-300 hover:text-[#00D2AD] hover:bg-white/5 px-3 py-2 rounded-lg uppercase">
+                        💳 Planos
+                      </Link>
+                      <Link
+                        href="/admin/expirados"
+                        onClick={() => setIsAdmOpen(false)}
+                        className="flex items-center justify-between text-[10px] md:text-xs font-black text-[#FFC107] hover:text-white hover:bg-[#FFC107]/10 px-3 py-2 rounded-lg uppercase"
+                      >
+                        <span>⏳ Expirados</span>
+                        {pendingResets > 0 && (
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white animate-bounce">
+                            {pendingResets}
+                          </span>
+                        )}
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
             </nav>
@@ -208,31 +240,41 @@ export default function ClientLayout({
                 Grupo VIP (Promoções)
               </a>
               {profile?.role === 'admin' && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Painel Admin</span>
-                  <Link href="/admin/estoque" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-white flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15" /><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></svg>
-                    Estoque
-                  </Link>
-                  <Link href="/admin/servicos" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-white flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                    Serviços
-                  </Link>
-                  <Link href="/admin/planos" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-white flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
-                    Solicitações Planos
-                  </Link>
-                  <Link href="/admin/expirados" onClick={() => setIsMenuOpen(false)} className="text-base font-black text-[#FFC107] flex items-center justify-between p-3 rounded-xl hover:bg-[#0f172a] border border-[#FFC107]/20 bg-[#FFC107]/5">
-                    <div className="flex items-center gap-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                      Reset Manual
+                <div className="flex flex-col gap-2" ref={admMobileRef}>
+                  <button
+                    onClick={() => setIsAdmOpen(!isAdmOpen)}
+                    className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest flex items-center justify-between"
+                  >
+                    <span>🛡️ Painel Admin (ADM)</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${isAdmOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6" /></svg>
+                  </button>
+                  {isAdmOpen && (
+                    <div className="flex flex-col gap-2">
+                      <Link href="/admin/estoque" onClick={() => { setIsMenuOpen(false); setIsAdmOpen(false); }} className="text-base font-bold text-white flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15" /><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></svg>
+                        Estoque
+                      </Link>
+                      <Link href="/admin/servicos" onClick={() => { setIsMenuOpen(false); setIsAdmOpen(false); }} className="text-base font-bold text-white flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                        Serviços
+                      </Link>
+                      <Link href="/admin/planos" onClick={() => { setIsMenuOpen(false); setIsAdmOpen(false); }} className="text-base font-bold text-white flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                        Solicitações Planos
+                      </Link>
+                      <Link href="/admin/expirados" onClick={() => { setIsMenuOpen(false); setIsAdmOpen(false); }} className="text-base font-black text-[#FFC107] flex items-center justify-between p-3 rounded-xl hover:bg-[#0f172a] border border-[#FFC107]/20 bg-[#FFC107]/5">
+                        <div className="flex items-center gap-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                          Reset Manual
+                        </div>
+                        {pendingResets > 0 && (
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] text-white">
+                            {pendingResets}
+                          </span>
+                        )}
+                      </Link>
                     </div>
-                    {pendingResets > 0 && (
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] text-white">
-                        {pendingResets}
-                      </span>
-                    )}
-                  </Link>
+                  )}
                 </div>
               )}
               <div className="h-px bg-[#334155] my-2" />
