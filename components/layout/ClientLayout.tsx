@@ -112,7 +112,6 @@ export default function ClientLayout({
               <Link href="/pedidos" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Meus Pedidos</Link>
               <Link href="/saldo" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Adicionar Saldo</Link>
               <Link href="/extrato" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Ver extrato</Link>
-              <Link href="/suporte" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Suporte</Link>
               {profile?.role === 'admin' && (
                 <Link
                   href="/admin/estoque"
@@ -181,10 +180,6 @@ export default function ClientLayout({
               <Link href="/extrato" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
                 Ver extrato
-              </Link>
-              <Link href="/suporte" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                Suporte
               </Link>
               <a href="https://chat.whatsapp.com/DELs1QYHUQAK83NpJwAjTD" target="_blank" rel="noopener noreferrer" className="text-base font-bold text-[#25D366] flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
