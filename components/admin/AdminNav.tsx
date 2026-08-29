@@ -55,14 +55,7 @@ export default function AdminNav() {
     { href: '/admin/pedidos', label: '🛒 Pedidos' },
     { href: '/admin/estoque', label: '📦 Gestão de Estoque' },
     { href: '/admin/servicos', label: '🛠️ Gerenciar Serviços' },
-    { href: '/admin/planos', label: '💳 Solicitações de Planos' },
-    { href: '/admin/assinaturas', label: '💎 Assinaturas' },
-    { href: '/admin/licencas', label: '🗝️ Gestão de Licenças' },
-    { href: '/admin/expirados', label: '⏳ Expirados / Reset' },
-    { href: '/admin/tutoriais', label: '📖 Tutoriais' },
-    { href: '/admin/fraudes', label: '🚫 Fraudes' },
     { href: '/admin/conciliacao', label: '⚡ Conciliação' },
-    { href: '/admin/downloads-extras', label: '⬇️ Download Extra' },
   ];
 
   const activeLink = links.find((link) => pathname.startsWith(link.href));
