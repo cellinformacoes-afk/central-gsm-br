@@ -12,8 +12,10 @@ export default function DesbloqueiosPage() {
   const [loading, setLoading] = useState(true);
 
   const [selectedService, setSelectedService] = useState<any>(null);
+  const [nome, setNome] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
-  const [imei, setImei] = useState('');
+  const [celular, setCelular] = useState('');
+  const [tipo, setTipo] = useState<'FRP' | 'MDM'>('FRP');
   const [purchaseLoading, setPurchaseLoading] = useState(false);
 
   const router = useRouter();
@@ -45,9 +47,19 @@ export default function DesbloqueiosPage() {
   const handlePurchase = async () => {
     if (!selectedService) return;
 
+    if (!nome.trim()) {
+      alert("Por favor, digite seu nome.");
+      return;
+    }
+
     const digits = whatsapp.replace(/\D/g, '');
-    if (digits.length < 10) {
+    if (digits.length < 10 || digits.length > 13) {
       alert("Por favor, digite seu WhatsApp corretamente com DDD (ex: 11999998888).");
+      return;
+    }
+
+    if (!celular.trim()) {
+      alert("Por favor, informe o modelo do celular que deseja desbloquear.");
       return;
     }
 
@@ -63,7 +75,7 @@ export default function DesbloqueiosPage() {
       const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
         p_user_id: session.user.id,
         p_service_id: selectedService.id,
-        p_input_data: { whatsapp: digits, imei: imei.trim() },
+        p_input_data: { nome: nome.trim(), whatsapp: digits, celular: celular.trim(), tipo },
         p_quantity: 1
       });
 
@@ -77,8 +89,9 @@ export default function DesbloqueiosPage() {
 
       alert("Pedido de desbloqueio realizado com sucesso! Entraremos em contato pelo seu WhatsApp.");
       setSelectedService(null);
+      setNome('');
       setWhatsapp('');
-      setImei('');
+      setCelular('');
       router.push('/pedidos');
     } catch (error: any) {
       console.error(error);
@@ -133,7 +146,7 @@ export default function DesbloqueiosPage() {
           visibleServices.map((service) => (
             <div
               key={service.id}
-              onClick={() => { setWhatsapp(''); setImei(''); setSelectedService(service); }}
+              onClick={() => { setNome(''); setWhatsapp(''); setCelular(''); setTipo(service.categories?.slug === 'desbloqueio-mdm' ? 'MDM' : 'FRP'); setSelectedService(service); }}
               className="bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center transition-all relative overflow-hidden hover:shadow-[0_0_40px_rgba(0,210,173,0.1)] hover:-translate-y-2 hover:border-[#00D2AD]/40 cursor-pointer group"
             >
               <div className="absolute top-0 right-0 w-40 h-40 bg-[#00D2AD]/5 blur-[70px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -190,14 +203,25 @@ export default function DesbloqueiosPage() {
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price)}
                   </p>
                 </div>
-                <button onClick={() => { setSelectedService(null); setWhatsapp(''); setImei(''); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
+                <button onClick={() => { setSelectedService(null); setNome(''); setWhatsapp(''); setCelular(''); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
               </div>
 
               <div className="space-y-6">
                 <p className="text-gray-400 text-sm leading-relaxed">{selectedService.description || "Faça o desbloqueio remoto deste modelo. Após a compra entraremos em contato pelo WhatsApp."}</p>
 
                 <div>
-                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">WhatsApp para atendimento *</label>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Seu Nome *</label>
+                  <input
+                    type="text"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    placeholder="EX: João da Silva"
+                    className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">WhatsApp com DDD *</label>
                   <input
                     type="tel"
                     value={whatsapp}
@@ -209,14 +233,34 @@ export default function DesbloqueiosPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">IMEI do Aparelho (opcional)</label>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Modelo do Celular a Desbloquear *</label>
                   <input
                     type="text"
-                    value={imei}
-                    onChange={(e) => setImei(e.target.value)}
-                    placeholder="EX: 351234567890123"
-                    className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-mono text-center tracking-[0.1em] focus:border-[#00D2AD] outline-none"
+                    value={celular}
+                    onChange={(e) => setCelular(e.target.value)}
+                    placeholder="EX: Realme Note 70 / iPhone 11"
+                    className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Confirme o tipo de Desbloqueio *</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {(['FRP', 'MDM'] as const).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setTipo(t)}
+                        className={`py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all border-2 ${
+                          tipo === t
+                            ? 'bg-[#00D2AD] border-[#00D2AD] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)]'
+                            : 'bg-[#0f172a] border-[#334155] text-gray-400 hover:border-[#00D2AD]/50 hover:text-white'
+                        }`}
+                      >
+                        {t === 'FRP' ? '📱 FRP' : '🔒 MDM'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/10 text-xs text-gray-400 font-medium">

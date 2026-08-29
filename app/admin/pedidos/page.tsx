@@ -245,6 +245,24 @@ export default function AdminPedidosPage() {
                             <p className="text-blue-400 font-black text-xs font-mono tracking-widest">{order.input_data.imei}</p>
                           </div>
                         )}
+                        {order.input_data?.nome && (
+                          <div className="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-lg">
+                            <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">Cliente:</p>
+                            <p className="text-white font-black text-xs">{order.input_data.nome}</p>
+                          </div>
+                        )}
+                        {order.input_data?.celular && (
+                          <div className="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-lg">
+                            <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">Celular (Modelo):</p>
+                            <p className="text-white font-black text-xs">{order.input_data.celular}</p>
+                          </div>
+                        )}
+                        {order.input_data?.tipo && (
+                          <div className="bg-purple-500/10 border border-purple-500/20 px-3 py-1.5 rounded-lg">
+                            <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">Tipo:</p>
+                            <p className="text-purple-400 font-black text-xs">{order.input_data.tipo}</p>
+                          </div>
+                        )}
                         {order.input_data?.whatsapp && (
                           <div className="bg-[#25D366]/10 border border-[#25D366]/30 px-3 py-1.5 rounded-lg">
                             <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">WhatsApp Cliente:</p>
