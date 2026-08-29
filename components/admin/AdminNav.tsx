@@ -55,7 +55,7 @@ export default function AdminNav() {
     { href: '/admin/pedidos', label: '🛒 Pedidos' },
     { href: '/admin/estoque', label: '📦 Gestão de Estoque' },
     { href: '/admin/servicos', label: '🛠️ Gerenciar Serviços' },
-    { href: '/admin/conciliacao', label: '⚡ Conciliação' },
+    { href: '/admin/conciliacao', label: '⚡ Devolução de Saldo' },
   ];
 
   const activeLink = links.find((link) => pathname.startsWith(link.href));
