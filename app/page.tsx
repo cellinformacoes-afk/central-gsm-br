@@ -140,7 +140,7 @@ export default function Home() {
     }
   };
 
-  const DESBLOQUEIO_SLUGS = ['desbloqueio-frp', 'desbloqueio-mdm'];
+  const DESBLOQUEIO_SLUGS = ['desbloqueio-frp', 'desbloqueio-mdm', 'desbloqueio-iphone'];
   const homeCategories = categories.filter(c => !DESBLOQUEIO_SLUGS.includes(c.slug));
   const homeServices = services.filter(s => s.categories?.slug && !DESBLOQUEIO_SLUGS.includes(s.categories.slug));
   const displayedServices = activeCategoryId

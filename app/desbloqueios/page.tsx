@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
-type Tab = 'FRP' | 'MDM';
+type Tab = 'FRP' | 'MDM' | 'IPHONE';
 
 export default function DesbloqueiosPage() {
   const [tab, setTab] = useState<Tab>('FRP');
@@ -15,7 +15,7 @@ export default function DesbloqueiosPage() {
   const [nome, setNome] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [celular, setCelular] = useState('');
-  const [tipo, setTipo] = useState<'FRP' | 'MDM'>('FRP');
+  const [tipo, setTipo] = useState<'FRP' | 'MDM' | 'IPHONE'>('FRP');
   const [purchaseLoading, setPurchaseLoading] = useState(false);
 
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function DesbloqueiosPage() {
       .from('services')
       .select('*, categories(name, slug)')
       .eq('active', true)
-      .in('categories.slug', ['desbloqueio-frp', 'desbloqueio-mdm']);
+      .in('categories.slug', ['desbloqueio-frp', 'desbloqueio-mdm', 'desbloqueio-iphone']);
 
     if (error) {
       console.error('Erro ao buscar desbloqueios:', error);
@@ -42,7 +42,11 @@ export default function DesbloqueiosPage() {
 
   const frpServices = services.filter(s => s.categories?.slug === 'desbloqueio-frp');
   const mdmServices = services.filter(s => s.categories?.slug === 'desbloqueio-mdm');
-  const visibleServices = tab === 'FRP' ? frpServices : mdmServices;
+  const iphoneServices = services.filter(s => s.categories?.slug === 'desbloqueio-iphone');
+  const visibleServices = tab === 'FRP' ? frpServices : tab === 'MDM' ? mdmServices : iphoneServices;
+
+  const slugTipo = (slug?: string): 'FRP' | 'MDM' | 'IPHONE' =>
+    slug === 'desbloqueio-mdm' ? 'MDM' : slug === 'desbloqueio-iphone' ? 'IPHONE' : 'FRP';
 
   const handlePurchase = async () => {
     if (!selectedService) return;
@@ -121,7 +125,7 @@ export default function DesbloqueiosPage() {
 
       {/* Tabs FRP / MDM */}
       <div className="flex gap-2 mb-8">
-        {(['FRP', 'MDM'] as Tab[]).map((t) => (
+        {(['FRP', 'MDM', 'IPHONE'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => { setTab(t); setSelectedService(null); }}
@@ -131,7 +135,7 @@ export default function DesbloqueiosPage() {
                 : 'bg-[#0f172a] border-[#334155] text-gray-400 hover:border-[#00D2AD]/50 hover:text-white'
             }`}
           >
-            {t === 'FRP' ? '📱 FRP' : '🔒 MDM'}
+            {t === 'FRP' ? '📱 FRP' : t === 'MDM' ? '🔒 MDM' : '🍎 IPHONE'}
           </button>
         ))}
       </div>
@@ -146,7 +150,7 @@ export default function DesbloqueiosPage() {
           visibleServices.map((service) => (
             <div
               key={service.id}
-              onClick={() => { setNome(''); setWhatsapp(''); setCelular(''); setTipo(service.categories?.slug === 'desbloqueio-mdm' ? 'MDM' : 'FRP'); setSelectedService(service); }}
+              onClick={() => { setNome(''); setWhatsapp(''); setCelular(''); setTipo(slugTipo(service.categories?.slug)); setSelectedService(service); }}
               className="bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center transition-all relative overflow-hidden hover:shadow-[0_0_40px_rgba(0,210,173,0.1)] hover:-translate-y-2 hover:border-[#00D2AD]/40 cursor-pointer group"
             >
               <div className="absolute top-0 right-0 w-40 h-40 bg-[#00D2AD]/5 blur-[70px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -245,8 +249,8 @@ export default function DesbloqueiosPage() {
 
                 <div>
                   <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Confirme o tipo de Desbloqueio *</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {(['FRP', 'MDM'] as const).map((t) => (
+                  <div className="grid grid-cols-3 gap-3">
+                    {(['FRP', 'MDM', 'IPHONE'] as const).map((t) => (
                       <button
                         key={t}
                         type="button"
@@ -257,7 +261,7 @@ export default function DesbloqueiosPage() {
                             : 'bg-[#0f172a] border-[#334155] text-gray-400 hover:border-[#00D2AD]/50 hover:text-white'
                         }`}
                       >
-                        {t === 'FRP' ? '📱 FRP' : '🔒 MDM'}
+                        {t === 'FRP' ? '📱 FRP' : t === 'MDM' ? '🔒 MDM' : '🍎 IPHONE'}
                       </button>
                     ))}
                   </div>
