@@ -220,7 +220,7 @@ export default function ClientLayout({
 
 
       {/* WhatsApp Floats */}
-      <div className="fixed right-4 bottom-20 z-40 flex flex-col items-end gap-3">
+      <div className="fixed right-4 bottom-28 z-40 flex flex-col items-end gap-3">
         <span className="bg-[#FFC107]/15 border border-[#FFC107]/40 text-[#FFC107] text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full backdrop-blur animate-pulse shadow-[0_0_12px_rgba(255,193,7,0.3)]">
           Novidades e promoções
         </span>
@@ -240,9 +240,18 @@ export default function ClientLayout({
           </span>
         </a>
       </div>
-      <div className="fixed right-4 bottom-4 z-40">
-        <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" target="_blank" className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+      <div className="fixed right-4 bottom-4 z-40 flex flex-col items-end gap-3">
+        <span className="bg-[#00D2AD]/15 border border-[#00D2AD]/40 text-[#00D2AD] text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full backdrop-blur animate-pulse shadow-[0_0_12px_rgba(0,210,173,0.3)]">
+          Atendimento rápido
+        </span>
+        <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-3 bg-[#25D366] hover:bg-[#1fb356] pl-4 pr-5 py-3 rounded-full shadow-[0_10px_30px_rgba(37,211,102,0.45)] hover:scale-105 active:scale-95 transition-all" title="Falar com o Suporte">
+          <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:rotate-12 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+          </span>
+          <span className="flex flex-col leading-none text-left">
+            <span className="text-white font-black text-sm uppercase tracking-tight">Suporte</span>
+            <span className="text-white/80 text-[9px] font-bold uppercase tracking-wider mt-0.5">Falar agora</span>
+          </span>
         </a>
       </div>
 
