@@ -35,7 +35,11 @@ export default function Home() {
   async function fetchData() {
     setLoading(true);
     const { data: catData, error: catError } = await supabase.from('categories').select('*');
-    if (!catError) setCategories(catData || []);
+    if (!catError) {
+      setCategories(catData || []);
+      const aluguel = (catData || []).find(c => c.slug === 'aluguel-contas');
+      if (aluguel) setActiveCategoryId(aluguel.id);
+    }
 
     const { data: servData, error: servError } = await supabase
       .from('services')
@@ -338,22 +342,10 @@ export default function Home() {
 
         {/* Compact Category Navigation */}
         <div className="flex flex-wrap items-center gap-3">
-          <button 
-            onClick={() => setActiveCategoryId(null)}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all border-2 ${
-              activeCategoryId === null 
-              ? 'bg-[#00D2AD] border-[#00D2AD] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)]' 
-              : 'bg-[#0f172a] border-[#334155] text-gray-400 hover:border-[#00D2AD]/50 hover:text-white'
-            }`}
-          >
-            <div className={`w-2 h-2 rounded-full ${activeCategoryId === null ? 'bg-[#0f172a] animate-pulse' : 'bg-gray-600'}`}></div>
-            TODOS
-          </button>
-
           {homeCategories.map((cat) => (
             <button 
               key={cat.id}
-              onClick={() => setActiveCategoryId(activeCategoryId === cat.id ? null : cat.id)}
+              onClick={() => setActiveCategoryId(cat.id)}
               className={`flex items-center gap-3 px-5 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all border-2 group ${
                 activeCategoryId === cat.id 
                 ? 'bg-[#00D2AD] border-[#00D2AD] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)]' 
