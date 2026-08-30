@@ -194,8 +194,8 @@ export default function DesbloqueiosPage() {
       {/* Purchase Modal */}
       {selectedService && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#0f172a]/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
-          <div className="bg-[#1e293b] max-w-md w-full rounded-3xl border border-[#00D2AD]/50 shadow-[0_0_50px_rgba(0,210,173,0.2)] overflow-hidden relative">
-            <div className="p-8">
+          <div className="bg-[#1e293b] max-w-md w-full rounded-3xl border border-[#00D2AD]/50 shadow-[0_0_50px_rgba(0,210,173,0.2)] overflow-hidden relative flex flex-col max-h-[90vh]">
+            <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-2xl font-black text-white uppercase italic">{selectedService.title}</h2>
@@ -266,15 +266,17 @@ export default function DesbloqueiosPage() {
                 <div className="bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/10 text-xs text-gray-400 font-medium">
                   📌 Prazo médio: <span className="text-[#FFC107] font-black">{selectedService.time_estimate || '30 MINUTOS'}</span>.
                 </div>
-
-                <button
-                  onClick={handlePurchase}
-                  disabled={purchaseLoading}
-                  className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-5 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-xl transition-all hover:-translate-y-1"
-                >
-                  {purchaseLoading ? 'PROCESSANDO...' : 'CONFIRMAR COMPRA'}
-                </button>
               </div>
+            </div>
+
+            <div className="p-6 bg-[#151e2e] border-t border-[#334155]">
+              <button
+                onClick={handlePurchase}
+                disabled={purchaseLoading}
+                className="w-full bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] py-5 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-[0_0_20px_rgba(0,210,173,0.25)] transition-all hover:-translate-y-1"
+              >
+                {purchaseLoading ? 'PROCESSANDO...' : 'CONFIRMAR COMPRA'}
+              </button>
             </div>
           </div>
         </div>
