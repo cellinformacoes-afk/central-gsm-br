@@ -146,7 +146,7 @@ export default function DesbloqueiosPage() {
           visibleServices.map((service) => (
             <div
               key={service.id}
-              onClick={() => { setNome(''); setWhatsapp(''); setCelular(''); setTipo(service.categories?.slug === 'desbloqueio-mdm' ? 'MDM' : 'FRP'); setSelectedService(service); }}
+              onClick={() => { setNome(''); setWhatsapp(''); setCelular(service.title); setTipo(service.categories?.slug === 'desbloqueio-mdm' ? 'MDM' : 'FRP'); setSelectedService(service); }}
               className="bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center transition-all relative overflow-hidden hover:shadow-[0_0_40px_rgba(0,210,173,0.1)] hover:-translate-y-2 hover:border-[#00D2AD]/40 cursor-pointer group"
             >
               <div className="absolute top-0 right-0 w-40 h-40 bg-[#00D2AD]/5 blur-[70px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -234,13 +234,16 @@ export default function DesbloqueiosPage() {
 
                 <div>
                   <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Modelo do Celular a Desbloquear *</label>
-                  <input
-                    type="text"
+                  <select
                     value={celular}
                     onChange={(e) => setCelular(e.target.value)}
-                    placeholder="EX: Realme Note 70 / iPhone 11"
-                    className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
-                  />
+                    className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="">Selecione o modelo...</option>
+                    {(selectedService.categories?.slug === 'desbloqueio-mdm' ? mdmServices : frpServices).map((m) => (
+                      <option key={m.id} value={m.title}>{m.title}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
