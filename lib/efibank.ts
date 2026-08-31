@@ -139,5 +139,20 @@ export const efibank = {
       console.error('Erro no efibank.createPixPayment:', error);
       throw error;
     }
+  },
+
+  async configurarWebhook(webhookUrl: string) {
+    try {
+      const token = await this.getAuthToken();
+      const pixKey = process.env.EFI_PIX_KEY || '';
+      console.log(`Configurando webhook para a chave ${pixKey} com URL ${webhookUrl}`);
+      
+      // O efiRequest que criamos vai cuidar do HTTPS e do certificado
+      const response = await efiRequest(`/v2/webhook/${encodeURIComponent(pixKey)}`, 'PUT', { webhookUrl }, token);
+      return response;
+    } catch (error) {
+      console.error('Erro no efibank.configurarWebhook:', error);
+      throw error;
+    }
   }
 };
