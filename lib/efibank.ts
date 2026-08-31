@@ -50,7 +50,8 @@ function efiRequest(endpoint: string, method: string, data?: any, token?: string
       method: method,
       agent: getHttpsAgent(),
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'CentralGSM-App/1.0 (Node.js)'
       }
     };
 
