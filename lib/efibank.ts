@@ -1,6 +1,7 @@
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
+import QRCode from 'qrcode';
 
 // Credenciais Efi Bank (Gerencianet)
 const EFI_CLIENT_ID = process.env.EFI_CLIENT_ID || 'Client_Id_d92cb16bfe267f6063066d31b79e263991156aa2';
@@ -94,7 +95,7 @@ function efiRequest(endpoint: string, method: string, data?: any, token?: string
 
 export const efibank = {
   async getAuthToken(): Promise<string> {
-    const response = await efiRequest('/oauth/token', 'POST', { grant_type: 'client_credentials' }) as any;
+    const response = await efiRequest('/oauth/token', 'POST', { grant_type: 'client_credentials', scope: 'pix.write pix.read' }) as any;
     return response.access_token;
   },
 
@@ -130,14 +131,28 @@ export const efibank = {
 
       // Cria a cobrança
       const cobResponse = await efiRequest('/v2/cob', 'POST', cobData, token) as any;
-      
-      // Gera o QR Code para a loc gerada
-      const qrResponse = await efiRequest(`/v2/loc/${cobResponse.loc.id}/qrcode`, 'GET', undefined, token) as any;
-      
+
+      // Busca os dados completos da cobrança para obter o código copia-e-cola (pixCopiaECola).
+      // O endpoint /v2/loc/{id}/qrcode não está habilitado no produto desta conta (insufficient_scope),
+      // por isso geramos o QR Code localmente a partir do pixCopiaECola.
+      const cobDetail = await efiRequest(`/v2/cob/${cobResponse.txid}`, 'GET', undefined, token) as any;
+      const copyPaste: string = cobDetail.pixCopiaECola || '';
+
+      // Gera a imagem do QR Code localmente (base64 PNG) a partir do código copia-e-cola
+      let qrImageBase64 = '';
+      if (copyPaste) {
+        const dataUrl = await QRCode.toDataURL(copyPaste, {
+          errorCorrectionLevel: 'M',
+          margin: 1,
+          width: 260
+        });
+        qrImageBase64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+      }
+
       return {
         id: cobResponse.txid, // Usa o txid como referência externa
-        qrCode: qrResponse.imagemQrcode,
-        copyPaste: qrResponse.qrcode,
+        qrCode: qrImageBase64,
+        copyPaste,
         locId: cobResponse.loc.id
       };
     } catch (error) {
