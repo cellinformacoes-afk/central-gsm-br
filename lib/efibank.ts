@@ -161,6 +161,17 @@ export const efibank = {
     }
   },
 
+  async consultarCobranca(txid: string) {
+    try {
+      const token = await this.getAuthToken();
+      const response = await efiRequest(`/v2/cob/${encodeURIComponent(txid)}`, 'GET', undefined, token) as any;
+      return response;
+    } catch (error) {
+      console.error('Erro no efibank.consultarCobranca:', error);
+      throw error;
+    }
+  },
+
   async listarChavesPix() {
     try {
       const token = await this.getAuthToken();
