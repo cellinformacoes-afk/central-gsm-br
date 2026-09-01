@@ -5,28 +5,37 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    // Primeiro, busca as chaves PIX cadastradas na conta
-    const token = await efibank.getAuthToken();
-    
-    // Lista as chaves cadastradas
-    const keysResponse = await fetch('https://pix.api.efipay.com.br/v2/gw/conta/chaves', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    const keys = await keysResponse.json().catch(() => ({ error: 'Não foi possível listar as chaves' }));
-    
-    // Tenta configurar webhook com a chave PIX configurada
-    let webhookResult = null;
+    // Lista as chaves PIX cadastradas na conta (usando mTLS)
+    let chaves: any[] = [];
+    let chavesErro = null;
     try {
-      const webhookUrl = 'https://www.centralgsm.com.br/api/webhooks/efibank';
-      webhookResult = await efibank.configurarWebhook(webhookUrl);
+      const res = await efibank.listarChavesPix() as any;
+      chaves = res?.chaves || [];
     } catch (e: any) {
-      webhookResult = { error: e.message };
+      chavesErro = e.message;
+    }
+
+    // Tenta configurar webhook para cada chave encontrada
+    const webhookUrl = 'https://www.centralgsm.com.br/api/webhooks/efibank';
+    const resultados: any[] = [];
+
+    if (chaves.length > 0) {
+      for (const chave of chaves) {
+        const chaveValor = chave.chave || chave;
+        try {
+          await efibank.configurarWebhook(webhookUrl, chaveValor);
+          resultados.push({ chave: chaveValor, status: '✅ Webhook configurado!' });
+        } catch (e: any) {
+          resultados.push({ chave: chaveValor, status: `❌ ${e.message}` });
+        }
+      }
     }
 
     return NextResponse.json({ 
-      chaves_pix_cadastradas: keys,
-      webhook_resultado: webhookResult
+      chaves_encontradas: chaves,
+      chaves_erro: chavesErro,
+      webhook_resultados: resultados,
+      nota: chaves.length === 0 ? 'Nenhuma chave PIX encontrada na conta Efí. Cadastre uma chave PIX no app/site da Efí Bank.' : `${chaves.length} chave(s) encontrada(s)`
     });
   } catch (error: any) {
     return NextResponse.json({ 

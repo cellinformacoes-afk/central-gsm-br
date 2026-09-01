@@ -143,10 +143,21 @@ export const efibank = {
     }
   },
 
-  async configurarWebhook(webhookUrl: string) {
+  async listarChavesPix() {
     try {
       const token = await this.getAuthToken();
-      const pixKey = process.env.EFI_PIX_KEY || '';
+      const response = await efiRequest('/v2/gw/conta/chaves', 'GET', undefined, token) as any;
+      return response;
+    } catch (error) {
+      console.error('Erro no efibank.listarChavesPix:', error);
+      throw error;
+    }
+  },
+
+  async configurarWebhook(webhookUrl: string, chave?: string) {
+    try {
+      const token = await this.getAuthToken();
+      const pixKey = chave || EFI_PIX_KEY;
       console.log(`Configurando webhook para a chave ${pixKey} com URL ${webhookUrl}`);
       
       // O efiRequest que criamos vai cuidar do HTTPS e do certificado
