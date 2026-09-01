@@ -35,13 +35,13 @@ export default function SaldoPage() {
     fetchProfile();
   }, []);
 
-  // Polling automático a cada 10 segundos quando o QR Code está visível (PIX)
+  // Polling automático a cada 5 segundos quando o QR Code está visível (PIX)
   useEffect(() => {
     let interval: any;
     if (step === 2 && pixData?.id) {
       interval = setInterval(() => {
         checkPaymentStatus(true);
-      }, 10000);
+      }, 5000);
     }
     return () => clearInterval(interval);
   }, [step, pixData]);
