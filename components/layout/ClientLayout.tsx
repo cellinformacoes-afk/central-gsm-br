@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import DailyRevenueWidget from '@/components/admin/DailyRevenueWidget';
 
 
 export default function ClientLayout({
@@ -16,7 +15,6 @@ export default function ClientLayout({
   const [profile, setProfile] = useState<any>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pendingResets, setPendingResets] = useState(0);
-  const [notice, setNotice] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -38,22 +36,6 @@ export default function ClientLayout({
 
     return () => subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    fetchNotice();
-  }, []);
-
-  async function fetchNotice() {
-    const { data, error } = await supabase
-      .from('site_notice')
-      .select('message, enabled')
-      .eq('id', 1)
-      .single();
-
-    if (!error && data && data.enabled && data.message) {
-      setNotice(data.message);
-    }
-  }
 
   async function fetchProfile(userId: string) {
     const { data, error } = await supabase
@@ -80,6 +62,50 @@ export default function ClientLayout({
 
     setPendingResets(count || 0);
   }
+
+  // Recuperação automática de PIX pendente: enquanto o usuário estiver
+  // logado, verifica silenciosamente se tem PIX pago ainda não creditado
+  // e credita. Cobre o caso de "paguei e saí da tela".
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    let stopped = false;
+
+    const checkPendingPix = async () => {
+      try {
+        // Só busca PIX pendentes que já "venceram" o tempo normal de confirmação
+        const grace = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('external_id')
+          .eq('user_id', session.user.id)
+          .eq('status', 'pending')
+          .eq('type', 'pix')
+          .lte('created_at', grace)
+          .limit(1);
+
+        if (error || (!data) || data.length === 0) return;
+
+        // Tem PIX pendente: manda o servidor verificar na Efí e creditar
+        const { data: { session: s } } = await supabase.auth.getSession();
+        if (!s || stopped) return;
+        await fetch('/api/pix/check-pending', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s.access_token}` }
+        });
+      } catch (e) {
+        // silencioso — nunca derruba a interface
+      }
+    };
+
+    checkPendingPix();
+    const interval = setInterval(checkPendingPix, 20000);
+
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+    };
+  }, [session?.user?.id]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -126,18 +152,16 @@ export default function ClientLayout({
           {session && (
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/" className="text-sm font-medium text-white hover:text-[#00D2AD] transition-colors">Início</Link>
-              <Link href="/desbloqueios" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Desbloqueios Remoto MDM/FRP</Link>
+              <Link href="/planos" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Planos</Link>
               <Link href="/pedidos" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Meus Pedidos</Link>
               <Link href="/saldo" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Adicionar Saldo</Link>
               <Link href="/extrato" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Ver extrato</Link>
+              <Link href="/suporte" className="text-sm font-medium text-gray-300 hover:text-[#00D2AD] transition-colors">Suporte</Link>
               {profile?.role === 'admin' && (
-                <Link
-                  href="/admin/estoque"
-                  className="flex items-center gap-1.5 text-[10px] md:text-xs font-black text-gray-300 hover:text-[#00D2AD] transition-all bg-white/5 px-2 md:px-3 py-1.5 rounded-lg border border-white/10 uppercase"
-                >
-                  <span>🛡️ ADM</span>
+                <Link href="/admin/estoque" className="flex items-center gap-2 text-xs md:text-sm font-black text-[#FFC107] hover:text-white transition-all border border-[#FFC107]/50 hover:border-[#FFC107] px-4 py-1.5 rounded-full uppercase ml-2 bg-[#FFC107]/10">
+                  ADMIN
                   {pendingResets > 0 && (
-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] text-white animate-bounce">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white animate-bounce">
                       {pendingResets}
                     </span>
                   )}
@@ -149,10 +173,6 @@ export default function ClientLayout({
 
           {/* Right Buttons */}
           <div className="flex items-center gap-2 md:gap-4">
-            <a href="https://chat.whatsapp.com/DELs1QYHUQAK83NpJwAjTD" target="_blank" rel="noopener noreferrer" className="hidden md:flex items-center gap-2 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-[#25D366]/20">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-              Grupo VIP
-            </a>
             {session ? (
               <>
                 <div className="flex items-center gap-1.5 md:gap-2 bg-[#00D2AD]/10 border border-[#00D2AD]/20 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-[10px] md:text-sm font-bold">
@@ -187,9 +207,9 @@ export default function ClientLayout({
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
                 Início
               </Link>
-              <Link href="/desbloqueios" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                Desbloqueio Remoto MDM/FRP
+              <Link href="/planos" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                Planos
               </Link>
               <Link href="/pedidos" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
@@ -203,24 +223,37 @@ export default function ClientLayout({
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
                 Ver extrato
               </Link>
-              <a href="https://chat.whatsapp.com/DELs1QYHUQAK83NpJwAjTD" target="_blank" rel="noopener noreferrer" className="text-base font-bold text-[#25D366] flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                Grupo VIP (Promoções)
-              </a>
+              <Link href="/suporte" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-gray-300 flex items-center gap-3 p-2 rounded-lg hover:bg-[#0f172a]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                Suporte
+              </Link>
               {profile?.role === 'admin' && (
-                <Link
-                  href="/admin/estoque"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="text-base font-bold text-gray-300 flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                  🛡️ Painel Admin (ADM)
-                  {pendingResets > 0 && (
-                    <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] text-white">
-                      {pendingResets}
-                    </span>
-                  )}
-                </Link>
+                <div className="flex flex-col gap-2">
+                  <span className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Painel Admin</span>
+                  <Link href="/admin/estoque" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-white flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15" /><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></svg>
+                    Estoque
+                  </Link>
+                  <Link href="/admin/servicos" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-white flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                    Serviços
+                  </Link>
+                  <Link href="/admin/planos" onClick={() => setIsMenuOpen(false)} className="text-base font-bold text-white flex items-center gap-3 p-3 rounded-xl hover:bg-[#0f172a] border border-white/5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                    Solicitações Planos
+                  </Link>
+                  <Link href="/admin/expirados" onClick={() => setIsMenuOpen(false)} className="text-base font-black text-[#FFC107] flex items-center justify-between p-3 rounded-xl hover:bg-[#0f172a] border border-[#FFC107]/20 bg-[#FFC107]/5">
+                    <div className="flex items-center gap-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                      Reset Manual
+                    </div>
+                    {pendingResets > 0 && (
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] text-white">
+                        {pendingResets}
+                      </span>
+                    )}
+                  </Link>
+                </div>
               )}
               <div className="h-px bg-[#334155] my-2" />
               <button
@@ -236,77 +269,21 @@ export default function ClientLayout({
       </header>
 
 
-      {/* WhatsApp Floats + Balão de Aviso */}
-      <div className="fixed right-4 bottom-8 z-40 flex flex-col items-end gap-3">
-        {/* Grupo VIP */}
-        <a
-          href="https://chat.whatsapp.com/DELs1QYHUQAK83NpJwAjTD"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group flex items-center gap-3 bg-[#25D366] hover:bg-[#1fb356] pl-4 pr-5 py-3 rounded-full shadow-[0_10px_30px_rgba(37,211,102,0.45)] hover:scale-105 active:scale-95 transition-all"
-          title="Entrar no Grupo VIP"
-        >
-          <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:rotate-12 transition-transform">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-          </span>
-          <span className="flex flex-col leading-none text-left">
-            <span className="text-white font-black text-sm uppercase tracking-tight">Grupo VIP</span>
-            <span className="text-white/80 text-[9px] font-bold uppercase tracking-wider mt-0.5">Entrar agora</span>
-          </span>
+      {/* WhatsApp Float */}
+      <div className="fixed right-4 bottom-4 z-40">
+        <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" target="_blank" className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
         </a>
-
-        {/* Suporte */}
-        <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-3 bg-[#25D366] hover:bg-[#1fb356] pl-4 pr-5 py-3 rounded-full shadow-[0_10px_30px_rgba(37,211,102,0.45)] hover:scale-105 active:scale-95 transition-all" title="Falar com o Suporte">
-          <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:rotate-12 transition-transform">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-          </span>
-          <span className="flex flex-col leading-none text-left">
-            <span className="text-white font-black text-sm uppercase tracking-tight">Suporte</span>
-            <span className="text-white/80 text-[9px] font-bold uppercase tracking-wider mt-0.5">Falar agora</span>
-          </span>
-        </a>
-
-        {/* Balão de Aviso da Equipe */}
-        {notice && (
-          <div className="relative max-w-[260px] rounded-2xl border border-[#FFC107]/40 bg-[#0f172a]/95 backdrop-blur shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-2 duration-300">
-            <button
-              onClick={() => setNotice(null)}
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[#1e293b] border border-[#334155] text-gray-400 hover:text-white hover:border-[#FFC107]/50 flex items-center justify-center text-sm font-bold shadow transition-colors"
-              aria-label="Fechar aviso"
-              title="Fechar aviso"
-            >
-              ×
-            </button>
-            <div className="flex items-start gap-3 p-4 pt-3 pr-7">
-              <span className="text-[#FFC107] text-lg leading-none mt-0.5 shrink-0">⚠️</span>
-              <p className="text-white text-sm leading-relaxed">{notice}</p>
-            </div>
-          </div>
-        )}
       </div>
 
       <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 mt-4 relative z-10">
         {children}
       </main>
 
-      {/* Admin Floating Widget - Daily Revenue */}
-      {profile?.role === 'admin' && (
-        <DailyRevenueWidget />
-      )}
 
-      <footer className="w-full border-t border-[#334155] p-8 text-gray-500 text-sm mt-12 bg-[#0f172a]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center">
-          <p>© 2026 JACKSON & ISRAEL GSM - Todos os direitos reservados.</p>
-          <a
-            href="https://chat.whatsapp.com/DELs1QYHUQAK83NpJwAjTD"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-[#25D366] hover:text-[#1fb356] font-bold transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-            Entre no nosso Grupo do WhatsApp
-          </a>
-        </div>
+
+      <footer className="w-full border-t border-[#334155] p-8 text-center text-gray-500 text-sm mt-12 bg-[#0f172a]">
+        <p>© 2026 JACKSON & ISRAEL GSM - Todos os direitos reservados.</p>
       </footer>
     </div>
   );
