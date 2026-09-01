@@ -19,7 +19,7 @@ function getHttpsAgent() {
   const certPassword = process.env.EFI_PIX_CERT_PASSWORD || '';
   
   if (EFI_CERT_BASE64) {
-    const certBuffer = Buffer.from(EFI_CERT_BASE64, 'base64');
+    const certBuffer = Buffer.from(EFI_CERT_BASE64.trim(), 'base64');
     agent = new https.Agent({
       pfx: certBuffer,
       passphrase: certPassword
@@ -58,7 +58,7 @@ function efiRequest(endpoint: string, method: string, data?: any, token?: string
     if (token) {
       options.headers!['Authorization'] = `Bearer ${token}`;
     } else {
-      const auth = Buffer.from(`${EFI_CLIENT_ID}:${EFI_CLIENT_SECRET}`).toString('base64');
+      const auth = Buffer.from(`${EFI_CLIENT_ID.trim()}:${EFI_CLIENT_SECRET.trim()}`).toString('base64');
       options.headers!['Authorization'] = `Basic ${auth}`;
     }
 
