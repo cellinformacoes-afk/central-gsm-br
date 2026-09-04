@@ -24,7 +24,7 @@ function LoginContent() {
     let session: any = null;
     let gotSession = false;
 
-    for (let attempt = 0; attempt < 2 && !gotSession; attempt++) {
+    for (let attempt = 0; attempt < 3 && !gotSession; attempt++) {
       try {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 15000);
@@ -50,31 +50,18 @@ function LoginContent() {
 
         if (!res.ok || data.error) {
           lastError = data.error || "Erro ao fazer login";
-          if (res.status === 401) break;
-        } else {
-          session = data.session;
           gotSession = true;
           break;
         }
+
+        session = data.session;
+        gotSession = true;
+        break;
       } catch (err: any) {
         lastError = err.name === "AbortError"
           ? "Servidor demorou para responder, tentando novamente..."
           : err.message || "Erro de conexão";
         await new Promise(r => setTimeout(r, 1000));
-      }
-    }
-
-    if (!gotSession) {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (!error && data.session) {
-          session = data.session;
-          gotSession = true;
-        } else {
-          lastError = error?.message || lastError || "Erro ao fazer login";
-        }
-      } catch (err: any) {
-        lastError = err.message || "Erro ao fazer login";
       }
     }
 
