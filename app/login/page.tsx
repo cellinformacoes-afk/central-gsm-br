@@ -21,18 +21,24 @@ function LoginContent() {
     setError(null);
 
     let lastError = "";
-    let success = false;
     let session: any = null;
+    let gotSession = false;
 
-    for (let attempt = 0; attempt < 3 && !success; attempt++) {
+    for (let attempt = 0; attempt < 2 && !gotSession; attempt++) {
       try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15000);
+
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
+          signal: controller.signal,
         });
 
+        clearTimeout(timer);
         const text = await res.text();
+
         let data: any = null;
         try {
           data = JSON.parse(text);
@@ -44,19 +50,36 @@ function LoginContent() {
 
         if (!res.ok || data.error) {
           lastError = data.error || "Erro ao fazer login";
-          success = true;
+          if (res.status === 401) break;
         } else {
           session = data.session;
-          success = true;
+          gotSession = true;
+          break;
         }
       } catch (err: any) {
-        lastError = err.message || "Erro de conexão";
+        lastError = err.name === "AbortError"
+          ? "Servidor demorou para responder, tentando novamente..."
+          : err.message || "Erro de conexão";
         await new Promise(r => setTimeout(r, 1000));
       }
     }
 
+    if (!gotSession) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (!error && data.session) {
+          session = data.session;
+          gotSession = true;
+        } else {
+          lastError = error?.message || lastError || "Erro ao fazer login";
+        }
+      } catch (err: any) {
+        lastError = err.message || "Erro ao fazer login";
+      }
+    }
+
     try {
-      if (success && session) {
+      if (gotSession && session) {
         await supabase.auth.setSession(session);
         window.location.href = redirectUrl;
         return;
