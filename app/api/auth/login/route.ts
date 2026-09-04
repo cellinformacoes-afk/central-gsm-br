@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
             continue;
           }
           return NextResponse.json(
-            { error: 'Serviço de autenticação indisponível no momento, tente novamente em instantes.' },
+            { error: 'Erro inesperado da API (Nao é JSON): ' + text.substring(0, 200) },
             { status: 503 }
           );
         }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
           continue;
         }
         return NextResponse.json(
-          { error: 'Serviço de autenticação indisponível no momento, tente novamente em instantes.' },
+          { error: 'Serviço de autenticação indisponível no momento. Erro: ' + err.message },
           { status: 503 }
         );
       }
