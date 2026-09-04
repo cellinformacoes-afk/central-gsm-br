@@ -9,13 +9,6 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
     autoRefreshToken: false,
     detectSessionInUrl: true,
   },
-  global: {
-    fetch: (...args) => {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      return fetch(args[0], { ...args[1], signal: controller.signal }).finally(() => clearTimeout(timeout));
-    },
-  },
 });
 
 export async function supabaseQueryWithRetry<T>(
