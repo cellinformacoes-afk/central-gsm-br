@@ -16,20 +16,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Configuração do servidor ausente' }, { status: 500 });
     }
 
-    const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': serviceRoleKey,
-        'Authorization': `Bearer ${serviceRoleKey}`,
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    let data: any = null;
+    let lastRes: Response | null = null;
 
-    const data = await res.json();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': serviceRoleKey,
+            'Authorization': `Bearer ${serviceRoleKey}`,
+          },
+          body: JSON.stringify({ email, password }),
+        });
 
-    if (!res.ok || data.error) {
-      const msg = data.error_description || data.error || 'Credenciais inválidas';
+        lastRes = res;
+        const text = await res.text();
+        try {
+          data = JSON.parse(text);
+          break;
+        } catch {
+          if (attempt < 2) {
+            await new Promise(r => setTimeout(r, 1200));
+            continue;
+          }
+          return NextResponse.json(
+            { error: 'Serviço de autenticação indisponível no momento, tente novamente em instantes.' },
+            { status: 503 }
+          );
+        }
+      } catch (err: any) {
+        if (attempt < 2) {
+          await new Promise(r => setTimeout(r, 1200));
+          continue;
+        }
+        return NextResponse.json(
+          { error: 'Serviço de autenticação indisponível no momento, tente novamente em instantes.' },
+          { status: 503 }
+        );
+      }
+    }
+
+    if (!lastRes?.ok || data.error) {
+      const msg = data?.error_description || data?.error || 'Credenciais inválidas';
       return NextResponse.json({ error: msg }, { status: 401 });
     }
 
