@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { proxy } from '@/lib/supabase-proxy';
 import { useRouter } from 'next/navigation';
 
 function CountdownTimer({ expiryDate }: { expiryDate: string }) {
@@ -86,16 +87,16 @@ export default function PedidosPage() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*, services(title, download_url), rentals(*)')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false });
+    try {
+      const data = await proxy
+        .from('orders')
+        .select('*, services(title, download_url), rentals(*)')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching orders:', error);
-    } else {
       setOrders(data || []);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
     }
     setLoading(false);
   }

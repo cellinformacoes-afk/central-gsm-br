@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { proxy } from '@/lib/supabase-proxy';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowUpCircle, ArrowDownCircle, Clock, Search } from 'lucide-react';
 import Link from 'next/link';
@@ -22,13 +23,12 @@ export default function ExtratoPage() {
         return;
       }
 
-      const { data, error } = await supabase
+      const data = await proxy
         .from('transactions')
         .select('*')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
       setTransactions(data || []);
     } catch (error) {
       console.error('Erro ao buscar extrato:', error);

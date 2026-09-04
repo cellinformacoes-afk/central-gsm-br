@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { proxy } from '@/lib/supabase-proxy';
 import { useRouter } from 'next/navigation';
 
 
@@ -38,29 +39,25 @@ export default function ClientLayout({
   }, []);
 
   async function fetchProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (!error && data) {
-      setProfile(data);
-      if (data.role === 'admin') fetchPendingResets();
+    try {
+      const data = await proxy.from('profiles').select('*').eq('id', userId).single();
+      if (data) {
+        setProfile(data);
+        if (data.role === 'admin') fetchPendingResets();
+      }
+    } catch (err) {
+      console.error('Error fetching profile via proxy:', err);
     }
   }
 
   async function fetchPendingResets() {
-    // Chamar o monitor primeiro para garantir que está atualizado
-    await supabase.rpc('monitor_rental_expiration');
-
-    // Contar pendentes
-    const { count } = await supabase
-      .from('service_accounts')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending_reset');
-
-    setPendingResets(count || 0);
+    try {
+      await proxy.rpc('monitor_rental_expiration');
+      const data = await proxy.from('service_accounts').select('*').eq('status', 'pending_reset');
+      setPendingResets(Array.isArray(data) ? data.length : 0);
+    } catch (err) {
+      console.error('Error fetching pending resets:', err);
+    }
   }
 
   // Recuperação automática de PIX pendente: enquanto o usuário estiver
@@ -73,9 +70,8 @@ export default function ClientLayout({
 
     const checkPendingPix = async () => {
       try {
-        // Só busca PIX pendentes que já "venceram" o tempo normal de confirmação
         const grace = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-        const { data, error } = await supabase
+        const data = await proxy
           .from('transactions')
           .select('external_id')
           .eq('user_id', session.user.id)
@@ -84,9 +80,8 @@ export default function ClientLayout({
           .lte('created_at', grace)
           .limit(1);
 
-        if (error || (!data) || data.length === 0) return;
+        if (!data || data.length === 0) return;
 
-        // Tem PIX pendente: manda o servidor verificar na Efí e creditar
         const { data: { session: s } } = await supabase.auth.getSession();
         if (!s || stopped) return;
         await fetch('/api/pix/check-pending', {
@@ -94,7 +89,7 @@ export default function ClientLayout({
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s.access_token}` }
         });
       } catch (e) {
-        // silencioso — nunca derruba a interface
+        // silencioso
       }
     };
 

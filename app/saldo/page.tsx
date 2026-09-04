@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { proxy } from '@/lib/supabase-proxy';
 import { useRouter } from 'next/navigation';
 
 export default function SaldoPage() {
@@ -21,14 +22,14 @@ export default function SaldoPage() {
     const fetchProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        if (data) {
-          setProfile(data);
-          if (data.cpf) setCpf(data.cpf);
+        try {
+          const data = await proxy.from('profiles').select('*').eq('id', session.user.id).single();
+          if (data) {
+            setProfile(data);
+            if (data.cpf) setCpf(data.cpf);
+          }
+        } catch (err) {
+          console.error('Error fetching profile:', err);
         }
       }
     };
@@ -190,12 +191,12 @@ export default function SaldoPage() {
 
       // 2. Fallback: Verificar se a transação já foi registrada no Banco de Dados (pelo webhook)
       // Buscamos especificamente pelo ID externo para evitar confusão com outros pagamentos
-      const { data: transaction } = await supabase
+      const { data: transaction } = await proxy
         .from('transactions')
         .select('*')
         .eq('user_id', session.user.id)
         .eq('external_id', pixData.id)
-        .maybeSingle();
+        .single();
 
 
       if (transaction && transaction.status === 'success') {
@@ -217,12 +218,12 @@ export default function SaldoPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { data: transaction } = await supabase
+      const { data: transaction } = await proxy
         .from('transactions')
         .select('*')
         .eq('user_id', session.user.id)
         .eq('external_id', cardPaymentId)
-        .maybeSingle();
+        .single();
 
       if (transaction && (transaction.status === 'success' || transaction.status === 'approved')) {
         router.push('/saldo/sucesso?amount=' + (transaction.amount || amount));

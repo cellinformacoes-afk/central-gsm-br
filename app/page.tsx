@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { supabase, supabaseQueryWithRetry } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { proxy } from '@/lib/supabase-proxy';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
@@ -109,14 +110,12 @@ export default function Home() {
 
       // Call Unified RPC
       const qty = isCreditService(selectedService) ? creditQuantity : 1;
-      const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
+      const result = await proxy.rpc('purchase_service_v2', {
         p_user_id: session.user.id,
         p_service_id: selectedService.id,
         p_input_data: { imei: imei.trim(), email: email.trim() },
         p_quantity: qty
       });
-
-      if (rpcError) throw rpcError;
 
       if (result.status === 'error') {
         alert(result.message);
