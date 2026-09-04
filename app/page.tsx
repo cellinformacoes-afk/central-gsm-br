@@ -37,40 +37,20 @@ export default function Home() {
     setLoading(true);
     setConnectionError(null);
 
-    const { data: catData, error: catError } = await supabaseQueryWithRetry(() =>
-      supabase.from('categories').select('*').then(r => {
-        if (r.error) throw r.error;
-        return r.data;
-      })
-    );
+    try {
+      const res = await fetch('/api/data', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
 
-    if (catError) {
-      console.error('Error fetching categories:', catError);
-      setConnectionError('Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.');
-      setLoading(false);
-      return;
-    }
+      setCategories(json.categories || []);
+      const aluguel = (json.categories || []).find((c: any) => c.slug === 'aluguel-contas');
+      if (aluguel) setActiveCategoryId(aluguel.id);
 
-    setCategories(catData || []);
-    const aluguel = (catData || []).find((c: any) => c.slug === 'aluguel-contas');
-    if (aluguel) setActiveCategoryId(aluguel.id);
-
-    const { data: servData, error: servError } = await supabaseQueryWithRetry(() =>
-      supabase
-        .from('services')
-        .select('*, categories(name, slug)')
-        .eq('active', true)
-        .then(r => {
-          if (r.error) throw r.error;
-          return r.data;
-        })
-    );
-
-    if (servError) {
-      console.error('Error fetching services:', servError);
+      setServices(json.services || []);
+    } catch (err: any) {
+      console.error('Error fetching data:', err);
       setConnectionError('Serviços temporariamente indisponíveis. Tente novamente em alguns instantes.');
-    } else {
-      setServices(servData || []);
     }
     setLoading(false);
   }
