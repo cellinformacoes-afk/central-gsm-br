@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseQueryWithRetry } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
@@ -17,6 +17,7 @@ export default function Home() {
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   
   // Purchase Modal State
@@ -34,20 +35,40 @@ export default function Home() {
 
   async function fetchData() {
     setLoading(true);
-    const { data: catData, error: catError } = await supabase.from('categories').select('*');
-    if (!catError) {
-      setCategories(catData || []);
-      const aluguel = (catData || []).find(c => c.slug === 'aluguel-contas');
-      if (aluguel) setActiveCategoryId(aluguel.id);
+    setConnectionError(null);
+
+    const { data: catData, error: catError } = await supabaseQueryWithRetry(() =>
+      supabase.from('categories').select('*').then(r => {
+        if (r.error) throw r.error;
+        return r.data;
+      })
+    );
+
+    if (catError) {
+      console.error('Error fetching categories:', catError);
+      setConnectionError('Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.');
+      setLoading(false);
+      return;
     }
 
-    const { data: servData, error: servError } = await supabase
-      .from('services')
-      .select('*, categories(name, slug)')
-      .eq('active', true);
-    
+    setCategories(catData || []);
+    const aluguel = (catData || []).find((c: any) => c.slug === 'aluguel-contas');
+    if (aluguel) setActiveCategoryId(aluguel.id);
+
+    const { data: servData, error: servError } = await supabaseQueryWithRetry(() =>
+      supabase
+        .from('services')
+        .select('*, categories(name, slug)')
+        .eq('active', true)
+        .then(r => {
+          if (r.error) throw r.error;
+          return r.data;
+        })
+    );
+
     if (servError) {
       console.error('Error fetching services:', servError);
+      setConnectionError('Serviços temporariamente indisponíveis. Tente novamente em alguns instantes.');
     } else {
       setServices(servData || []);
     }
@@ -383,6 +404,19 @@ export default function Home() {
           [...Array(6)].map((_, i) => (
             <div key={i} className="bg-[#1e293b] rounded-3xl p-6 border border-[#334155] h-32 animate-pulse shadow-2xl"></div>
           ))
+        ) : connectionError ? (
+          <div className="col-span-full p-16 text-center bg-[#1e293b]/30 rounded-[40px] border-4 border-dashed border-red-500/30 flex flex-col items-center gap-6">
+             <div className="w-24 h-24 rounded-full bg-red-500/10 flex items-center justify-center text-4xl text-red-400 shadow-inner">
+               <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+             </div>
+             <p className="text-red-400 font-black uppercase tracking-widest text-sm">{connectionError}</p>
+             <button 
+               onClick={() => fetchData()} 
+               className="bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] px-8 py-3 rounded-2xl font-black uppercase text-sm transition-all hover:-translate-y-1 shadow-lg"
+             >
+               Tentar Novamente
+             </button>
+          </div>
         ) : displayedServices.length > 0 ? (
           displayedServices.map((service) => {
             return (
