@@ -20,23 +20,50 @@ function LoginContent() {
     setLoading(true);
     setError(null);
 
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+    let lastError = "";
+    let success = false;
+    let session: any = null;
 
-      const data = await res.json();
+    for (let attempt = 0; attempt < 3 && !success; attempt++) {
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
 
-      if (!res.ok || data.error) {
-        setError(data.error || "Erro ao fazer login");
-      } else {
-        await supabase.auth.setSession(data.session);
-        window.location.href = redirectUrl;
+        const text = await res.text();
+        let data: any = null;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          lastError = "Servidor temporariamente indisponível, tentando novamente...";
+          await new Promise(r => setTimeout(r, 1000));
+          continue;
+        }
+
+        if (!res.ok || data.error) {
+          lastError = data.error || "Erro ao fazer login";
+          success = true;
+        } else {
+          session = data.session;
+          success = true;
+        }
+      } catch (err: any) {
+        lastError = err.message || "Erro de conexão";
+        await new Promise(r => setTimeout(r, 1000));
       }
+    }
+
+    try {
+      if (success && session) {
+        await supabase.auth.setSession(session);
+        window.location.href = redirectUrl;
+        return;
+      }
+      setError(lastError || "Não foi possível entrar. Tente novamente.");
     } catch (err: any) {
-      setError(err.message || "Erro de conexão");
+      setError(err.message || "Erro ao salvar sessão");
     }
     setLoading(false);
   };
