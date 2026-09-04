@@ -39,19 +39,33 @@ export default function Home() {
     setConnectionError(null);
 
     try {
-      const res = await fetch('/api/data', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      if (json.error) throw new Error(json.error);
+      const [catData, servData] = await Promise.all([
+        proxy.from('categories').select('*'),
+        proxy.from('services').select('*, categories(name, slug)').eq('active', true),
+      ]);
 
-      setCategories(json.categories || []);
-      const aluguel = (json.categories || []).find((c: any) => c.slug === 'aluguel-contas');
+      setCategories(catData || []);
+      const aluguel = (catData || []).find((c: any) => c.slug === 'aluguel-contas');
       if (aluguel) setActiveCategoryId(aluguel.id);
 
-      setServices(json.services || []);
+      setServices(servData || []);
     } catch (err: any) {
-      console.error('Error fetching data:', err);
-      setConnectionError('Serviços temporariamente indisponíveis. Tente novamente em alguns instantes.');
+      console.error('Error fetching data via proxy, trying api/data:', err);
+      try {
+        const res = await fetch(`/api/data?t=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (json.error) throw new Error(json.error);
+
+        setCategories(json.categories || []);
+        const aluguel = (json.categories || []).find((c: any) => c.slug === 'aluguel-contas');
+        if (aluguel) setActiveCategoryId(aluguel.id);
+
+        setServices(json.services || []);
+      } catch (fallbackErr: any) {
+        console.error('Error fetching fallback data:', fallbackErr);
+        setConnectionError('Serviços temporariamente indisponíveis. Tente novamente em alguns instantes.');
+      }
     }
     setLoading(false);
   }
