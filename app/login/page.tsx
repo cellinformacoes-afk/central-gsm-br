@@ -1,9 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-
 import { Suspense } from "react";
 
 function LoginContent() {
@@ -21,16 +19,29 @@ function LoginContent() {
     setLoading(true);
     setError(null);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      router.push(redirectUrl);
-      router.refresh(); // Ensure layout balance updates
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setError(data.error || "Erro ao fazer login");
+      } else {
+        const storageKey = `sb-cvzhczgvfvflmcwmmvlh-auth-token`;
+        const tokenData = {
+          currentSession: data.session,
+          expiresAt: Math.floor(Date.now() / 1000) + (data.session.expires_in || 3600),
+        };
+        localStorage.setItem(storageKey, JSON.stringify(tokenData));
+        router.push(redirectUrl);
+        router.refresh();
+      }
+    } catch (err: any) {
+      setError(err.message || "Erro de conexão");
     }
     setLoading(false);
   };

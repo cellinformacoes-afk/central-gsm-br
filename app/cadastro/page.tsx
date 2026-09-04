@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function Cadastro() {
@@ -22,60 +21,36 @@ export default function Cadastro() {
     setLoading(true);
     setError(null);
 
-    // Fetch user IP address client-side
     let userIp = "unknown";
     try {
       const ipRes = await fetch("https://api.ipify.org?format=json");
       const ipData = await ipRes.json();
-      if (ipData && ipData.ip) {
-        userIp = ipData.ip;
+      if (ipData && ipData.ip) userIp = ipData.ip;
+    } catch {}
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          cpf: "00000000000",
+          ip: userIp,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setError(data.error || "Erro ao criar conta");
+      } else {
+        alert("Cadastro realizado! Faça login para acessar.");
+        router.push("/login");
       }
-    } catch (ipErr) {
-      console.warn("Could not fetch user IP:", ipErr);
-    }
-
-    const termsAcceptedAt = new Date().toISOString();
-    const termsAcceptedVersion = "v1.0";
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
-          terms_accepted_at: termsAcceptedAt,
-          terms_accepted_ip: userIp,
-          terms_accepted_version: termsAcceptedVersion,
-        },
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-    } else {
-      if (data.user) {
-        // The trigger in Supabase should handle profile creation, 
-        // but adding a manual check/insert is safer for now if trigger isn't ready
-        const { error: profileError } = await supabase.from('profiles').insert([
-          { id: data.user.id, username: name, email }
-        ]);
-        if (profileError && profileError.code !== '23505') { // Ignore unique constraint if trigger already did it
-           console.error('Profile creation error:', profileError);
-        }
-
-        // Update terms columns if they exist (fails gracefully if migration not applied yet)
-        const { error: termsError } = await supabase.from('profiles').update({
-          terms_accepted_at: termsAcceptedAt,
-          terms_accepted_ip: userIp,
-          terms_accepted_version: termsAcceptedVersion
-        }).eq('id', data.user.id);
-        
-        if (termsError) {
-          console.warn('Could not update terms in profile table:', termsError);
-        }
-      }
-      alert("Cadastro realizado! Verifique seu e-mail ou faça login.");
-      router.push("/login");
+    } catch (err: any) {
+      setError(err.message || "Erro de conexão");
     }
     setLoading(false);
   };

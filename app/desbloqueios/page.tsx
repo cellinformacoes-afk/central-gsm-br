@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { proxy } from '@/lib/supabase-proxy';
+import { fetchAuthSession } from '@/lib/auth';
 
 type Tab = 'FRP' | 'MDM' | 'IPHONE';
 
@@ -26,16 +27,14 @@ export default function DesbloqueiosPage() {
 
   async function fetchData() {
     setLoading(true);
-    const { data, error } = await supabase
+    const data = await proxy
       .from('services')
       .select('*, categories(name, slug)')
       .eq('active', true)
       .in('categories.slug', ['desbloqueio-frp', 'desbloqueio-mdm', 'desbloqueio-iphone']);
 
-    if (error) {
-      console.error('Erro ao buscar desbloqueios:', error);
-    } else {
-      setServices(data || []);
+    if (data) {
+      setServices(data);
     }
     setLoading(false);
   }
@@ -70,13 +69,13 @@ export default function DesbloqueiosPage() {
     setPurchaseLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (!session) {
         router.push('/login');
         return;
       }
 
-      const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
+      const result = await proxy.rpc('purchase_service_v2', {
         p_user_id: session.user.id,
         p_service_id: selectedService.id,
         p_input_data: { nome: nome.trim(), whatsapp: digits, celular: celular.trim(), tipo },
