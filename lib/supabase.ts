@@ -6,40 +6,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
 export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
-    autoRefreshToken: true,
+    autoRefreshToken: false,
     detectSessionInUrl: true,
   },
   global: {
-    fetch: async (url: string | Request, init?: RequestInit) => {
-      const urlStr = typeof url === 'string' ? url : url.toString();
-
-      if (urlStr.includes('/auth/v1/token') && urlStr.includes('grant_type=refresh_token')) {
-        try {
-          const body = init?.body ? JSON.parse(init.body as string) : {};
-          const res = await fetch('/api/auth/refresh', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refresh_token: body.refresh_token }),
-          });
-          const data = await res.json();
-          if (data.error || !data.session) {
-            throw new Error(data.error || 'Refresh failed');
-          }
-          return new Response(JSON.stringify(data.session), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          });
-        } catch {
-          return new Response(JSON.stringify({ error: { message: 'Refresh failed' } }), {
-            status: 401,
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
-      }
-
+    fetch: (...args) => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
-      return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(timeout));
+      return fetch(args[0], { ...args[1], signal: controller.signal }).finally(() => clearTimeout(timeout));
     },
   },
 });

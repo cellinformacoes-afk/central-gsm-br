@@ -13,18 +13,33 @@ function getStoredSession(): { access_token: string; refresh_token: string } | n
 }
 
 function getStoredToken(): string | null {
-  const session = getStoredSession();
-  return session?.access_token || null;
+  return getStoredSession()?.access_token || null;
+}
+
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+}
+
+function saveSession(session: any) {
+  if (typeof window === 'undefined') return;
+  const key = Object.keys(localStorage).find(k => k.endsWith('-auth-token'));
+  if (key) {
+    localStorage.setItem(key, JSON.stringify({
+      currentSession: session,
+      expiresAt: session.expires_at || (Math.floor(Date.now() / 1000) + (session.expires_in || 3600)),
+    }));
+  }
 }
 
 async function refreshIfNeeded(): Promise<string | null> {
   const session = getStoredSession();
   if (!session) return null;
-
-  const payload = JSON.parse(atob(session.access_token.split('.')[1]));
-  const isExpired = payload.exp * 1000 < Date.now();
-
-  if (!isExpired) return session.access_token;
+  if (!isTokenExpired(session.access_token)) return session.access_token;
 
   try {
     const res = await fetch('/api/auth/refresh', {
@@ -32,22 +47,13 @@ async function refreshIfNeeded(): Promise<string | null> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: session.refresh_token }),
     });
-
     const data = await res.json();
 
     if (!res.ok || data.error || !data.session) {
-      clearStoredSession();
       return null;
     }
 
-    const key = Object.keys(localStorage).find(k => k.endsWith('-auth-token'));
-    if (key) {
-      localStorage.setItem(key, JSON.stringify({
-        currentSession: data.session,
-        expires_at: Math.floor(Date.now() / 1000) + (data.session.expires_in || 3600),
-      }));
-    }
-
+    saveSession(data.session);
     return data.session.access_token;
   } catch {
     return null;
@@ -56,10 +62,8 @@ async function refreshIfNeeded(): Promise<string | null> {
 
 export function clearStoredSession() {
   if (typeof window === 'undefined') return;
-  try {
-    const key = Object.keys(localStorage).find(k => k.endsWith('-auth-token'));
-    if (key) localStorage.removeItem(key);
-  } catch {}
+  const key = Object.keys(localStorage).find(k => k.endsWith('-auth-token'));
+  if (key) localStorage.removeItem(key);
 }
 
 export async function fetchAuthSession() {
@@ -78,6 +82,5 @@ export async function fetchAuthSession() {
 }
 
 export function getStoredAccessToken(): string | null {
-  const session = getStoredSession();
-  return session?.access_token || null;
+  return getStoredToken();
 }
