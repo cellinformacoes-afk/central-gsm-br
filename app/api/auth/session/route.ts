@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
@@ -11,19 +12,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ session: null, profile: null });
     }
 
-    let userId: string | null = null;
-    try {
-      const payload = JSON.parse(Buffer.from(access_token.split('.')[1], 'base64url').toString());
-      userId = payload.sub;
-    } catch {
-      return NextResponse.json({ session: null, profile: null });
-    }
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+    );
 
-    if (!userId) {
-      return NextResponse.json({ session: null, profile: null });
-    }
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const { data: { user }, error: authError } = await supabase.auth.getUser(access_token);
+    
     if (authError || !user) {
       return NextResponse.json({ session: null, profile: null });
     }
@@ -31,7 +26,7 @@ export async function POST(request: NextRequest) {
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('id', user.id)
       .single();
 
     return NextResponse.json({
