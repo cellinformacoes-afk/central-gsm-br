@@ -40,7 +40,6 @@ export default function ClientLayout({
 
   async function fetchPendingResets() {
     try {
-      await proxy.rpc('monitor_rental_expiration');
       const data = await proxy.from('service_accounts').select('*').eq('status', 'pending_reset');
       setPendingResets(Array.isArray(data) ? data.length : 0);
     } catch (err) {
@@ -72,7 +71,7 @@ export default function ClientLayout({
       } catch (e) {}
     };
     checkPendingPix();
-    const interval = setInterval(checkPendingPix, 20000);
+    const interval = setInterval(checkPendingPix, 60000);
     return () => { stopped = true; clearInterval(interval); };
   }, [session?.user?.id]);
 
