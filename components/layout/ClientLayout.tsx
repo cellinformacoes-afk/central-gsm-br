@@ -27,7 +27,15 @@ export default function ClientLayout({
   useEffect(() => {
     loadSession();
     const interval = setInterval(loadSession, 60000);
-    return () => clearInterval(interval);
+    const onVisible = () => { if (!document.hidden) loadSession(); };
+    document.addEventListener('visibilitychange', onVisible);
+    const onFocus = () => loadSession();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [loadSession]);
 
   async function fetchPendingResets() {

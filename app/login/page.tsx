@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { supabase } from "@/lib/supabase";
 
 function LoginContent() {
   const [email, setEmail] = useState("");
@@ -31,14 +32,8 @@ function LoginContent() {
       if (!res.ok || data.error) {
         setError(data.error || "Erro ao fazer login");
       } else {
-        const storageKey = `sb-cvzhczgvfvflmcwmmvlh-auth-token`;
-        const tokenData = {
-          currentSession: data.session,
-          expiresAt: Math.floor(Date.now() / 1000) + (data.session.expires_in || 3600),
-        };
-        localStorage.setItem(storageKey, JSON.stringify(tokenData));
-        router.push(redirectUrl);
-        router.refresh();
+        await supabase.auth.setSession(data.session);
+        window.location.href = redirectUrl;
       }
     } catch (err: any) {
       setError(err.message || "Erro de conexão");
