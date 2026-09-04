@@ -1,11 +1,10 @@
 "use client";
 import { Inter } from 'next/font/google';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState, useEffect, useCallback } from 'react';
 import { proxy } from '@/lib/supabase-proxy';
+import { fetchAuthSession, getStoredAccessToken } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-
 
 export default function ClientLayout({
   children,
@@ -18,37 +17,18 @@ export default function ClientLayout({
   const [pendingResets, setPendingResets] = useState(0);
   const router = useRouter();
 
-  useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) fetchProfile(session.user.id);
-    });
-
-    // Listen for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+  const loadSession = useCallback(async () => {
+    const { session: s, profile: p } = await fetchAuthSession();
+    setSession(s);
+    setProfile(p);
+    if (p?.role === 'admin') fetchPendingResets();
   }, []);
 
-  async function fetchProfile(userId: string) {
-    try {
-      const data = await proxy.from('profiles').select('*').eq('id', userId).single();
-      if (data) {
-        setProfile(data);
-        if (data.role === 'admin') fetchPendingResets();
-      }
-    } catch (err) {
-      console.error('Error fetching profile via proxy:', err);
-    }
-  }
+  useEffect(() => {
+    loadSession();
+    const interval = setInterval(loadSession, 60000);
+    return () => clearInterval(interval);
+  }, [loadSession]);
 
   async function fetchPendingResets() {
     try {
@@ -60,16 +40,13 @@ export default function ClientLayout({
     }
   }
 
-  // Recuperação automática de PIX pendente: enquanto o usuário estiver
-  // logado, verifica silenciosamente se tem PIX pago ainda não creditado
-  // e credita. Cobre o caso de "paguei e saí da tela".
   useEffect(() => {
     if (!session?.user?.id) return;
-
     let stopped = false;
-
     const checkPendingPix = async () => {
       try {
+        const token = getStoredAccessToken();
+        if (!token || stopped) return;
         const grace = new Date(Date.now() - 2 * 60 * 1000).toISOString();
         const data = await proxy
           .from('transactions')
@@ -79,31 +56,25 @@ export default function ClientLayout({
           .eq('type', 'pix')
           .lte('created_at', grace)
           .limit(1);
-
         if (!data || data.length === 0) return;
-
-        const { data: { session: s } } = await supabase.auth.getSession();
-        if (!s || stopped) return;
         await fetch('/api/pix/check-pending', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s.access_token}` }
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
         });
-      } catch (e) {
-        // silencioso
-      }
+      } catch (e) {}
     };
-
     checkPendingPix();
     const interval = setInterval(checkPendingPix, 20000);
-
-    return () => {
-      stopped = true;
-      clearInterval(interval);
-    };
+    return () => { stopped = true; clearInterval(interval); };
   }, [session?.user?.id]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      const key = Object.keys(localStorage).find(k => k.endsWith('-auth-token'));
+      if (key) localStorage.removeItem(key);
+    } catch {}
+    setSession(null);
+    setProfile(null);
     setIsMenuOpen(false);
     router.push('/login');
   };
@@ -113,7 +84,6 @@ export default function ClientLayout({
       {/* Sticky Navbar */}
       <header className="sticky top-0 z-50 w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-[#334155] shadow-lg">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Mobile Menu Button */}
           {session && (
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -127,7 +97,6 @@ export default function ClientLayout({
             </button>
           )}
 
-          {/* Logo */}
           <Link href="/" className={`flex flex-col justify-center flex-1 md:flex-none ${session ? 'ml-2' : ''} md:ml-0`}>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 md:w-10 md:h-10 bg-[#00D2AD]/20 rounded-md border-2 border-[#00D2AD] flex items-center justify-center relative overflow-hidden shrink-0">
@@ -143,7 +112,6 @@ export default function ClientLayout({
             </div>
           </Link>
 
-          {/* Navigation Desktop */}
           {session && (
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/" className="text-sm font-medium text-white hover:text-[#00D2AD] transition-colors">Início</Link>
@@ -165,8 +133,6 @@ export default function ClientLayout({
             </nav>
           )}
 
-
-          {/* Right Buttons */}
           <div className="flex items-center gap-2 md:gap-4">
             {session ? (
               <>
@@ -194,7 +160,6 @@ export default function ClientLayout({
           </div>
         </div>
 
-        {/* Mobile Menu Overlay */}
         {isMenuOpen && (
           <div className="md:hidden bg-[#1e293b] border-t border-[#334155] p-4 absolute w-full left-0 top-16 shadow-2xl animate-in slide-in-from-top duration-200">
             <nav className="flex flex-col gap-4">
@@ -263,8 +228,6 @@ export default function ClientLayout({
         )}
       </header>
 
-
-      {/* WhatsApp Float */}
       <div className="fixed right-4 bottom-4 z-40">
         <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" target="_blank" className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform">
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
@@ -274,8 +237,6 @@ export default function ClientLayout({
       <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 mt-4 relative z-10">
         {children}
       </main>
-
-
 
       <footer className="w-full border-t border-[#334155] p-8 text-center text-gray-500 text-sm mt-12 bg-[#0f172a]">
         <p>© 2026 JACKSON & ISRAEL GSM - Todos os direitos reservados.</p>

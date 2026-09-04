@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { proxy } from '@/lib/supabase-proxy';
+import { fetchAuthSession, getStoredAccessToken } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 
 export default function SaldoPage() {
@@ -20,7 +20,7 @@ export default function SaldoPage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (session) {
         try {
           const data = await proxy.from('profiles').select('*').eq('id', session.user.id).single();
@@ -81,7 +81,7 @@ export default function SaldoPage() {
     setShowNameConfirm(false);
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (!session) {
         alert("Sessão expirada. Por favor, faça login novamente.");
         return;
@@ -132,7 +132,7 @@ export default function SaldoPage() {
 
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (!session) {
         alert("Sessão expirada. Por favor, faça login novamente.");
         return;
@@ -171,7 +171,7 @@ export default function SaldoPage() {
     if (!isAuto) setLoading(true);
     console.log("Iniciando verificação de pagamento. pixData:", pixData);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (!session) return;
 
       // 1. Tentar verificar DIRETAMENTE no Mercado Pago via nossa nova API
@@ -215,7 +215,7 @@ export default function SaldoPage() {
   const checkCardStatus = async (isAuto = false) => {
     if (!isAuto) setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (!session) return;
 
       const { data: transaction } = await proxy

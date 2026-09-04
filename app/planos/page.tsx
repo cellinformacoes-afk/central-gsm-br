@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { proxy } from '@/lib/supabase-proxy';
+import { fetchAuthSession } from '@/lib/auth';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -20,33 +21,18 @@ export default function PlanosPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        fetchProfile(session.user.id);
-        fetchExistingRequest(session.user.id);
+    const init = async () => {
+      const { session: s } = await fetchAuthSession();
+      setSession(s);
+      if (s) {
+        fetchProfile(s.user.id);
+        fetchExistingRequest(s.user.id);
       } else {
         setLoadingRequest(false);
       }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        fetchProfile(session.user.id);
-        fetchExistingRequest(session.user.id);
-      } else {
-        setProfile(null);
-        setExistingRequest(null);
-        setLoadingRequest(false);
-      }
-    });
-
+    };
+    init();
     fetchServices();
-
-    return () => subscription.unsubscribe();
   }, []);
 
   async function fetchProfile(userId: string) {
@@ -150,7 +136,7 @@ export default function PlanosPage() {
       const termsAcceptedVersion = "v1.0";
 
       // 2. Call RPC to create the plan purchase request
-      const result = await proxy.rpc("create_plan_purchase_request", {
+      const result =       await proxy.rpc("create_plan_purchase_request", {
         p_plan_name: selectedPlan.name,
         p_cost: selectedPlan.cost,
       });

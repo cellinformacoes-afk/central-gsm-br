@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { proxy } from '@/lib/supabase-proxy';
+import { fetchAuthSession } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowUpCircle, ArrowDownCircle, Clock, Search } from 'lucide-react';
 import Link from 'next/link';
@@ -17,7 +17,7 @@ export default function ExtratoPage() {
 
   async function fetchTransactions() {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (!session) {
         router.push('/login');
         return;
