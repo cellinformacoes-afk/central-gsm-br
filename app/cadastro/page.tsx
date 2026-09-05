@@ -6,11 +6,27 @@ import { useRouter } from "next/navigation";
 export default function Cadastro() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  // Função para aplicar máscara de CPF (000.000.000-00)
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, ""); // Remove não-números
+    if (value.length > 11) value = value.slice(0, 11);
+    
+    if (value.length > 9) {
+      value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    } else if (value.length > 6) {
+      value = value.replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3");
+    } else if (value.length > 3) {
+      value = value.replace(/(\d{3})(\d{1,3})/, "$1.$2");
+    }
+    setCpf(value);
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,6 +34,13 @@ export default function Cadastro() {
       setError("Você precisa aceitar os Termos de Uso e Responsabilidade para continuar.");
       return;
     }
+    
+    const cleanCpf = cpf.replace(/\D/g, "");
+    if (cleanCpf.length !== 11) {
+      setError("Por favor, insira um CPF válido com 11 dígitos.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -36,7 +59,7 @@ export default function Cadastro() {
           email,
           password,
           name,
-          cpf: "00000000000",
+          cpf: cleanCpf,
           ip: userIp,
         }),
       });
@@ -106,6 +129,18 @@ export default function Cadastro() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com" 
+                className="w-full bg-[#1e293b] border border-[#334155] rounded-xl py-3.5 px-5 text-white placeholder-gray-600 focus:outline-none focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD] transition-all font-medium"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">CPF</label>
+              <input 
+                type="text" 
+                required
+                value={cpf}
+                onChange={handleCpfChange}
+                placeholder="000.000.000-00" 
                 className="w-full bg-[#1e293b] border border-[#334155] rounded-xl py-3.5 px-5 text-white placeholder-gray-600 focus:outline-none focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD] transition-all font-medium"
               />
             </div>
