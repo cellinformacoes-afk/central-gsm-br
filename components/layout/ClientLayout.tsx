@@ -256,7 +256,7 @@ export default function ClientLayout({
 
         {/* Suporte */}
         <a
-          href="https://wa.me/5511966959666?text=Vim%20pelo%20site%20Centralgsm"
+          href="https://wa.me/5511985029684?text=Vim%20pelo%20site%20Centralgsm"
           target="_blank"
           rel="noopener noreferrer"
           className="group flex items-center gap-3 bg-[#25D366] hover:bg-[#1fb356] pl-4 pr-5 py-3 rounded-full shadow-[0_10px_30px_rgba(37,211,102,0.45)] hover:scale-105 active:scale-95 transition-all"

@@ -63,6 +63,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 401 });
     }
 
+    // Bloqueio manual de golpistas (contestação indevida)
+    const blockedUsers = [
+      'cfef9d31-0685-44b6-95f1-9cbfe60ac558', // Bernardo
+      '10ea5e2c-4828-4cc7-8f4e-02600c265bf2', // Wylliam / Mateus
+      '082770a6-5b58-42f9-9072-ba74496acfc6'  // Carlos Boccia
+    ];
+    
+    if (data.user && blockedUsers.includes(data.user.id)) {
+      return NextResponse.json({ error: 'Sua conta foi bloqueada por violação dos termos (Contestação Indevida).' }, { status: 403 });
+    }
+
     return NextResponse.json({
       session: {
         access_token: data.access_token,
