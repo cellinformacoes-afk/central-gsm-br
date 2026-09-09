@@ -67,7 +67,8 @@ export async function POST(request: NextRequest) {
     const blockedUsers = [
       'cfef9d31-0685-44b6-95f1-9cbfe60ac558', // Bernardo
       '10ea5e2c-4828-4cc7-8f4e-02600c265bf2', // Wylliam / Mateus
-      '082770a6-5b58-42f9-9072-ba74496acfc6'  // Carlos Boccia
+      '082770a6-5b58-42f9-9072-ba74496acfc6', // Carlos Boccia
+      '60a17e43-8d31-4c7d-ac32-d688059813c2'  // Marcos Antonio
     ];
     
     if (data.user && blockedUsers.includes(data.user.id)) {
