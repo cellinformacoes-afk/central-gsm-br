@@ -22,22 +22,49 @@ export async function POST(request: Request) {
           
           console.log(`Processando pagamento recebido EFI: txid=${txid} valor=${amount}`);
 
-          if (!txid) {
-            console.error('Pix sem txid (possível pagamento estático/manual), endToEndId:', endToEndId);
-            continue;
+          let txToProcess = null;
+
+          if (txid) {
+            // Busca a transação pelo ID
+            const { data: foundTx, error: txError } = await supabaseAdmin
+              .from('transactions')
+              .select('*')
+              .eq('external_id', txid)
+              .single();
+
+            if (!txError && foundTx) {
+              txToProcess = foundTx;
+            } else {
+              console.error('Transação não encontrada no banco pelo txid:', txid);
+            }
           }
 
-          // Busca a transação
-          const { data: tx, error: txError } = await supabaseAdmin
-            .from('transactions')
-            .select('*')
-            .eq('external_id', txid)
-            .single();
+          // Se não encontrou pelo txid (ou se veio sem txid), tenta buscar pelo valor exato
+          if (!txToProcess) {
+            console.warn(`Tentando buscar transação pendente pelo valor exato: R$ ${amount}`);
+            
+            const { data: pendingTxs } = await supabaseAdmin
+              .from('transactions')
+              .select('*')
+              .eq('status', 'pending')
+              .eq('type', 'pix')
+              .order('created_at', { ascending: false })
+              .limit(50);
 
-          if (txError || !tx) {
-            console.error('Transação não encontrada no banco:', txid);
-            continue; // Pula para o próximo pix do array
+            const candidates = (pendingTxs || []).filter((t: any) =>
+              Math.abs(parseFloat(String(t.amount)) - amount) < 0.05
+            );
+
+            if (candidates.length > 0) {
+              txToProcess = candidates[0]; // Pega a mais recente
+              console.log(`✅ Sucesso: Transação correspondente encontrada pelo valor! User ID: ${txToProcess.user_id}`);
+            } else {
+              console.error('Nenhuma transação pendente encontrada para o valor:', amount);
+              continue; // Pula para o próximo pix se não encontrar nenhuma
+            }
           }
+
+          const tx = txToProcess;
 
           if (tx.status === 'success' || tx.status === 'approved') {
             console.log(`Pagamento ${txid} já processado anteriormente.`);
