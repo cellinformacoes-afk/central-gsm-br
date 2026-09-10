@@ -124,7 +124,7 @@ function LoginContent() {
             <div className="space-y-2 relative">
               <div className="flex justify-between items-center mb-1">
                 <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Senha</label>
-                <Link href="#" className="text-[10px] font-bold text-[#00D2AD] hover:text-white transition-colors">ESQUECI A SENHA</Link>
+                <Link href="/recuperar-senha" className="text-[10px] font-bold text-[#00D2AD] hover:text-white transition-colors">ESQUECI A SENHA</Link>
               </div>
               <input 
                 type="password" 
