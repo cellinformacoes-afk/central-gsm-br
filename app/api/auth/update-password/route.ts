@@ -5,9 +5,9 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const { code, newPassword } = await request.json();
-    if (!code || !newPassword) {
-      return NextResponse.json({ error: 'Código e nova senha são obrigatórios' }, { status: 400 });
+    const { code, accessToken, newPassword } = await request.json();
+    if ((!code && !accessToken) || !newPassword) {
+      return NextResponse.json({ error: 'Código (ou token) e nova senha são obrigatórios' }, { status: 400 });
     }
 
     if (newPassword.length < 6) {
@@ -17,33 +17,43 @@ export async function POST(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-    // Exchange the recovery code for tokens
-    const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=pkce`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': serviceRoleKey,
-      },
-      body: JSON.stringify({ auth_code: code }),
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const tokenData = await tokenRes.json();
+    let user;
 
-    if (!tokenRes.ok || tokenData.error) {
-      return NextResponse.json({ error: tokenData.error_description || 'Código inválido ou expirado' }, { status: 401 });
+    if (code) {
+      // Exchange the recovery code for tokens
+      const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=pkce`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': serviceRoleKey,
+        },
+        body: JSON.stringify({ auth_code: code }),
+      });
+
+      const tokenData = await tokenRes.json();
+
+      if (!tokenRes.ok || tokenData.error) {
+        return NextResponse.json({ error: tokenData.error_description || 'Código inválido ou expirado' }, { status: 401 });
+      }
+
+      user = tokenData.user;
+    } else if (accessToken) {
+      const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
+      if (error || !data?.user) {
+        return NextResponse.json({ error: 'Token inválido ou expirado' }, { status: 401 });
+      }
+      user = data.user;
     }
-
-    const accessToken = tokenData.access_token;
-    const user = tokenData.user;
 
     if (!user?.id) {
       return NextResponse.json({ error: 'Não foi possível identificar o usuário' }, { status: 401 });
     }
 
-    // Update password using admin API
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+
 
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
       user.id,

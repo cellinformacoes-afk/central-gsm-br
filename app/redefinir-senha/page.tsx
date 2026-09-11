@@ -13,11 +13,30 @@ function RedefinirSenhaContent() {
   const [noCode, setNoCode] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const code = searchParams.get("code");
+  const [tokenCode, setTokenCode] = useState<string | null>(null);
+  const [hashToken, setHashToken] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!code) setNoCode(true);
-  }, [code]);
+    let urlCode = searchParams.get("code");
+    if (urlCode) {
+      setTokenCode(urlCode);
+    } else if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token=")) {
+        const params = new URLSearchParams(hash.replace('#', ''));
+        const token = params.get('access_token');
+        if (token) {
+          setHashToken(token);
+        } else {
+          setNoCode(true);
+        }
+      } else {
+        setNoCode(true);
+      }
+    } else {
+      setNoCode(true);
+    }
+  }, [searchParams]);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +56,7 @@ function RedefinirSenhaContent() {
       return;
     }
 
-    if (!code) {
+    if (!tokenCode && !hashToken) {
       setError("Código de recuperação não encontrado. Solicite um novo link.");
       setLoading(false);
       return;
@@ -47,7 +66,7 @@ function RedefinirSenhaContent() {
       const res = await fetch("/api/auth/update-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, newPassword: password }),
+        body: JSON.stringify({ code: tokenCode, accessToken: hashToken, newPassword: password }),
       });
 
       const data = await res.json();
