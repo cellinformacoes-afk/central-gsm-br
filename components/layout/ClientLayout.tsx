@@ -16,6 +16,7 @@ export default function ClientLayout({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pendingResets, setPendingResets] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
+  const [noticeIcon, setNoticeIcon] = useState('⚠️');
   const router = useRouter();
 
   const loadSession = useCallback(async () => {
@@ -57,7 +58,15 @@ export default function ClientLayout({
           .eq('id', 1)
           .single();
         if (data && data.enabled && data.message) {
-          setNotice(data.message);
+          let msg = data.message;
+          let ic = '⚠️';
+          const match = msg.match(/^(⚠️|ℹ️|🚀|📢|✅|🔥)\|/);
+          if (match) {
+            ic = match[1];
+            msg = msg.substring(match[0].length);
+          }
+          setNoticeIcon(ic);
+          setNotice(msg);
         }
       } catch (err) {
         console.error('Error fetching site notice:', err);
@@ -292,17 +301,35 @@ export default function ClientLayout({
 
         {/* Balão de Aviso da Equipe */}
         {notice && (
-          <div className="relative max-w-[260px] rounded-2xl border border-[#FFC107]/40 bg-[#0f172a]/95 backdrop-blur shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-2 duration-300">
+          <div className={`relative max-w-[260px] rounded-2xl border bg-[#0f172a]/95 backdrop-blur shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-2 duration-300 ${
+            noticeIcon === 'ℹ️' ? 'border-[#3B82F6]/40' :
+            noticeIcon === '🚀' ? 'border-[#8B5CF6]/40' :
+            noticeIcon === '✅' ? 'border-[#10B981]/40' :
+            noticeIcon === '🔥' ? 'border-[#EF4444]/40' :
+            'border-[#FFC107]/40'
+          }`}>
             <button
               onClick={() => setNotice(null)}
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[#1e293b] border border-[#334155] text-gray-400 hover:text-white hover:border-[#FFC107]/50 flex items-center justify-center text-sm font-bold shadow transition-colors"
+              className={`absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[#1e293b] border border-[#334155] text-gray-400 hover:text-white flex items-center justify-center text-sm font-bold shadow transition-colors ${
+                noticeIcon === 'ℹ️' ? 'hover:border-[#3B82F6]/50' :
+                noticeIcon === '🚀' ? 'hover:border-[#8B5CF6]/50' :
+                noticeIcon === '✅' ? 'hover:border-[#10B981]/50' :
+                noticeIcon === '🔥' ? 'hover:border-[#EF4444]/50' :
+                'hover:border-[#FFC107]/50'
+              }`}
               aria-label="Fechar aviso"
               title="Fechar aviso"
             >
               ×
             </button>
             <div className="flex items-start gap-3 p-4 pt-3 pr-7">
-              <span className="text-[#FFC107] text-lg leading-none mt-0.5 shrink-0">⚠️</span>
+              <span className={`text-lg leading-none mt-0.5 shrink-0 ${
+                noticeIcon === 'ℹ️' ? 'text-[#3B82F6]' :
+                noticeIcon === '🚀' ? 'text-[#8B5CF6]' :
+                noticeIcon === '✅' ? 'text-[#10B981]' :
+                noticeIcon === '🔥' ? 'text-[#EF4444]' :
+                'text-[#FFC107]'
+              }`}>{noticeIcon}</span>
               <p className="text-white text-sm leading-relaxed">{notice}</p>
             </div>
           </div>

@@ -6,6 +6,7 @@ import AdminNav from '@/components/admin/AdminNav';
 
 export default function AdminNoticiaPage() {
   const [message, setMessage] = useState('');
+  const [icon, setIcon] = useState('⚠️');
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,7 +41,15 @@ export default function AdminNoticiaPage() {
       .single();
 
     if (!error && data) {
-      setMessage(data.message || '');
+      let msg = data.message || '';
+      let ic = '⚠️';
+      const match = msg.match(/^(⚠️|ℹ️|🚀|📢|✅|🔥)\|/);
+      if (match) {
+        ic = match[1];
+        msg = msg.substring(match[0].length);
+      }
+      setMessage(msg);
+      setIcon(ic);
       setEnabled(data.enabled || false);
     }
     setLoading(false);
@@ -49,9 +58,10 @@ export default function AdminNoticiaPage() {
   async function handleSave() {
     setSaving(true);
     setSaved(false);
+    const fullMessage = `${icon}|${message}`;
     const { error } = await supabase
       .from('site_notice')
-      .upsert({ id: 1, message, enabled, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+      .upsert({ id: 1, message: fullMessage, enabled, updated_at: new Date().toISOString() }, { onConflict: 'id' });
 
     setSaving(false);
     if (error) {
@@ -95,6 +105,31 @@ export default function AdminNoticiaPage() {
             </button>
           </div>
 
+          {/* Tipo de Aviso */}
+          <div>
+            <label className="block text-white font-bold mb-3">Tipo de Aviso / Ícone</label>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { i: '⚠️', label: 'Alerta / Problema', color: 'border-[#FFC107] text-[#FFC107]' },
+                { i: 'ℹ️', label: 'Informação', color: 'border-[#3B82F6] text-[#3B82F6]' },
+                { i: '🚀', label: 'Novidade', color: 'border-[#8B5CF6] text-[#8B5CF6]' },
+                { i: '✅', label: 'Sucesso / Resolvido', color: 'border-[#10B981] text-[#10B981]' },
+                { i: '🔥', label: 'Urgente / Promoção', color: 'border-[#EF4444] text-[#EF4444]' }
+              ].map(opt => (
+                <button
+                  key={opt.i}
+                  onClick={() => setIcon(opt.i)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+                    icon === opt.i ? `bg-[#1e293b] ${opt.color} bg-opacity-20` : 'border-[#334155] text-gray-400 hover:border-gray-500 hover:text-white'
+                  }`}
+                >
+                  <span className="text-lg">{opt.i}</span>
+                  <span className="text-xs font-bold">{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Mensagem */}
           <div>
             <label className="block text-white font-bold mb-2">Mensagem do aviso</label>
@@ -111,9 +146,21 @@ export default function AdminNoticiaPage() {
           {message && (
             <div className="border-t border-[#334155] pt-6">
               <div className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">Pré-visualização</div>
-              <div className="rounded-2xl border border-[#FFC107]/40 bg-[#0f172a] shadow-[0_10px_30px_rgba(0,0,0,0.4)] max-w-sm">
+              <div className={`rounded-2xl border bg-[#0f172a] shadow-[0_10px_30px_rgba(0,0,0,0.4)] max-w-sm ${
+                icon === 'ℹ️' ? 'border-[#3B82F6]/40' :
+                icon === '🚀' ? 'border-[#8B5CF6]/40' :
+                icon === '✅' ? 'border-[#10B981]/40' :
+                icon === '🔥' ? 'border-[#EF4444]/40' :
+                'border-[#FFC107]/40'
+              }`}>
                 <div className="flex items-start gap-3 p-4">
-                  <span className="text-[#FFC107] text-lg leading-none mt-0.5">⚠️</span>
+                  <span className={`text-lg leading-none mt-0.5 ${
+                    icon === 'ℹ️' ? 'text-[#3B82F6]' :
+                    icon === '🚀' ? 'text-[#8B5CF6]' :
+                    icon === '✅' ? 'text-[#10B981]' :
+                    icon === '🔥' ? 'text-[#EF4444]' :
+                    'text-[#FFC107]'
+                  }`}>{icon}</span>
                   <p className="text-white text-sm leading-relaxed">{message}</p>
                 </div>
               </div>
