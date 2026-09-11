@@ -15,6 +15,7 @@ export default function ClientLayout({
   const [profile, setProfile] = useState<any>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pendingResets, setPendingResets] = useState(0);
+  const [notice, setNotice] = useState<string | null>(null);
   const router = useRouter();
 
   const loadSession = useCallback(async () => {
@@ -46,6 +47,24 @@ export default function ClientLayout({
       console.error('Error fetching pending resets:', err);
     }
   }
+
+  useEffect(() => {
+    async function fetchNotice() {
+      try {
+        const data = await proxy
+          .from('site_notice')
+          .select('message, enabled')
+          .eq('id', 1)
+          .single();
+        if (data && data.enabled && data.message) {
+          setNotice(data.message);
+        }
+      } catch (err) {
+        console.error('Error fetching site notice:', err);
+      }
+    }
+    fetchNotice();
+  }, []);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -270,6 +289,24 @@ export default function ClientLayout({
             <span className="text-white/80 text-[9px] font-bold uppercase tracking-wider mt-0.5">Falar agora</span>
           </span>
         </a>
+
+        {/* Balão de Aviso da Equipe */}
+        {notice && (
+          <div className="relative max-w-[260px] rounded-2xl border border-[#FFC107]/40 bg-[#0f172a]/95 backdrop-blur shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-2 duration-300">
+            <button
+              onClick={() => setNotice(null)}
+              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[#1e293b] border border-[#334155] text-gray-400 hover:text-white hover:border-[#FFC107]/50 flex items-center justify-center text-sm font-bold shadow transition-colors"
+              aria-label="Fechar aviso"
+              title="Fechar aviso"
+            >
+              ×
+            </button>
+            <div className="flex items-start gap-3 p-4 pt-3 pr-7">
+              <span className="text-[#FFC107] text-lg leading-none mt-0.5 shrink-0">⚠️</span>
+              <p className="text-white text-sm leading-relaxed">{notice}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 mt-4 relative z-10">
