@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase-admin';
+import { syncEfiPendingPayments } from '@/lib/syncEfiPending';
 
 // CONFIGURAÇÕES W-API
 const W_API_TOKEN = 'Swp2rYBaElQLSscDhTYWKQ9SnTLIVz9Sv';
@@ -23,6 +24,14 @@ export async function GET() {
 
     const { expiredCount } = result as { expiredCount: number };
 
+    // Sincroniza PIX Efí pagos mas ainda pendentes (plano Hobby limita a 1 cron por dia)
+    let pixStats = { checked: 0, credited: 0, errors: [] as any[] };
+    try {
+      pixStats = await syncEfiPendingPayments();
+    } catch (e: any) {
+      console.error('[CRON] Erro ao sincronizar PIX Efí:', e.message);
+    }
+
     if (expiredCount > 0) {
       const msg = `🚨 *Central GSM - Automação* 🚨\n\nProcessadas *${expiredCount}* expirações.\nTarefas de reset de senha criadas e enviadas para o Worker.`;
       await sendWhatsApp(GROUP_ID, msg);
@@ -31,6 +40,7 @@ export async function GET() {
     return NextResponse.json({ 
       success: true, 
       processed: expiredCount,
+      pix_efi: pixStats.credited > 0 ? `✅ ${pixStats.credited} PIX recuperados` : 'nenhum pendente',
       timestamp: new Date().toISOString()
     });
 

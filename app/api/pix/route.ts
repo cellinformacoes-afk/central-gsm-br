@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { asaas } from '@/lib/asaas';
+import { efibank } from '@/lib/efibank';
 
 export async function POST(request: Request) {
   try {
@@ -16,35 +16,28 @@ export async function POST(request: Request) {
 
     const baseAmount = parseFloat(amount);
 
-    // Busca email do perfil para criar cliente no Asaas
+    // Busca email do perfil
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('email, cpf')
       .eq('id', userId)
       .single();
 
-    const customerEmail = profile?.email;
     const customerCpf = cpf || profile?.cpf;
 
-    if (!customerEmail) {
-      return NextResponse.json({ error: 'Email do usuário não encontrado' }, { status: 400 });
-    }
-
-    console.log('--- Gerando PIX Dinâmico Asaas ---');
+    console.log('--- Gerando PIX Dinâmico Efí Bank ---');
     console.log('User:', userId, '| Valor: R$', baseAmount);
 
-    // Cria ou recupera cliente no Asaas
-    const customerId = await asaas.getOrCreateCustomer(customerEmail, payerName, customerCpf || undefined);
-
-    // Gera cobrança PIX no Asaas (QR Code dinâmico)
-    const pixPayment = await asaas.createPixPayment(
-      customerId,
+    // Gera cobrança PIX no Efí Bank
+    const pixPayment = await efibank.createPixPayment(
       baseAmount,
       description || `Recarga Central GSM - R$ ${baseAmount}`,
-      userId
+      userId,
+      customerCpf,
+      payerName
     );
 
-    // Salva transação pendente no banco com o ID real do Asaas
+    // Salva transação pendente no banco com o txid (id) do Efí Bank
     const { error: dbError } = await supabaseAdmin
       .from('transactions')
       .insert({

@@ -1,10 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-
 import { Suspense } from "react";
+import { supabase } from "@/lib/supabase";
 
 function LoginContent() {
   const [email, setEmail] = useState("");
@@ -21,16 +20,60 @@ function LoginContent() {
     setLoading(true);
     setError(null);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    let lastError = "";
+    let session: any = null;
+    let gotSession = false;
 
-    if (error) {
-      setError(error.message);
-    } else {
-      router.push(redirectUrl);
-      router.refresh(); // Ensure layout balance updates
+    for (let attempt = 0; attempt < 3 && !gotSession; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15000);
+
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timer);
+        const text = await res.text();
+
+        let data: any = null;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          lastError = "Servidor temporariamente indisponível, tentando novamente...";
+          await new Promise(r => setTimeout(r, 1000));
+          continue;
+        }
+
+        if (!res.ok || data.error) {
+          lastError = data.error || "Erro ao fazer login";
+          gotSession = true;
+          break;
+        }
+
+        session = data.session;
+        gotSession = true;
+        break;
+      } catch (err: any) {
+        lastError = err.name === "AbortError"
+          ? "Servidor demorou para responder, tentando novamente..."
+          : err.message || "Erro de conexão";
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+
+    try {
+      if (gotSession && session) {
+        await supabase.auth.setSession(session);
+        window.location.href = redirectUrl;
+        return;
+      }
+      setError(lastError || "Não foi possível entrar. Tente novamente.");
+    } catch (err: any) {
+      setError(err.message || "Erro ao salvar sessão");
     }
     setLoading(false);
   };
@@ -81,7 +124,7 @@ function LoginContent() {
             <div className="space-y-2 relative">
               <div className="flex justify-between items-center mb-1">
                 <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Senha</label>
-                <Link href="#" className="text-[10px] font-bold text-[#00D2AD] hover:text-white transition-colors">ESQUECI A SENHA</Link>
+                <Link href="/recuperar-senha" className="text-[10px] font-bold text-[#00D2AD] hover:text-white transition-colors">ESQUECI A SENHA</Link>
               </div>
               <input 
                 type="password" 

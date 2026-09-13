@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { proxy } from '@/lib/supabase-proxy';
+import { fetchAuthSession } from '@/lib/auth';
 
 export default function Profile() {
   const [profile, setProfile] = useState<any>(null);
@@ -15,14 +17,18 @@ export default function Profile() {
 
   async function getProfile() {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      setProfile(data);
+    const { session } = await fetchAuthSession();
+    if (session?.user) {
+      try {
+        const data = await proxy
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        setProfile(data);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
     }
     setLoading(false);
   }

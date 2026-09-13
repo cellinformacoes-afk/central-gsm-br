@@ -15,15 +15,18 @@ export default function RecuperarSenha() {
     setError(null);
     setSuccess(false);
 
-    // Provide the redirectTo URL to ensure the user comes back to our app's reset password page.
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/redefinir-senha`,
-    });
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/redefinir-senha`,
+      });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setSuccess(true);
+      if (resetError) {
+        setError(resetError.message || "Erro ao enviar e-mail");
+      } else {
+        setSuccess(true);
+      }
+    } catch (err: any) {
+      setError(err.message || "Erro de conexão");
     }
     setLoading(false);
   };

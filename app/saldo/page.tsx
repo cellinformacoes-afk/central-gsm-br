@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { proxy } from '@/lib/supabase-proxy';
+import { fetchAuthSession, getStoredAccessToken } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 
 export default function SaldoPage() {
@@ -19,29 +20,29 @@ export default function SaldoPage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (session) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        if (data) {
-          setProfile(data);
-          if (data.cpf) setCpf(data.cpf);
+        try {
+          const data = await proxy.from('profiles').select('*').eq('id', session.user.id).single();
+          if (data) {
+            setProfile(data);
+            if (data.cpf) setCpf(data.cpf);
+          }
+        } catch (err) {
+          console.error('Error fetching profile:', err);
         }
       }
     };
     fetchProfile();
   }, []);
 
-  // Polling automático a cada 10 segundos quando o QR Code está visível (PIX)
+  // Polling automático a cada 5 segundos quando o QR Code está visível (PIX)
   useEffect(() => {
     let interval: any;
     if (step === 2 && pixData?.id) {
       interval = setInterval(() => {
         checkPaymentStatus(true);
-      }, 10000);
+      }, 5000);
     }
     return () => clearInterval(interval);
   }, [step, pixData]);
@@ -80,7 +81,7 @@ export default function SaldoPage() {
     setShowNameConfirm(false);
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (!session) {
         alert("Sessão expirada. Por favor, faça login novamente.");
         return;
@@ -131,7 +132,7 @@ export default function SaldoPage() {
 
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (!session) {
         alert("Sessão expirada. Por favor, faça login novamente.");
         return;
@@ -170,7 +171,7 @@ export default function SaldoPage() {
     if (!isAuto) setLoading(true);
     console.log("Iniciando verificação de pagamento. pixData:", pixData);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (!session) return;
 
       // 1. Tentar verificar DIRETAMENTE no Mercado Pago via nossa nova API
@@ -190,12 +191,12 @@ export default function SaldoPage() {
 
       // 2. Fallback: Verificar se a transação já foi registrada no Banco de Dados (pelo webhook)
       // Buscamos especificamente pelo ID externo para evitar confusão com outros pagamentos
-      const { data: transaction } = await supabase
+      const { data: transaction } = await proxy
         .from('transactions')
         .select('*')
         .eq('user_id', session.user.id)
         .eq('external_id', pixData.id)
-        .maybeSingle();
+        .single();
 
 
       if (transaction && transaction.status === 'success') {
@@ -214,15 +215,15 @@ export default function SaldoPage() {
   const checkCardStatus = async (isAuto = false) => {
     if (!isAuto) setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (!session) return;
 
-      const { data: transaction } = await supabase
+      const { data: transaction } = await proxy
         .from('transactions')
         .select('*')
         .eq('user_id', session.user.id)
         .eq('external_id', cardPaymentId)
-        .maybeSingle();
+        .single();
 
       if (transaction && (transaction.status === 'success' || transaction.status === 'approved')) {
         router.push('/saldo/sucesso?amount=' + (transaction.amount || amount));

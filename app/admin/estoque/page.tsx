@@ -45,9 +45,6 @@ export default function AdminEstoquePage() {
 
   async function fetchData() {
     setLoading(true);
-    // Refresh expiration first
-    await supabase.rpc('monitor_rental_expiration');
-
     const { data: servData } = await supabase.from('services').select('id, title, duration_hours, price').eq('is_rental', true);
     setServices(servData || []);
 

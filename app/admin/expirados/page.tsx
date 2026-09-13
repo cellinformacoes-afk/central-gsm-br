@@ -31,9 +31,6 @@ export default function ExpiradosPage() {
 
   const fetchExpirados = async () => {
     setLoading(true);
-    // Primeiro garante que o monitor rodou para capturar novas expirações
-    await supabase.rpc('monitor_rental_expiration');
-    
     // Busca contas pendentes de reset
     const { data, error } = await supabase
       .from('service_accounts')

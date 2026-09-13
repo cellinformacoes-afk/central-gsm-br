@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { proxy } from '@/lib/supabase-proxy';
+import { fetchAuthSession } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
@@ -17,6 +18,7 @@ export default function Home() {
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   
   // Purchase Modal State
@@ -34,22 +36,36 @@ export default function Home() {
 
   async function fetchData() {
     setLoading(true);
-    const { data: catData, error: catError } = await supabase.from('categories').select('*');
-    if (!catError) {
-      setCategories(catData || []);
-      const aluguel = (catData || []).find(c => c.slug === 'aluguel-contas');
-      if (aluguel) setActiveCategoryId(aluguel.id);
-    }
+    setConnectionError(null);
 
-    const { data: servData, error: servError } = await supabase
-      .from('services')
-      .select('*, categories(name, slug)')
-      .eq('active', true);
-    
-    if (servError) {
-      console.error('Error fetching services:', servError);
-    } else {
+    try {
+      const [catData, servData] = await Promise.all([
+        proxy.from('categories').select('*'),
+        proxy.from('services').select('*, categories(name, slug)').eq('active', true),
+      ]);
+
+      setCategories(catData || []);
+      const aluguel = (catData || []).find((c: any) => c.slug === 'aluguel-contas');
+      if (aluguel) setActiveCategoryId(aluguel.id);
+
       setServices(servData || []);
+    } catch (err: any) {
+      console.error('Error fetching data via proxy, trying api/data:', err);
+      try {
+        const res = await fetch(`/api/data?t=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (json.error) throw new Error(json.error);
+
+        setCategories(json.categories || []);
+        const aluguel = (json.categories || []).find((c: any) => c.slug === 'aluguel-contas');
+        if (aluguel) setActiveCategoryId(aluguel.id);
+
+        setServices(json.services || []);
+      } catch (fallbackErr: any) {
+        console.error('Error fetching fallback data:', fallbackErr);
+        setConnectionError('Serviços temporariamente indisponíveis. Tente novamente em alguns instantes.');
+      }
     }
     setLoading(false);
   }
@@ -103,7 +119,7 @@ export default function Home() {
     setPurchaseLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await fetchAuthSession();
       if (!session) {
         router.push('/login');
         return;
@@ -111,14 +127,12 @@ export default function Home() {
 
       // Call Unified RPC
       const qty = isCreditService(selectedService) ? creditQuantity : 1;
-      const { data: result, error: rpcError } = await supabase.rpc('purchase_service_v2', {
+      const result = await proxy.rpc('purchase_service_v2', {
         p_user_id: session.user.id,
         p_service_id: selectedService.id,
         p_input_data: { imei: imei.trim(), email: email.trim() },
         p_quantity: qty
       });
-
-      if (rpcError) throw rpcError;
 
       if (result.status === 'error') {
         alert(result.message);
@@ -391,6 +405,19 @@ export default function Home() {
           [...Array(6)].map((_, i) => (
             <div key={i} className="bg-[#1e293b] rounded-3xl p-6 border border-[#334155] h-32 animate-pulse shadow-2xl"></div>
           ))
+        ) : connectionError ? (
+          <div className="col-span-full p-16 text-center bg-[#1e293b]/30 rounded-[40px] border-4 border-dashed border-red-500/30 flex flex-col items-center gap-6">
+             <div className="w-24 h-24 rounded-full bg-red-500/10 flex items-center justify-center text-4xl text-red-400 shadow-inner">
+               <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+             </div>
+             <p className="text-red-400 font-black uppercase tracking-widest text-sm">{connectionError}</p>
+             <button 
+               onClick={() => fetchData()} 
+               className="bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] px-8 py-3 rounded-2xl font-black uppercase text-sm transition-all hover:-translate-y-1 shadow-lg"
+             >
+               Tentar Novamente
+             </button>
+          </div>
         ) : displayedServices.length > 0 ? (
           displayedServices.map((service) => {
             return (
@@ -456,7 +483,7 @@ export default function Home() {
             <p className="text-gray-400 font-medium">Nossa equipe de especialistas está pronta para ajudar você com qualquer dúvida ou ativação via WhatsApp.</p>
          </div>
          <div className="flex flex-col sm:flex-row gap-4">
-            <a href="https://wa.me/5511913378848?text=Vim%20pelo%20site%20Centralgsm" className="whitespace-nowrap bg-[#25D366] hover:bg-[#1fb356] text-white px-8 py-5 rounded-[30px] font-black uppercase text-base shadow-[0_15px_35px_rgba(37,211,102,0.3)] hover:-translate-y-2 transition-all flex items-center justify-center gap-2">
+            <a href="https://wa.me/5511985029684?text=Vim%20pelo%20site%20Centralgsm" className="whitespace-nowrap bg-[#25D366] hover:bg-[#1fb356] text-white px-8 py-5 rounded-[30px] font-black uppercase text-base shadow-[0_15px_35px_rgba(37,211,102,0.3)] hover:-translate-y-2 transition-all flex items-center justify-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
               Falar com Consultor
             </a>

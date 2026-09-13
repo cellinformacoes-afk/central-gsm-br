@@ -1,17 +1,32 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function Cadastro() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  // Função para aplicar máscara de CPF (000.000.000-00)
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, ""); // Remove não-números
+    if (value.length > 11) value = value.slice(0, 11);
+    
+    if (value.length > 9) {
+      value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    } else if (value.length > 6) {
+      value = value.replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3");
+    } else if (value.length > 3) {
+      value = value.replace(/(\d{3})(\d{1,3})/, "$1.$2");
+    }
+    setCpf(value);
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,63 +34,46 @@ export default function Cadastro() {
       setError("Você precisa aceitar os Termos de Uso e Responsabilidade para continuar.");
       return;
     }
+    
+    const cleanCpf = cpf.replace(/\D/g, "");
+    if (cleanCpf.length !== 11) {
+      setError("Por favor, insira um CPF válido com 11 dígitos.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
-    // Fetch user IP address client-side
     let userIp = "unknown";
     try {
       const ipRes = await fetch("https://api.ipify.org?format=json");
       const ipData = await ipRes.json();
-      if (ipData && ipData.ip) {
-        userIp = ipData.ip;
+      if (ipData && ipData.ip) userIp = ipData.ip;
+    } catch {}
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          cpf: cleanCpf,
+          ip: userIp,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setError(data.error || "Erro ao criar conta");
+      } else {
+        alert("Cadastro realizado! Faça login para acessar.");
+        router.push("/login");
       }
-    } catch (ipErr) {
-      console.warn("Could not fetch user IP:", ipErr);
-    }
-
-    const termsAcceptedAt = new Date().toISOString();
-    const termsAcceptedVersion = "v1.0";
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
-          terms_accepted_at: termsAcceptedAt,
-          terms_accepted_ip: userIp,
-          terms_accepted_version: termsAcceptedVersion,
-        },
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-    } else {
-      if (data.user) {
-        // The trigger in Supabase should handle profile creation, 
-        // but adding a manual check/insert is safer for now if trigger isn't ready
-        const { error: profileError } = await supabase.from('profiles').insert([
-          { id: data.user.id, username: name, email }
-        ]);
-        if (profileError && profileError.code !== '23505') { // Ignore unique constraint if trigger already did it
-           console.error('Profile creation error:', profileError);
-        }
-
-        // Update terms columns if they exist (fails gracefully if migration not applied yet)
-        const { error: termsError } = await supabase.from('profiles').update({
-          terms_accepted_at: termsAcceptedAt,
-          terms_accepted_ip: userIp,
-          terms_accepted_version: termsAcceptedVersion
-        }).eq('id', data.user.id);
-        
-        if (termsError) {
-          console.warn('Could not update terms in profile table:', termsError);
-        }
-      }
-      alert("Cadastro realizado! Verifique seu e-mail ou faça login.");
-      router.push("/login");
+    } catch (err: any) {
+      setError(err.message || "Erro de conexão");
     }
     setLoading(false);
   };
@@ -131,6 +129,18 @@ export default function Cadastro() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com" 
+                className="w-full bg-[#1e293b] border border-[#334155] rounded-xl py-3.5 px-5 text-white placeholder-gray-600 focus:outline-none focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD] transition-all font-medium"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">CPF</label>
+              <input 
+                type="text" 
+                required
+                value={cpf}
+                onChange={handleCpfChange}
+                placeholder="000.000.000-00" 
                 className="w-full bg-[#1e293b] border border-[#334155] rounded-xl py-3.5 px-5 text-white placeholder-gray-600 focus:outline-none focus:border-[#00D2AD] focus:ring-1 focus:ring-[#00D2AD] transition-all font-medium"
               />
             </div>

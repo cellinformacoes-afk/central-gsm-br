@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { proxy } from '@/lib/supabase-proxy';
+import { fetchAuthSession } from '@/lib/auth';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -19,57 +21,40 @@ export default function PlanosPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        fetchProfile(session.user.id);
-        fetchExistingRequest(session.user.id);
+    const init = async () => {
+      const { session: s } = await fetchAuthSession();
+      setSession(s);
+      if (s) {
+        fetchProfile(s.user.id);
+        fetchExistingRequest(s.user.id);
       } else {
         setLoadingRequest(false);
       }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        fetchProfile(session.user.id);
-        fetchExistingRequest(session.user.id);
-      } else {
-        setProfile(null);
-        setExistingRequest(null);
-        setLoadingRequest(false);
-      }
-    });
-
+    };
+    init();
     fetchServices();
-
-    return () => subscription.unsubscribe();
   }, []);
 
   async function fetchProfile(userId: string) {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
-    if (!error && data) {
-      setProfile(data);
+    try {
+      const data = await proxy.from("profiles").select("*").eq("id", userId).single();
+      if (data) {
+        setProfile(data);
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
     }
   }
 
   async function fetchServices() {
     setLoadingServices(true);
     try {
-      const { data, error } = await supabase
+      const data = await proxy
         .from('services')
         .select('*, categories(name, slug)')
         .eq('active', true);
       
-      if (!error && data) {
-        // Filter mainly for 'metodos' and 'arquivos' which belong to plans, or just show them if user wants "os metodos"
+      if (data) {
         const metodos = data.filter((s: any) => s.categories?.slug === 'metodos' || s.categories?.slug === 'arquivos');
         setServices(metodos.length > 0 ? metodos : data);
       }
@@ -82,18 +67,16 @@ export default function PlanosPage() {
   async function fetchExistingRequest(userId: string) {
     setLoadingRequest(true);
     try {
-      // Fetch the most recent approved or pending plan request for this user
-      const { data, error } = await supabase
+      const data = await proxy
         .from("plan_purchase_requests")
         .select("*")
         .eq("user_id", userId)
         .in("status", ["approved", "pending"])
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
 
-      if (!error && data) {
-        setExistingRequest(data);
+      if (data && data.length > 0) {
+        setExistingRequest(data[0]);
       } else {
         setExistingRequest(null);
       }
@@ -153,12 +136,10 @@ export default function PlanosPage() {
       const termsAcceptedVersion = "v1.0";
 
       // 2. Call RPC to create the plan purchase request
-      const { data: result, error: rpcError } = await supabase.rpc("create_plan_purchase_request", {
+      const result =       await proxy.rpc("create_plan_purchase_request", {
         p_plan_name: selectedPlan.name,
         p_cost: selectedPlan.cost,
       });
-
-      if (rpcError) throw rpcError;
 
       // 3. Save terms acceptance in profiles (fails gracefully if migration not applied)
       const { error: termsError } = await supabase.from("profiles").update({
