@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function RecuperarSenha() {
   const [email, setEmail] = useState("");
@@ -15,16 +16,12 @@ export default function RecuperarSenha() {
     setSuccess(false);
 
     try {
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/redefinir-senha`,
       });
 
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        setError(data.error || "Erro ao enviar e-mail");
+      if (resetError) {
+        setError(resetError.message || "Erro ao enviar e-mail");
       } else {
         setSuccess(true);
       }

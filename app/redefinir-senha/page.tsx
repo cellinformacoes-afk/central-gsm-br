@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
+import { supabase } from "@/lib/supabase";
 
 function RedefinirSenhaContent() {
   const [password, setPassword] = useState("");
@@ -56,23 +57,13 @@ function RedefinirSenhaContent() {
       return;
     }
 
-    if (!tokenCode && !hashToken) {
-      setError("Código de recuperação não encontrado. Solicite um novo link.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const res = await fetch("/api/auth/update-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: tokenCode, accessToken: hashToken, newPassword: password }),
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        password: password
       });
 
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        setError(data.error || "Erro ao redefinir senha");
+      if (updateError) {
+        setError(updateError.message || "Erro ao redefinir senha. Verifique se o link não expirou.");
       } else {
         setSuccess(true);
         setTimeout(() => router.push("/login"), 3000);
