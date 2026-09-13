@@ -12,6 +12,8 @@ export default function AdminServicosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<any>(null);
   const [formCategoryId, setFormCategoryId] = useState<number | null>(null);
+  const [formInputType, setFormInputType] = useState<'IMEI' | 'SN'>('IMEI');
+
 
   const router = useRouter();
 
@@ -73,7 +75,9 @@ export default function AdminServicosPage() {
       is_rental: formData.get('is_rental') === 'on',
       duration_hours: parseFloat(formData.get('duration_hours') as string || '0'),
       download_url: formData.get('download_url'),
-      active: true
+      active: true,
+      input_type: formInputType
+
     };
 
     if (editingService) {
@@ -108,7 +112,7 @@ export default function AdminServicosPage() {
            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-2">Adicione ou remova itens das categorias</p>
         </div>
          <button 
-           onClick={() => { setEditingService(null); setFormCategoryId(categories[0]?.id || null); setIsModalOpen(true); }}
+           onClick={() => { setEditingService(null); setFormCategoryId(categories[0]?.id || null); setFormInputType('IMEI'); setIsModalOpen(true); }}
            className="bg-[#00D2AD] text-[#0f172a] px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:-translate-y-1 transition-all"
          >
            + ADICIONAR NOVO PROGRAMA
@@ -145,7 +149,7 @@ export default function AdminServicosPage() {
                              )}
                           </div>
                           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={() => { setEditingService(service); setFormCategoryId(service.category_id); setIsModalOpen(true); }} className="p-2 bg-[#334155] rounded-md text-white hover:bg-[#00D2AD] hover:text-black">
+                              <button onClick={() => { setEditingService(service); setFormCategoryId(service.category_id); setFormInputType(service.input_type || 'IMEI'); setIsModalOpen(true); }} className="p-2 bg-[#334155] rounded-md text-white hover:bg-[#00D2AD] hover:text-black">
                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                               </button>
                              <button onClick={() => handleDelete(service.id)} className="p-2 bg-[#334155] rounded-md text-white hover:bg-red-600">
@@ -229,6 +233,47 @@ export default function AdminServicosPage() {
                        </div>
                    </div>
                  )}
+
+                  {/* IMEI / SN selector — shown only for Serviços IMEI/SN category (id=4) */}
+                  {formCategoryId === 4 && (
+                    <div className="bg-[#0f172a] p-6 rounded-3xl border border-[#00D2AD]/30 animate-in slide-in-from-top-2 space-y-3">
+                      <label className="text-xs font-black text-[#00D2AD] uppercase tracking-widest block">
+                        📱 Tipo de Entrada do Cliente
+                      </label>
+                      <p className="text-[10px] text-gray-500 uppercase font-bold">
+                        Selecione o que o cliente deverá digitar ao comprar este serviço
+                      </p>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setFormInputType('IMEI')}
+                          className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-widest border-2 transition-all ${
+                            formInputType === 'IMEI'
+                              ? 'bg-[#00D2AD] border-[#00D2AD] text-[#0f172a]'
+                              : 'bg-transparent border-[#334155] text-gray-400 hover:border-[#00D2AD]/50'
+                          }`}
+                        >
+                          📶 IMEI
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormInputType('SN')}
+                          className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-widest border-2 transition-all ${
+                            formInputType === 'SN'
+                              ? 'bg-[#00D2AD] border-[#00D2AD] text-[#0f172a]'
+                              : 'bg-transparent border-[#334155] text-gray-400 hover:border-[#00D2AD]/50'
+                          }`}
+                        >
+                          🔢 Serial Number (SN)
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-gray-500 italic">
+                        {formInputType === 'IMEI'
+                          ? '✅ O cliente verá: "Digite o IMEI do Aparelho"'
+                          : '✅ O cliente verá: "Digite o Serial Number (SN) do Aparelho"'}
+                      </p>
+                    </div>
+                  )}
 
                  {/* Download Link (Shown only for Arquivos, Metodos and Download de Programas) */}
                  {[5, 6, 9].includes(formCategoryId || 0) && (

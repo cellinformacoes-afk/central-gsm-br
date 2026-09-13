@@ -60,9 +60,12 @@ export default function Home() {
     if (!selectedService) return;
 
     if (selectedService.category_id === 4 && !imei.trim()) {
-      alert("Por favor, digite o IMEI do aparelho.");
+      alert(selectedService.input_type === 'SN'
+        ? "Por favor, digite o Serial Number (SN) do aparelho."
+        : "Por favor, digite o IMEI do aparelho.");
       return;
     }
+
 
     if (selectedService.category_id === 3) {
       if (!email.trim()) {
@@ -226,19 +229,24 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Conditional Input for IMEI (Only for IMEI Category) */}
+                    {/* Conditional Input for IMEI/SN (Only for IMEI/SN Category) */}
                     {selectedService.category_id === 4 && (
                       <div className="animate-in slide-in-from-top-2 duration-300">
-                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Digite o IMEI do Aparelho</label>
+                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
+                          {selectedService.input_type === 'SN'
+                            ? 'Digite o Serial Number (SN) do Aparelho'
+                            : 'Digite o IMEI do Aparelho'}
+                        </label>
                         <input 
                           type="text" 
                           value={imei}
                           onChange={(e) => setImei(e.target.value)}
-                          placeholder="EX: 351234567890123"
+                          placeholder={selectedService.input_type === 'SN' ? 'EX: F17ABC1234XY' : 'EX: 351234567890123'}
                           className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-mono text-center tracking-[0.2em] focus:border-[#00D2AD] outline-none"
                         />
                       </div>
                     )}
+
 
                     {/* Conditional Input for Email (Only for Licenças / Ativação Category) */}
                     {selectedService.category_id === 3 && (
