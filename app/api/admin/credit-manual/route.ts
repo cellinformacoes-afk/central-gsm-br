@@ -10,11 +10,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'E-mail e valor são obrigatórios' }, { status: 400 });
     }
 
-    const { data: profile, error: profileError } = await supabaseAdmin
+    // Busca case-insensitive para aceitar emails em maiúsculas ou minúsculas
+    let { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('id, balance')
-      .eq('email', email.toLowerCase().trim())
+      .ilike('email', email.trim())
       .single();
+
+    // Fallback: busca via auth.users caso profiles não tenha campo email ou email esteja diferente
+    if (profileError || !profile) {
+      const { data: { users }, error: authErr } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+      if (!authErr) {
+        const authUser = users.find(u => u.email?.toLowerCase() === email.trim().toLowerCase());
+        if (authUser) {
+          const { data: profileById } = await supabaseAdmin
+            .from('profiles')
+            .select('id, balance')
+            .eq('id', authUser.id)
+            .single();
+          if (profileById) {
+            profile = profileById;
+            profileError = null;
+          }
+        }
+      }
+    }
 
     if (profileError || !profile) {
       return NextResponse.json({ error: 'Usuário não encontrado com este e-mail.' }, { status: 404 });
