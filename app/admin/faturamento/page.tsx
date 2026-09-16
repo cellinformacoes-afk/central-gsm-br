@@ -96,7 +96,8 @@ export default function AdminFaturamentoPage() {
     let card = 0;
     
     allTransactions.forEach(t => {
-      const amt = parseFloat(t.amount) || 0;
+      // Aplica desconto de 1,2% da taxa do banco
+      const amt = (parseFloat(t.amount) || 0) * 0.988;
       if (t.type === 'pix' || t.type === 'deposit') {
         pix += amt;
       } else if (t.type === 'credit_card') {
@@ -224,7 +225,7 @@ export default function AdminFaturamentoPage() {
                       </span>
                     </td>
                     <td className="p-4 text-right text-sm font-black text-[#00D2AD]">
-                      {formatCurrency(parseFloat(tx.amount))}
+                      {formatCurrency((parseFloat(tx.amount) || 0) * 0.988)}
                     </td>
                   </tr>
                 ))}
