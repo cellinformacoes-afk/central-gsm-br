@@ -15,8 +15,8 @@ export default function AdminFaturamentoPage() {
 
   useEffect(() => {
     checkAdmin();
-    // Default to the first day of the store (e.g., year 2020) so it's "desde o começo"
-    const firstDay = new Date(2020, 0, 1);
+    // Loja começou aproximadamente em Março de 2026
+    const firstDay = new Date(2026, 2, 1);
     const now = new Date();
     
     setStartDate(firstDay.toISOString().split('T')[0]);
@@ -57,38 +57,55 @@ export default function AdminFaturamentoPage() {
     end.setUTCHours(3, 0, 0, 0);
     end.setUTCDate(end.getUTCDate() + 1); // Up to beginning of next day
 
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('amount, type, created_at, profiles(email)')
-      .eq('status', 'success')
-      .in('type', ['pix', 'credit_card', 'deposit'])
-      .gte('created_at', start.toISOString())
-      .lt('created_at', end.toISOString())
-      .order('created_at', { ascending: false })
-      .limit(999999); // <--- AUMENTANDO O LIMITE PARA PEGAR TUDO
+    let allTransactions: any[] = [];
+    let from = 0;
+    const step = 1000;
+    let hasMore = true;
 
-    if (!error && data) {
-      setTransactions(data);
-      
-      let pix = 0;
-      let card = 0;
-      
-      data.forEach(t => {
-        const amt = parseFloat(t.amount) || 0;
-        if (t.type === 'pix' || t.type === 'deposit') {
-          pix += amt;
-        } else if (t.type === 'credit_card') {
-          card += amt;
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('amount, type, created_at, profiles(email)')
+        .eq('status', 'success')
+        .in('type', ['pix', 'credit_card', 'deposit'])
+        .gte('created_at', start.toISOString())
+        .lt('created_at', end.toISOString())
+        .order('created_at', { ascending: false })
+        .range(from, from + step - 1);
+
+      if (error) {
+        console.error("Erro ao buscar transações:", error);
+        hasMore = false;
+        break;
+      }
+
+      if (data && data.length > 0) {
+        allTransactions = [...allTransactions, ...data];
+        from += step;
+        if (data.length < step) {
+          hasMore = false;
         }
-      });
-      
-      setTotalPix(pix);
-      setTotalCard(card);
-    } else {
-      console.error("Erro ao buscar transações:", error);
-      setTransactions([]);
+      } else {
+        hasMore = false;
+      }
     }
+
+    setTransactions(allTransactions);
     
+    let pix = 0;
+    let card = 0;
+    
+    allTransactions.forEach(t => {
+      const amt = parseFloat(t.amount) || 0;
+      if (t.type === 'pix' || t.type === 'deposit') {
+        pix += amt;
+      } else if (t.type === 'credit_card') {
+        card += amt;
+      }
+    });
+    
+    setTotalPix(pix);
+    setTotalCard(card);
     setLoading(false);
   }
 
