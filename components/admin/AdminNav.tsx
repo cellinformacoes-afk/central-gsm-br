@@ -53,6 +53,7 @@ export default function AdminNav() {
 
   const links = [
     { href: '/admin/pedidos', label: '🛒 Pedidos' },
+    { href: '/admin/pix', label: '💸 Pedidos (PIX)' },
     { href: '/admin/estoque', label: '📦 Gestão de Estoque' },
     { href: '/admin/servicos', label: '🛠️ Gerenciar Serviços' },
     { href: '/admin/conciliacao', label: '⚡ Devolução de Saldo' },
