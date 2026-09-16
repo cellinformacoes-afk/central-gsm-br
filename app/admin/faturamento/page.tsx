@@ -15,11 +15,10 @@ export default function AdminFaturamentoPage() {
 
   useEffect(() => {
     checkAdmin();
-    // Loja começou aproximadamente em Março de 2026
-    const firstDay = new Date(2026, 2, 1);
+    // Padrão: mostra apenas o dia atual ao entrar na página
     const now = new Date();
     
-    setStartDate(firstDay.toISOString().split('T')[0]);
+    setStartDate(now.toISOString().split('T')[0]);
     setEndDate(now.toISOString().split('T')[0]);
   }, []);
 
