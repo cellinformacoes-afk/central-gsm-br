@@ -479,8 +479,8 @@ export default function Home() {
 
       <div className="mt-20 p-12 bg-gradient-to-r from-[#1e293b] to-[#0f172a] rounded-[50px] border border-[#00D2AD]/20 flex flex-col lg:flex-row items-center justify-between gap-10 shadow-3xl">
          <div className="max-w-xl text-center lg:text-left">
-            <h2 className="text-4xl font-black text-white uppercase italic leading-tight mb-4 tracking-tighter">PRECISA DE <span className="text-[#00D2AD]">SUPORTE</span> TÉCNICO?</h2>
-            <p className="text-gray-400 font-medium">Nossa equipe de especialistas está pronta para ajudar você com qualquer dúvida ou ativação via WhatsApp.</p>
+            <h2 className="text-4xl font-black text-white uppercase italic leading-tight mb-4 tracking-tighter">AJUDA COM <span className="text-[#00D2AD]">ACESSOS</span> E LOGINS?</h2>
+            <p className="text-gray-400 font-medium">Nosso suporte é exclusivo para resolver pendências de contas, saldos e problemas de login. <strong>Não oferecemos suporte de como desbloquear os aparelhos.</strong></p>
          </div>
          <div className="flex flex-col sm:flex-row gap-4">
             <a href="https://wa.me/5511985029684?text=Vim%20pelo%20site%20Centralgsm" className="whitespace-nowrap bg-[#25D366] hover:bg-[#1fb356] text-white px-8 py-5 rounded-[30px] font-black uppercase text-base shadow-[0_15px_35px_rgba(37,211,102,0.3)] hover:-translate-y-2 transition-all flex items-center justify-center gap-2">
