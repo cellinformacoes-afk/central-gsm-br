@@ -9,18 +9,14 @@ export default function AdminFaturamentoPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all_time'); // 'today', '7days', 'this_month', 'all_time', 'custom'
   const [totalPix, setTotalPix] = useState(0);
   const [totalCard, setTotalCard] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
     checkAdmin();
-    // Default to the first day of the store (e.g., year 2020) so it's "desde o começo"
-    const firstDay = new Date(2020, 0, 1);
-    const now = new Date();
-    
-    setStartDate(firstDay.toISOString().split('T')[0]);
-    setEndDate(now.toISOString().split('T')[0]);
+    applyQuickFilter('all_time');
   }, []);
 
   useEffect(() => {
@@ -46,6 +42,25 @@ export default function AdminFaturamentoPage() {
       router.push('/');
     }
   }
+
+  const applyQuickFilter = (filter: string) => {
+    setActiveFilter(filter);
+    const now = new Date();
+    let start = new Date();
+    
+    if (filter === 'today') {
+      start = new Date();
+    } else if (filter === '7days') {
+      start.setDate(now.getDate() - 7);
+    } else if (filter === 'this_month') {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (filter === 'all_time') {
+      start = new Date(2020, 0, 1);
+    }
+    
+    setStartDate(start.toISOString().split('T')[0]);
+    setEndDate(now.toISOString().split('T')[0]);
+  };
 
   async function fetchData() {
     setLoading(true);
@@ -111,31 +126,41 @@ export default function AdminFaturamentoPage() {
         </div>
         
         {/* Filtro de Datas */}
-        <div className="flex flex-col md:flex-row gap-4 items-center bg-[#0f172a] p-3 rounded-2xl border border-[#334155]">
-            <div className="flex flex-col">
-              <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 ml-1">De:</label>
-              <input 
-                type="date" 
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="bg-[#1e293b] text-white border border-[#334155] rounded-xl px-4 py-2 text-sm outline-none focus:border-[#00D2AD]"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 ml-1">Até:</label>
-              <input 
-                type="date" 
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="bg-[#1e293b] text-white border border-[#334155] rounded-xl px-4 py-2 text-sm outline-none focus:border-[#00D2AD]"
-              />
-            </div>
-            <button 
-              onClick={fetchData}
-              className="bg-[#00D2AD]/10 hover:bg-[#00D2AD] text-[#00D2AD] hover:text-[#0f172a] mt-4 md:mt-5 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-[#00D2AD]/30"
-            >
-              Filtrar
-            </button>
+        <div className="flex flex-col items-end gap-3">
+          {/* Botões Rápidos */}
+          <div className="flex bg-[#0f172a] p-1 rounded-xl border border-[#334155]">
+            <button onClick={() => applyQuickFilter('today')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${activeFilter === 'today' ? 'bg-[#334155] text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>Hoje</button>
+            <button onClick={() => applyQuickFilter('7days')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${activeFilter === '7days' ? 'bg-[#334155] text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>7 Dias</button>
+            <button onClick={() => applyQuickFilter('this_month')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${activeFilter === 'this_month' ? 'bg-[#334155] text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>Mês Atual</button>
+            <button onClick={() => applyQuickFilter('all_time')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${activeFilter === 'all_time' ? 'bg-[#00D2AD] text-[#0f172a] shadow-lg' : 'text-gray-500 hover:text-[#00D2AD]'}`}>Tudo</button>
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-4 items-center bg-[#0f172a] p-3 rounded-2xl border border-[#334155]">
+              <div className="flex flex-col">
+                <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 ml-1">De:</label>
+                <input 
+                  type="date" 
+                  value={startDate}
+                  onChange={(e) => { setStartDate(e.target.value); setActiveFilter('custom'); }}
+                  className="bg-[#1e293b] text-white border border-[#334155] rounded-xl px-4 py-2 text-sm outline-none focus:border-[#00D2AD]"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 ml-1">Até:</label>
+                <input 
+                  type="date" 
+                  value={endDate}
+                  onChange={(e) => { setEndDate(e.target.value); setActiveFilter('custom'); }}
+                  className="bg-[#1e293b] text-white border border-[#334155] rounded-xl px-4 py-2 text-sm outline-none focus:border-[#00D2AD]"
+                />
+              </div>
+              <button 
+                onClick={fetchData}
+                className="bg-[#00D2AD]/10 hover:bg-[#00D2AD] text-[#00D2AD] hover:text-[#0f172a] mt-4 md:mt-5 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-[#00D2AD]/30"
+              >
+                Filtrar
+              </button>
+          </div>
         </div>
       </div>
 
