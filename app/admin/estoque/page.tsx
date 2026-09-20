@@ -423,7 +423,8 @@ export default function AdminEstoquePage() {
                   </div>
                </div>
             </div>
-          ))
+          );
+        })
         ) : (
           <div className="text-center py-20 bg-[#1e293b]/50 rounded-3xl border-2 border-dashed border-[#334155]">
              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Estoque vazio. Adicione contas para começar.</p>
