@@ -18,11 +18,13 @@ export default function AdminEstoquePage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({ service_id: '', email: '', password: '', duration_hours: '', price: '' });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [lastCopiedAccountId, setLastCopiedAccountId] = useState<string | null>(null);
 
-  const copyToClipboard = (text: string, key: string) => {
+  const copyToClipboard = (text: string, key: string, accountId?: string) => {
     if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
+    if (accountId) setLastCopiedAccountId(accountId);
     setTimeout(() => {
       setCopiedKey(prev => prev === key ? null : prev);
     }, 2000);
@@ -83,6 +85,7 @@ export default function AdminEstoquePage() {
     } else {
       setIsModalOpen(false);
       setNewPass('');
+      setLastCopiedAccountId(null);
       fetchData();
     }
   };
@@ -296,52 +299,79 @@ export default function AdminEstoquePage() {
         ) : accounts.filter(acc => filter === 'all' || acc.status === filter).length > 0 ? (
           accounts
             .filter(acc => filter === 'all' || acc.status === filter)
-            .map(acc => (
-            <div key={acc.id} className={`bg-[#1e293b] p-6 rounded-3xl border ${acc.status === 'pending_reset' ? 'border-red-500/80 shadow-[0_0_30px_rgba(239,68,68,0.2)] bg-red-900/10' : 'border-[#334155] hover:border-[#00D2AD]/30'} flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-2xl hover:-translate-y-1 transition-all group`}>
-               <div className="flex items-center gap-6">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${acc.status === 'pending_reset' ? 'bg-red-500/10 text-red-500' : acc.status === 'rented' ? 'bg-blue-500/10 text-blue-500' : 'bg-[#00D2AD]/10 text-[#00D2AD]'}`}>
-                     {acc.status === 'pending_reset' ? '⚠️' : acc.status === 'rented' ? '🔑' : '✅'}
-                  </div>
-                  <div>
-                     <h3 className="text-white font-black uppercase italic tracking-tighter text-sm md:text-base">{acc.services?.title}</h3>
-                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-gray-400 text-xs font-mono">{acc.credentials?.email}</span>
-                        <button 
-                           type="button"
-                           onClick={() => copyToClipboard(acc.credentials?.email, `${acc.id}-email`)}
-                           title="Copiar Email/Login"
-                           className="p-1 rounded bg-[#0f172a] hover:bg-[#334155] border border-[#334155] text-gray-400 hover:text-[#00D2AD] transition-all flex items-center gap-1 text-[10px]"
-                        >
-                           {copiedKey === `${acc.id}-email` ? (
-                              <span className="text-[#00D2AD] flex items-center gap-1 font-bold text-[10px]">
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                 Copiado!
-                              </span>
-                           ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                           )}
-                        </button>
-                     </div>
-                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[#00D2AD] text-[11px] font-mono font-bold">Senha: {acc.credentials?.password}</span>
-                        <button 
-                           type="button"
-                           onClick={() => copyToClipboard(acc.credentials?.password, `${acc.id}-pass`)}
-                           title="Copiar Senha"
-                           className="p-1 rounded bg-[#0f172a] hover:bg-[#334155] border border-[#334155] text-gray-400 hover:text-[#00D2AD] transition-all flex items-center gap-1 text-[10px]"
-                        >
-                           {copiedKey === `${acc.id}-pass` ? (
-                              <span className="text-[#00D2AD] flex items-center gap-1 font-bold text-[10px]">
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                 Copiada!
-                              </span>
-                           ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                           )}
-                        </button>
-                     </div>
-                  </div>
-               </div>
+            .map(acc => {
+              const isSelected = acc.id === lastCopiedAccountId;
+              return (
+              <div 
+                key={acc.id} 
+                className={`p-6 rounded-3xl border transition-all group flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-2xl hover:-translate-y-1 ${
+                  isSelected 
+                    ? 'border-[#00D2AD] ring-2 ring-[#00D2AD] shadow-[0_0_35px_rgba(0,210,173,0.35)] bg-gradient-to-r from-[#1e293b] via-[#1e293b] to-[#00D2AD]/20'
+                    : acc.status === 'pending_reset' 
+                      ? 'border-red-500/80 shadow-[0_0_30px_rgba(239,68,68,0.2)] bg-red-900/10' 
+                      : 'border-[#334155] bg-[#1e293b] hover:border-[#00D2AD]/30'
+                }`}
+              >
+                 <div className="flex items-center gap-6">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${
+                      isSelected ? 'bg-[#00D2AD] text-[#0f172a] shadow-[0_0_15px_rgba(0,210,173,0.5)] scale-110' :
+                      acc.status === 'pending_reset' ? 'bg-red-500/10 text-red-500' : 
+                      acc.status === 'rented' ? 'bg-blue-500/10 text-blue-500' : 
+                      'bg-[#00D2AD]/10 text-[#00D2AD]'
+                    }`}>
+                       {isSelected ? '🎯' : acc.status === 'pending_reset' ? '⚠️' : acc.status === 'rented' ? '🔑' : '✅'}
+                    </div>
+                    <div>
+                       <div className="flex items-center gap-3">
+                          <h3 className="text-white font-black uppercase italic tracking-tighter text-sm md:text-base">{acc.services?.title}</h3>
+                          {isSelected && (
+                             <span className="px-2.5 py-0.5 rounded-full bg-[#00D2AD] text-[#0f172a] font-black text-[9px] uppercase tracking-wider animate-pulse flex items-center gap-1 shadow-[0_0_10px_rgba(0,210,173,0.5)]">
+                                🎯 COPIADO / EM ANDAMENTO
+                             </span>
+                          )}
+                       </div>
+                       <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-xs font-mono px-1.5 py-0.5 rounded transition-all ${isSelected ? 'bg-[#00D2AD]/20 text-white font-bold border border-[#00D2AD]/40' : 'text-gray-400'}`}>
+                             {acc.credentials?.email}
+                          </span>
+                          <button 
+                             type="button"
+                             onClick={() => copyToClipboard(acc.credentials?.email, `${acc.id}-email`, acc.id)}
+                             title="Copiar Email/Login"
+                             className="p-1 rounded bg-[#0f172a] hover:bg-[#334155] border border-[#334155] text-gray-400 hover:text-[#00D2AD] transition-all flex items-center gap-1 text-[10px]"
+                          >
+                             {copiedKey === `${acc.id}-email` ? (
+                                <span className="text-[#00D2AD] flex items-center gap-1 font-bold text-[10px]">
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                   Copiado!
+                                </span>
+                             ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                             )}
+                          </button>
+                       </div>
+                       <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded transition-all ${isSelected ? 'bg-[#00D2AD]/20 text-[#00D2AD] border border-[#00D2AD]/40 font-black' : 'text-[#00D2AD]'}`}>
+                             Senha: {acc.credentials?.password}
+                          </span>
+                          <button 
+                             type="button"
+                             onClick={() => copyToClipboard(acc.credentials?.password, `${acc.id}-pass`, acc.id)}
+                             title="Copiar Senha"
+                             className="p-1 rounded bg-[#0f172a] hover:bg-[#334155] border border-[#334155] text-gray-400 hover:text-[#00D2AD] transition-all flex items-center gap-1 text-[10px]"
+                          >
+                             {copiedKey === `${acc.id}-pass` ? (
+                                <span className="text-[#00D2AD] flex items-center gap-1 font-bold text-[10px]">
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                   Copiada!
+                                </span>
+                             ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                             )}
+                          </button>
+                       </div>
+                    </div>
+                 </div>
 
                <div className="flex items-center gap-4">
                   <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
