@@ -17,6 +17,16 @@ export default function AdminEstoquePage() {
   // New Account Form
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({ service_id: '', email: '', password: '', duration_hours: '', price: '' });
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, key: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => {
+      setCopiedKey(prev => prev === key ? null : prev);
+    }, 2000);
+  };
 
   const router = useRouter();
 
@@ -56,32 +66,6 @@ export default function AdminEstoquePage() {
     if (!error) setAccounts(accData || []);
     setLoading(false);
   }
-  
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return null;
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return dateStr; // Se não for data válida, mostra o texto original
-      return date.toLocaleDateString('pt-BR');
-    } catch (e) {
-      return dateStr;
-    }
-  };
-
-  const getExpiryStatus = (dateStr: string) => {
-    if (!dateStr) return null;
-    try {
-      const expiry = new Date(dateStr);
-      const now = new Date();
-      const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (diffDays < 0) return { label: 'EXPIRADA', color: 'text-red-500' };
-      if (diffDays <= 7) return { label: `VENCE EM ${diffDays} DIAS`, color: 'text-orange-500' };
-      return { label: `VENCE EM ${diffDays} DIAS`, color: 'text-gray-400' };
-    } catch (e) {
-      return null;
-    }
-  };
 
   const handleUpdatePassword = async () => {
     if (!newPass || !editingAccount) return;
@@ -319,25 +303,44 @@ export default function AdminEstoquePage() {
                      {acc.status === 'pending_reset' ? '⚠️' : acc.status === 'rented' ? '🔑' : '✅'}
                   </div>
                   <div>
-                     <h3 className="text-white font-black uppercase italic tracking-tighter">{acc.services?.title}</h3>
-                     <p className="text-gray-500 text-xs font-mono">{acc.credentials.email}</p>
-                     <p className="text-[#00D2AD] text-[10px] font-mono mt-0.5 font-bold">Senha: {acc.credentials.password}</p>
-                  </div>
-               </div>
-
-               {/* Info de Licença */}
-               <div className="flex-1 border-l border-[#334155] pl-6 hidden md:block">
-                  <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Licença Original</p>
-                  {acc.license_expires_at ? (
-                     <div className="mt-1">
-                        <p className="text-white font-black text-xs">{formatDate(acc.license_expires_at)}</p>
-                        <p className={`text-[9px] font-bold uppercase mt-0.5 ${getExpiryStatus(acc.license_expires_at)?.color}`}>
-                           {getExpiryStatus(acc.license_expires_at)?.label}
-                        </p>
+                     <h3 className="text-white font-black uppercase italic tracking-tighter text-sm md:text-base">{acc.services?.title}</h3>
+                     <div className="flex items-center gap-2 mt-1">
+                        <span className="text-gray-400 text-xs font-mono">{acc.credentials?.email}</span>
+                        <button 
+                           type="button"
+                           onClick={() => copyToClipboard(acc.credentials?.email, `${acc.id}-email`)}
+                           title="Copiar Email/Login"
+                           className="p-1 rounded bg-[#0f172a] hover:bg-[#334155] border border-[#334155] text-gray-400 hover:text-[#00D2AD] transition-all flex items-center gap-1 text-[10px]"
+                        >
+                           {copiedKey === `${acc.id}-email` ? (
+                              <span className="text-[#00D2AD] flex items-center gap-1 font-bold text-[10px]">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                 Copiado!
+                              </span>
+                           ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                           )}
+                        </button>
                      </div>
-                  ) : (
-                     <p className="text-gray-600 font-bold text-[10px] italic mt-1 uppercase">Não identificada</p>
-                  )}
+                     <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[#00D2AD] text-[11px] font-mono font-bold">Senha: {acc.credentials?.password}</span>
+                        <button 
+                           type="button"
+                           onClick={() => copyToClipboard(acc.credentials?.password, `${acc.id}-pass`)}
+                           title="Copiar Senha"
+                           className="p-1 rounded bg-[#0f172a] hover:bg-[#334155] border border-[#334155] text-gray-400 hover:text-[#00D2AD] transition-all flex items-center gap-1 text-[10px]"
+                        >
+                           {copiedKey === `${acc.id}-pass` ? (
+                              <span className="text-[#00D2AD] flex items-center gap-1 font-bold text-[10px]">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                 Copiada!
+                              </span>
+                           ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                           )}
+                        </button>
+                     </div>
+                  </div>
                </div>
 
                <div className="flex items-center gap-4">
