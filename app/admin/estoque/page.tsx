@@ -304,39 +304,58 @@ export default function AdminEstoquePage() {
               return (
               <div 
                 key={acc.id} 
-                className={`p-6 rounded-3xl border transition-all group flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-2xl hover:-translate-y-1 ${
+                onClick={() => setLastCopiedAccountId(acc.id)}
+                style={isSelected ? {
+                  borderColor: '#00D2AD',
+                  borderWidth: '2px',
+                  boxShadow: '0 0 35px rgba(0, 210, 173, 0.45)',
+                  backgroundColor: '#16233b'
+                } : undefined}
+                className={`p-6 rounded-3xl border transition-all group flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-2xl hover:-translate-y-1 cursor-pointer ${
                   isSelected 
-                    ? 'border-[#00D2AD] ring-2 ring-[#00D2AD] shadow-[0_0_35px_rgba(0,210,173,0.35)] bg-gradient-to-r from-[#1e293b] via-[#1e293b] to-[#00D2AD]/20'
+                    ? 'border-[#00D2AD]'
                     : acc.status === 'pending_reset' 
                       ? 'border-red-500/80 shadow-[0_0_30px_rgba(239,68,68,0.2)] bg-red-900/10' 
                       : 'border-[#334155] bg-[#1e293b] hover:border-[#00D2AD]/30'
                 }`}
               >
                  <div className="flex items-center gap-6">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${
-                      isSelected ? 'bg-[#00D2AD] text-[#0f172a] shadow-[0_0_15px_rgba(0,210,173,0.5)] scale-110' :
-                      acc.status === 'pending_reset' ? 'bg-red-500/10 text-red-500' : 
-                      acc.status === 'rented' ? 'bg-blue-500/10 text-blue-500' : 
-                      'bg-[#00D2AD]/10 text-[#00D2AD]'
-                    }`}>
+                    <div 
+                      style={isSelected ? { backgroundColor: '#00D2AD', color: '#0f172a' } : undefined}
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all ${
+                        isSelected ? 'shadow-[0_0_20px_rgba(0,210,173,0.6)] scale-110 font-bold' :
+                        acc.status === 'pending_reset' ? 'bg-red-500/10 text-red-500' : 
+                        acc.status === 'rented' ? 'bg-blue-500/10 text-blue-500' : 
+                        'bg-[#00D2AD]/10 text-[#00D2AD]'
+                      }`}
+                    >
                        {isSelected ? '🎯' : acc.status === 'pending_reset' ? '⚠️' : acc.status === 'rented' ? '🔑' : '✅'}
                     </div>
                     <div>
                        <div className="flex items-center gap-3">
                           <h3 className="text-white font-black uppercase italic tracking-tighter text-sm md:text-base">{acc.services?.title}</h3>
                           {isSelected && (
-                             <span className="px-2.5 py-0.5 rounded-full bg-[#00D2AD] text-[#0f172a] font-black text-[9px] uppercase tracking-wider animate-pulse flex items-center gap-1 shadow-[0_0_10px_rgba(0,210,173,0.5)]">
-                                🎯 COPIADO / EM ANDAMENTO
+                             <span 
+                                style={{ backgroundColor: '#00D2AD', color: '#0f172a' }}
+                                className="px-2.5 py-0.5 rounded-full font-black text-[9px] uppercase tracking-wider animate-pulse flex items-center gap-1 shadow-[0_0_12px_rgba(0,210,173,0.6)]"
+                             >
+                                🎯 CONTA SELECIONADA / EM ANDAMENTO
                              </span>
                           )}
                        </div>
                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-xs font-mono px-1.5 py-0.5 rounded transition-all ${isSelected ? 'bg-[#00D2AD]/20 text-white font-bold border border-[#00D2AD]/40' : 'text-gray-400'}`}>
+                          <span 
+                             style={isSelected ? { backgroundColor: 'rgba(0, 210, 173, 0.25)', color: '#ffffff', borderColor: '#00D2AD' } : undefined}
+                             className={`text-xs font-mono px-2 py-0.5 rounded transition-all border ${isSelected ? 'border-[#00D2AD] font-bold' : 'border-transparent text-gray-400'}`}
+                          >
                              {acc.credentials?.email}
                           </span>
                           <button 
                              type="button"
-                             onClick={() => copyToClipboard(acc.credentials?.email, `${acc.id}-email`, acc.id)}
+                             onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(acc.credentials?.email, `${acc.id}-email`, acc.id);
+                             }}
                              title="Copiar Email/Login"
                              className="p-1 rounded bg-[#0f172a] hover:bg-[#334155] border border-[#334155] text-gray-400 hover:text-[#00D2AD] transition-all flex items-center gap-1 text-[10px]"
                           >
@@ -351,12 +370,18 @@ export default function AdminEstoquePage() {
                           </button>
                        </div>
                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded transition-all ${isSelected ? 'bg-[#00D2AD]/20 text-[#00D2AD] border border-[#00D2AD]/40 font-black' : 'text-[#00D2AD]'}`}>
+                          <span 
+                             style={isSelected ? { backgroundColor: 'rgba(0, 210, 173, 0.25)', color: '#00D2AD', borderColor: '#00D2AD' } : undefined}
+                             className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded transition-all border ${isSelected ? 'border-[#00D2AD] font-black' : 'border-transparent text-[#00D2AD]'}`}
+                          >
                              Senha: {acc.credentials?.password}
                           </span>
                           <button 
                              type="button"
-                             onClick={() => copyToClipboard(acc.credentials?.password, `${acc.id}-pass`, acc.id)}
+                             onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(acc.credentials?.password, `${acc.id}-pass`, acc.id);
+                             }}
                              title="Copiar Senha"
                              className="p-1 rounded bg-[#0f172a] hover:bg-[#334155] border border-[#334155] text-gray-400 hover:text-[#00D2AD] transition-all flex items-center gap-1 text-[10px]"
                           >
