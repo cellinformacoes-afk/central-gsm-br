@@ -15,7 +15,7 @@ Sempre rode um comando de cópia (ou escreva diretamente) para sincronizar o arq
 
 ```powershell
 $URL = "https://cvzhczgvfvflmcwmmvlh.supabase.co"
-$KEY = "sb_secret_WqYuGx7-UvQEazYdbx0LWA_WTK_iMcP"
+$KEY = "<SERVICE_KEY>"  # Chave disponível no .env.local (SUPABASE_SERVICE_ROLE_KEY)
 curl.exe -s "$URL/rest/v1/profiles?select=id,email,username,cpf&email=eq.usuario@email.com" `
   -H "apikey: $KEY" `
   -H "Authorization: Bearer $KEY" `
@@ -26,4 +26,4 @@ curl.exe -s "$URL/rest/v1/profiles?select=id,email,username,cpf&email=eq.usuario
 
 Credenciais do Supabase:
 - URL: `https://cvzhczgvfvflmcwmmvlh.supabase.co`
-- Service Key: `sb_secret_WqYuGx7-UvQEazYdbx0LWA_WTK_iMcP`
+- Service Key: disponível no arquivo `.env.local` (variável `SUPABASE_SERVICE_ROLE_KEY`)
