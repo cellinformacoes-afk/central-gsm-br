@@ -15,6 +15,15 @@ dist
 
 # Automation sessions
 scripts/automation/sessions/
+
+# Arquivos sensíveis e temporários
 *.png
 *.pfx
+*.p12
 script.js
+tmp_*.js
+tmp_*.ts
+*_dump*.json
+users_dump*.json
+duplicates_*.json
+migrate_data.*

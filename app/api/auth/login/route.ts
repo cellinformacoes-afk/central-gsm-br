@@ -70,8 +70,11 @@ export async function POST(request: NextRequest) {
       '082770a6-5b58-42f9-9072-ba74496acfc6', // Carlos Boccia
       '60a17e43-8d31-4c7d-ac32-d688059813c2', // Marcos Antonio
       '99979fb5-91d1-4aa9-9842-98f291fd564c', // Diego Daniel (diegodanielamericodesouza2002@gmail.com)
-      'be247f8a-0f23-4d4a-84b8-20c4ae95471a'  // Elite Importados (elitecell2027@gmail.com)
+      'be247f8a-0f23-4d4a-84b8-20c4ae95471a', // Elite Importados (elitecell2027@gmail.com)
+      '523eddd4-ec49-45cd-b3c2-d5ba3b1718e9', // Paulo Dir dos Santos Junior (ps2543569@gmail.com) - MED indevido 22/09/2026
+      'a3591f78-6f27-4233-b783-349fb8318223', // Renato Abib Dutra Miguel (renatoadmiguel@yahoo.com.br) - MED indevido 22/09/2026
     ];
+
     
     if (data.user && blockedUsers.includes(data.user.id)) {
       return NextResponse.json({ error: 'Sua conta foi bloqueada por violação dos termos (Contestação Indevida).' }, { status: 403 });
