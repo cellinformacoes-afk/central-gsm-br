@@ -9,8 +9,8 @@ COPY package.json ./
 # Instala dependencias Node
 RUN npm install
 
-# Instala o browser Chromium do Playwright
-RUN npx playwright install chromium
+# Instala Chromium + Firefox (Firefox tem TLS fingerprint diferente - bypass Cloudflare)
+RUN npx playwright install chromium firefox
 
 # Copia o restante do codigo
 COPY . .

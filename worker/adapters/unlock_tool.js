@@ -1,15 +1,17 @@
 ﻿const net  = require('net');
 const http = require('http');
-const { chromium } = require('playwright-extra');
+const { firefox } = require('playwright-extra');
 const stealth = require('puppeteer-extra-plugin-stealth')();
 const { log } = require('../lib/logger');
 
-chromium.use(stealth);
+firefox.use(stealth);
 
 const LOGIN_URL  = 'https://unlocktool.net/post-in/';
 const CHANGE_URL = 'https://unlocktool.net/password-change/';
 const TIMEOUT_MS = 90000;
 
+// Proxy local HTTP: Playwright se conecta sem auth, proxy repassa com auth pro WebShare
+// Necessario porque Firefox nao suporta SOCKS5 autenticado via playwright-extra
 function startLocalProxy(upstreamHost, upstreamPort, username, password) {
   return new Promise((resolve, reject) => {
     const server = http.createServer();
@@ -36,20 +38,21 @@ function startLocalProxy(upstreamHost, upstreamPort, username, password) {
         const end = buffer.indexOf('\r\n\r\n');
         if (end >= 0) {
           const header = buffer.slice(0, end).toString();
+          const firstLine = header.split('\r\n')[0];
           const statusMatch = header.match(/HTTP\/1\.\d (\d+)/);
           const status = statusMatch ? parseInt(statusMatch[1]) : 0;
 
+          log('ROBO', `Proxy local → WebShare resp: ${firstLine} | status=${status}`);
+
           if (status === 200) {
             tunnelOk = true;
-            log('ROBO', 'Proxy local → tunel estabelecido com WebShare! SSL handshake iniciando...');
+            log('ROBO', 'Proxy local → tunel OK! Repassando para Firefox...');
             clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
             const rest = buffer.slice(end + 4);
             if (rest.length > 0) clientSocket.write(rest);
             upstream.on('data', (d) => clientSocket.write(d));
           } else {
-            // WebShare negou (407 auth, 403 blocked, etc) - repassa o erro
-            const firstLine = header.split('\r\n')[0];
-            log('ERRO', `Proxy local → WebShare retornou: ${firstLine}`);
+            log('ERRO', `Proxy local → WebShare negou: ${firstLine}`);
             clientSocket.write(`HTTP/1.1 502 Bad Gateway\r\n\r\n`);
             clientSocket.end();
             upstream.end();
@@ -100,23 +103,16 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
 
   let localProxy = null;
 
+  // Firefox: headless=true mas TLS fingerprint diferente do Chromium
   const launchOptions = {
     headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-blink-features=AutomationControlled',
-      '--disable-http2',
-      '--disable-quic',
-    ]
   };
 
   if (proxyUser && proxyPass) {
     try {
       localProxy = await startLocalProxy(proxyHost, proxyPort, proxyUser, proxyPass);
       launchOptions.proxy = { server: `http://127.0.0.1:${localProxy.port}` };
-      log('ROBO', `Unlock Tool → playwright usa proxy local (sem auth) | user: ${proxyUser}`);
+      log('ROBO', `Unlock Tool → Firefox usa proxy local (sem auth) | user: ${proxyUser}`);
     } catch (e) {
       log('AVISO', `Unlock Tool → proxy local falhou: ${e.message}`);
     }
@@ -124,9 +120,9 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
     log('AVISO', 'Unlock Tool → sem proxy configurado');
   }
 
-  const browser = await chromium.launch(launchOptions);
+  const browser = await firefox.launch(launchOptions);
   const context = await browser.newContext({
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0'
   });
 
   const page = await context.newPage();
@@ -140,7 +136,7 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   });
 
   try {
-    log('ROBO', 'Unlock Tool → acessando pagina de login (aguardando Cloudflare)...');
+    log('ROBO', 'Unlock Tool → [Firefox] acessando pagina de login (aguardando Cloudflare)...');
     await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await page.waitForTimeout(8000);
 
@@ -230,4 +226,3 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
 }
 
 module.exports = { resetarSenha };
-
