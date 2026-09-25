@@ -41,6 +41,7 @@ function startLocalProxy(upstreamHost, upstreamPort, username, password) {
 
           if (status === 200) {
             tunnelOk = true;
+            log('ROBO', 'Proxy local → tunel estabelecido com WebShare! SSL handshake iniciando...');
             clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
             const rest = buffer.slice(end + 4);
             if (rest.length > 0) clientSocket.write(rest);
@@ -229,3 +230,4 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
 }
 
 module.exports = { resetarSenha };
+
