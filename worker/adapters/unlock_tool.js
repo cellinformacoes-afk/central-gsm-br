@@ -57,17 +57,13 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   };
 
   if (proxyServer) {
-    // Embute credenciais na URL do proxy: http://user:pass@host:port
-    let proxyUrl = proxyServer;
-    if (proxyUsername && !proxyServer.includes('@')) {
-      proxyUrl = proxyServer.replace('http://', `http://${proxyUsername}:${proxyPassword}@`);
-    }
+    // Playwright docs: credenciais APENAS no username/password, NÃO na URL
     launchOptions.proxy = {
-      server: proxyUrl,
+      server: proxyServer,  // ex: http://p.webshare.io:80 (sem credenciais)
       username: proxyUsername || undefined,
       password: proxyPassword || undefined
     };
-    log('ROBO', `Unlock Tool → usando proxy (credenciais embutidas)`);
+    log('ROBO', `Unlock Tool → proxy: ${proxyServer} | user: ${proxyUsername}`);
   } else {
     log('AVISO', 'Unlock Tool → sem proxy configurado (pode falhar no Cloudflare)');
   }
