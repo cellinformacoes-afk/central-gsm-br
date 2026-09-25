@@ -41,7 +41,12 @@ async function aguardarFormLogin(page) {
 async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   log('ROBO', `Unlock Tool → iniciando para usuário: ${username}`);
 
-  const browser = await chromium.launch({
+  // Proxy residencial para passar Cloudflare (configurar via variáveis de ambiente)
+  const proxyServer   = process.env.PROXY_SERVER;   // ex: http://12.34.56.78:8080
+  const proxyUsername = process.env.PROXY_USER;
+  const proxyPassword = process.env.PROXY_PASS;
+
+  const launchOptions = {
     headless: true,
     args: [
       '--no-sandbox',
@@ -49,13 +54,38 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
       '--disable-dev-shm-usage',
       '--disable-blink-features=AutomationControlled'
     ]
-  });
+  };
 
-  const context = await browser.newContext({
+  if (proxyServer) {
+    launchOptions.proxy = { server: proxyServer };
+    log('ROBO', `Unlock Tool → usando proxy: ${proxyServer}`);
+  } else {
+    log('AVISO', 'Unlock Tool → sem proxy configurado (pode falhar no Cloudflare)');
+  }
+
+  const browser = await chromium.launch(launchOptions);
+
+  const contextOptions = {
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+  };
+
+  if (proxyServer && proxyUsername) {
+    contextOptions.httpCredentials = { username: proxyUsername, password: proxyPassword };
+  }
+
+  const context = await browser.newContext(contextOptions);
+
+  // Bloqueia imagens, fontes e CSS para economizar ~70% de banda do proxy
+  const page = await context.newPage();
+  await page.route('**/*', (route) => {
+    const type = route.request().resourceType();
+    if (['image', 'font', 'stylesheet', 'media'].includes(type)) {
+      route.abort();
+    } else {
+      route.continue();
+    }
   });
 
-  const page = await context.newPage();
 
   try {
     // ── PASSO 1: Login ──────────────────────────────────────────
