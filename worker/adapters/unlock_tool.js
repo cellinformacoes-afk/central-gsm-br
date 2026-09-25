@@ -1,11 +1,4 @@
-﻿/**
- * Adaptador: Unlock Tool (unlocktool.net)
- *
- * Proxy: Proxy local Node.js (sem auth) que encaminha para WebShare com auth.
- * Playwright conecta em http://127.0.0.1:PORT sem precisar de credenciais.
- */
-
-const net  = require('net');
+﻿const net  = require('net');
 const http = require('http');
 const { chromium } = require('playwright-extra');
 const stealth = require('puppeteer-extra-plugin-stealth')();
@@ -42,16 +35,29 @@ function startLocalProxy(upstreamHost, upstreamPort, username, password) {
         buffer = Buffer.concat([buffer, chunk]);
         const end = buffer.indexOf('\r\n\r\n');
         if (end >= 0) {
-          tunnelOk = true;
-          clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-          const rest = buffer.slice(end + 4);
-          if (rest.length > 0) clientSocket.write(rest);
-          upstream.on('data', (d) => clientSocket.write(d));
+          const header = buffer.slice(0, end).toString();
+          const statusMatch = header.match(/HTTP\/1\.\d (\d+)/);
+          const status = statusMatch ? parseInt(statusMatch[1]) : 0;
+
+          if (status === 200) {
+            tunnelOk = true;
+            clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+            const rest = buffer.slice(end + 4);
+            if (rest.length > 0) clientSocket.write(rest);
+            upstream.on('data', (d) => clientSocket.write(d));
+          } else {
+            // WebShare negou (407 auth, 403 blocked, etc) - repassa o erro
+            const firstLine = header.split('\r\n')[0];
+            log('ERRO', `Proxy local → WebShare retornou: ${firstLine}`);
+            clientSocket.write(`HTTP/1.1 502 Bad Gateway\r\n\r\n`);
+            clientSocket.end();
+            upstream.end();
+          }
         }
       });
 
       clientSocket.on('data', (d) => { if (tunnelOk) upstream.write(d); });
-      upstream.on('error',     () => clientSocket.destroy());
+      upstream.on('error',     () => { clientSocket.write('HTTP/1.1 502 Bad Gateway\r\n\r\n'); clientSocket.destroy(); });
       clientSocket.on('error', () => upstream.destroy());
       upstream.on('end',       () => clientSocket.end());
       clientSocket.on('end',   () => upstream.end());
@@ -109,7 +115,7 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
     try {
       localProxy = await startLocalProxy(proxyHost, proxyPort, proxyUser, proxyPass);
       launchOptions.proxy = { server: `http://127.0.0.1:${localProxy.port}` };
-      log('ROBO', `Unlock Tool → playwright usa proxy local (sem auth)`);
+      log('ROBO', `Unlock Tool → playwright usa proxy local (sem auth) | user: ${proxyUser}`);
     } catch (e) {
       log('AVISO', `Unlock Tool → proxy local falhou: ${e.message}`);
     }
