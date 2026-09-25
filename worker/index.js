@@ -157,6 +157,32 @@ async function processarTarefas() {
 
     await marcarRodando(task.id);
 
+    // ⚠️ SEGURANÇA: Verifica se a conta está pending_reset antes de mexer
+    if (task.account_id) {
+      const { data: conta } = await supabase
+        .from('service_accounts')
+        .select('status')
+        .eq('id', task.account_id)
+        .single();
+
+      if (!conta || conta.status === 'rented') {
+        const motivo = !conta ? 'Conta não encontrada' : 'Conta ainda ALUGADA para cliente';
+        log('AVISO', `⛔ ${motivo} — ${task.payload?.email}. Pulando sem resetar!`);
+        await supabase.from('automation_tasks')
+          .update({ status: 'skipped', error_message: motivo, updated_at: new Date().toISOString() })
+          .eq('id', task.id);
+        continue;
+      }
+
+      if (conta.status !== 'pending_reset') {
+        log('AVISO', `Conta ${task.payload?.email} status="${conta.status}" — não precisa reset. Pulando...`);
+        await supabase.from('automation_tasks')
+          .update({ status: 'skipped', error_message: `Status: ${conta.status}`, updated_at: new Date().toISOString() })
+          .eq('id', task.id);
+        continue;
+      }
+    }
+
     const senhaNova = task.payload?.new_password || gerarSenha();
     const emailConta = task.payload?.email;
     const senhaAntiga = task.payload?.old_password;
