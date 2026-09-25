@@ -10,8 +10,7 @@ const LOGIN_URL  = 'https://unlocktool.net/post-in/';
 const CHANGE_URL = 'https://unlocktool.net/password-change/';
 const TIMEOUT_MS = 90000;
 
-// Proxy local HTTP: Playwright se conecta sem auth, proxy repassa com auth pro WebShare
-// Necessario porque Firefox nao suporta SOCKS5 autenticado via playwright-extra
+// Proxy local limpo: usa removeListener corretamente para evitar dados duplicados
 function startLocalProxy(upstreamHost, upstreamPort, username, password) {
   return new Promise((resolve, reject) => {
     const server = http.createServer();
@@ -19,7 +18,11 @@ function startLocalProxy(upstreamHost, upstreamPort, username, password) {
     server.on('connect', (req, clientSocket) => {
       const authHeader = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
 
-      const upstream = net.connect(upstreamPort, upstreamHost, () => {
+      const upstream = net.connect(upstreamPort, upstreamHost);
+      upstream.setNoDelay(true);
+      clientSocket.setNoDelay(true);
+
+      upstream.on('connect', () => {
         upstream.write(
           `CONNECT ${req.url} HTTP/1.1\r\n` +
           `Host: ${req.url}\r\n` +
@@ -29,50 +32,62 @@ function startLocalProxy(upstreamHost, upstreamPort, username, password) {
         );
       });
 
-      let buffer = Buffer.alloc(0);
-      let tunnelOk = false;
+      let headerBuf = Buffer.alloc(0);
+      let headerDone = false;
 
-      upstream.on('data', (chunk) => {
-        if (tunnelOk) { clientSocket.write(chunk); return; }
-        buffer = Buffer.concat([buffer, chunk]);
-        const end = buffer.indexOf('\r\n\r\n');
-        if (end >= 0) {
-          const header = buffer.slice(0, end).toString();
-          const firstLine = header.split('\r\n')[0];
-          const statusMatch = header.match(/HTTP\/1\.\d (\d+)/);
-          const status = statusMatch ? parseInt(statusMatch[1]) : 0;
+      // Handler unico para ler o cabecalho de resposta do WebShare
+      function onUpstreamHeaderData(chunk) {
+        headerBuf = Buffer.concat([headerBuf, chunk]);
+        const end = headerBuf.indexOf('\r\n\r\n');
+        if (end < 0) return; // header ainda nao completo
 
-          log('ROBO', `Proxy local → WebShare resp: ${firstLine} | status=${status}`);
+        // Cabecalho completo - remover este handler
+        upstream.removeListener('data', onUpstreamHeaderData);
+        headerDone = true;
 
-          if (status === 200) {
-            tunnelOk = true;
-            log('ROBO', 'Proxy local → tunel OK! Repassando para Firefox...');
-            clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-            const rest = buffer.slice(end + 4);
-            if (rest.length > 0) clientSocket.write(rest);
-            // FIX: remover handler antigo para evitar dados duplicados no TLS
-            upstream.removeAllListeners('data');
-            upstream.on('data', (d) => clientSocket.write(d));
-            clientSocket.pipe(upstream);
-          } else {
-            log('ERRO', `Proxy local → WebShare negou: ${firstLine}`);
-            clientSocket.write(`HTTP/1.1 502 Bad Gateway\r\n\r\n`);
-            clientSocket.end();
-            upstream.end();
-          }
+        const header = headerBuf.slice(0, end).toString();
+        const firstLine = header.split('\r\n')[0];
+        const statusMatch = header.match(/HTTP\/1\.\d (\d+)/);
+        const status = statusMatch ? parseInt(statusMatch[1]) : 0;
+
+        log('ROBO', `Proxy local -> WebShare resp: ${firstLine} | status=${status}`);
+
+        if (status === 200) {
+          log('ROBO', 'Proxy local -> tunel OK! Iniciando TLS tunnel...');
+          clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+
+          // Encaminhar dados restantes que vieram junto com o cabecalho
+          const rest = headerBuf.slice(end + 4);
+          if (rest.length > 0) clientSocket.write(rest);
+
+          // Pipe bidirecional limpo (sem handlers duplicados)
+          upstream.pipe(clientSocket);
+          clientSocket.pipe(upstream);
+        } else {
+          log('ERRO', `Proxy local -> WebShare negou: ${firstLine}`);
+          clientSocket.write('HTTP/1.1 502 Bad Gateway\r\n\r\n');
+          clientSocket.end();
+          upstream.end();
         }
+      }
+
+      upstream.on('data', onUpstreamHeaderData);
+
+      upstream.on('error', (err) => {
+        if (!headerDone) {
+          clientSocket.write('HTTP/1.1 502 Bad Gateway\r\n\r\n');
+        }
+        clientSocket.destroy();
       });
 
-      clientSocket.on('data', (d) => { if (tunnelOk) upstream.write(d); });
-      upstream.on('error',     () => { clientSocket.write('HTTP/1.1 502 Bad Gateway\r\n\r\n'); clientSocket.destroy(); });
       clientSocket.on('error', () => upstream.destroy());
-      upstream.on('end',       () => clientSocket.end());
-      clientSocket.on('end',   () => upstream.end());
+      upstream.on('close', () => clientSocket.destroy());
+      clientSocket.on('close', () => upstream.destroy());
     });
 
     server.listen(0, '127.0.0.1', () => {
       const port = server.address().port;
-      log('ROBO', `Unlock Tool → proxy local 127.0.0.1:${port} -> ${upstreamHost}:${upstreamPort}`);
+      log('ROBO', `Unlock Tool -> proxy local 127.0.0.1:${port} -> ${upstreamHost}:${upstreamPort}`);
       resolve({ server, port });
     });
     server.on('error', reject);
@@ -97,7 +112,7 @@ async function aguardarFormLogin(page) {
 }
 
 async function resetarSenha({ username, senhaAntiga, senhaNova }) {
-  log('ROBO', `Unlock Tool → iniciando para usuario: ${username}`);
+  log('ROBO', `Unlock Tool -> iniciando para usuario: ${username}`);
 
   const proxyHost = process.env.PROXY_HOST || 'p.webshare.io';
   const proxyPort = parseInt(process.env.PROXY_PORT || '80', 10);
@@ -106,21 +121,18 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
 
   let localProxy = null;
 
-  // Firefox: headless=true mas TLS fingerprint diferente do Chromium
-  const launchOptions = {
-    headless: true,
-  };
+  const launchOptions = { headless: true };
 
   if (proxyUser && proxyPass) {
     try {
       localProxy = await startLocalProxy(proxyHost, proxyPort, proxyUser, proxyPass);
       launchOptions.proxy = { server: `http://127.0.0.1:${localProxy.port}` };
-      log('ROBO', `Unlock Tool → Firefox usa proxy local (sem auth) | user: ${proxyUser}`);
+      log('ROBO', `Unlock Tool -> Firefox proxy local porta ${localProxy.port} | user: ${proxyUser}`);
     } catch (e) {
-      log('AVISO', `Unlock Tool → proxy local falhou: ${e.message}`);
+      log('AVISO', `Unlock Tool -> proxy local falhou: ${e.message}`);
     }
   } else {
-    log('AVISO', 'Unlock Tool → sem proxy configurado');
+    log('AVISO', 'Unlock Tool -> sem proxy configurado');
   }
 
   const browser = await firefox.launch(launchOptions);
@@ -131,7 +143,7 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   const page = await context.newPage();
   await page.route('**/*', (route) => {
     const type = route.request().resourceType();
-    if (['image', 'font', 'stylesheet', 'media'].includes(type)) {
+    if (['image', 'font', 'media'].includes(type)) {
       route.abort();
     } else {
       route.continue();
@@ -139,18 +151,18 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   });
 
   try {
-    log('ROBO', 'Unlock Tool → [Firefox] acessando pagina de login (aguardando Cloudflare)...');
+    log('ROBO', 'Unlock Tool -> [Firefox] acessando pagina de login...');
     await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await page.waitForTimeout(8000);
 
     const seletorUsuario = await aguardarFormLogin(page);
     if (!seletorUsuario) {
       const html = (await page.content()).substring(0, 500);
-      log('AVISO', `Unlock Tool → HTML da pagina: ${html}`);
+      log('AVISO', `Unlock Tool -> HTML da pagina: ${html}`);
       return { ok: false, motivo: 'Formulario de login nao apareceu - Cloudflare bloqueou', intervencao: true };
     }
 
-    log('ROBO', `Unlock Tool → formulario encontrado (${seletorUsuario}), preenchendo...`);
+    log('ROBO', `Unlock Tool -> formulario encontrado (${seletorUsuario}), preenchendo...`);
     await page.fill(seletorUsuario, username);
 
     const camposSenha = await page.$$('input[type="password"]');
@@ -168,7 +180,7 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
       if (btn) btn.click();
     });
 
-    log('ROBO', 'Unlock Tool → login enviado, aguardando (12s)...');
+    log('ROBO', 'Unlock Tool -> login enviado, aguardando (12s)...');
     await page.waitForTimeout(12000);
 
     const urlAtual = page.url();
@@ -176,13 +188,13 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
       return { ok: false, motivo: 'Login falhou - senha antiga incorreta ou CAPTCHA', intervencao: true };
     }
 
-    log('ROBO', 'Unlock Tool → login OK! Acessando troca de senha...');
+    log('ROBO', 'Unlock Tool -> login OK! Acessando troca de senha...');
     await page.goto(CHANGE_URL, { waitUntil: 'load', timeout: TIMEOUT_MS });
     await page.waitForTimeout(3000);
 
     const campos = await page.$$('input[type="password"]');
     if (campos.length < 3) {
-      return { ok: false, motivo: `Esperava 3 campos de senha, encontrei ${campos.length}`, intervencao: true };
+      return { ok: false, motivo: `Esperava 3 campos, encontrei ${campos.length}`, intervencao: true };
     }
 
     await campos[0].fill(senhaAntiga);
@@ -198,7 +210,7 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
       if (btn) btn.click();
     });
 
-    log('ROBO', 'Unlock Tool → botao clicado, aguardando confirmacao (8s)...');
+    log('ROBO', 'Unlock Tool -> botao clicado, aguardando confirmacao (8s)...');
     await page.waitForTimeout(8000);
 
     const conteudo = await page.content();
@@ -214,12 +226,12 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
       }
     }
 
-    log('OK', `Unlock Tool → senha alterada com sucesso para ${username}`);
+    log('OK', `Unlock Tool -> senha alterada com sucesso para ${username}`);
     return { ok: true };
 
   } catch (err) {
-    log('ERRO', `Unlock Tool → erro inesperado: ${err.message}`);
-    const isNavigationTimeout = err.message.includes('page.goto') || err.message.includes('net::');
+    log('ERRO', `Unlock Tool -> erro inesperado: ${err.message}`);
+    const isNavigationTimeout = err.message.includes('page.goto') || err.message.includes('net::') || err.message.includes('NS_') || err.message.includes('SSL_');
     const isIntervencao = !isNavigationTimeout && err.message.includes('Target closed');
     return { ok: false, motivo: err.message, intervencao: isIntervencao };
   } finally {
@@ -229,4 +241,3 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
 }
 
 module.exports = { resetarSenha };
-
