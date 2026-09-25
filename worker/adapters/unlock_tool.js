@@ -57,7 +57,11 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   };
 
   if (proxyServer) {
-    launchOptions.proxy = { server: proxyServer };
+    launchOptions.proxy = {
+      server: proxyServer,
+      username: proxyUsername || undefined,
+      password: proxyPassword || undefined
+    };
     log('ROBO', `Unlock Tool → usando proxy: ${proxyServer}`);
   } else {
     log('AVISO', 'Unlock Tool → sem proxy configurado (pode falhar no Cloudflare)');
@@ -65,15 +69,9 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
 
   const browser = await chromium.launch(launchOptions);
 
-  const contextOptions = {
+  const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-  };
-
-  if (proxyServer && proxyUsername) {
-    contextOptions.httpCredentials = { username: proxyUsername, password: proxyPassword };
-  }
-
-  const context = await browser.newContext(contextOptions);
+  });
 
   // Bloqueia imagens, fontes e CSS para economizar ~70% de banda do proxy
   const page = await context.newPage();
