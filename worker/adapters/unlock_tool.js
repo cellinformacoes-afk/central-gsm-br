@@ -50,7 +50,10 @@ function startLocalProxy(upstreamHost, upstreamPort, username, password) {
             clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
             const rest = buffer.slice(end + 4);
             if (rest.length > 0) clientSocket.write(rest);
+            // FIX: remover handler antigo para evitar dados duplicados no TLS
+            upstream.removeAllListeners('data');
             upstream.on('data', (d) => clientSocket.write(d));
+            clientSocket.pipe(upstream);
           } else {
             log('ERRO', `Proxy local → WebShare negou: ${firstLine}`);
             clientSocket.write(`HTTP/1.1 502 Bad Gateway\r\n\r\n`);
@@ -226,3 +229,4 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
 }
 
 module.exports = { resetarSenha };
+
