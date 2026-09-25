@@ -1,11 +1,13 @@
 /**
  * Adaptador: Unlock Tool (unlocktool.net)
- * 
+ *
  * Fluxo:
  * 1. Login em /post-in/ com usuário e senha antiga
  * 2. Navega para /password-change/
  * 3. Preenche os 3 campos (antiga, nova, confirmar)
  * 4. Submete e verifica confirmação
+ *
+ * Cloudflare: aguarda até 90s para o challenge passar antes de interagir
  */
 
 const { chromium } = require('playwright-extra');
@@ -14,9 +16,27 @@ const { log } = require('../lib/logger');
 
 chromium.use(stealth);
 
-const LOGIN_URL   = 'https://unlocktool.net/post-in/';
-const CHANGE_URL  = 'https://unlocktool.net/password-change/';
-const TIMEOUT_MS  = 60000;
+const LOGIN_URL  = 'https://unlocktool.net/post-in/';
+const CHANGE_URL = 'https://unlocktool.net/password-change/';
+const TIMEOUT_MS = 90000; // 90s para Cloudflare
+
+// Aguarda o formulário de login aparecer (Cloudflare pode demorar)
+async function aguardarFormLogin(page) {
+  const seletores = [
+    'input[name="username"]',
+    'input[type="text"]',
+    'input[id*="user"]',
+    'input[placeholder*="user" i]',
+    'input[placeholder*="login" i]'
+  ];
+  for (const sel of seletores) {
+    try {
+      await page.waitForSelector(sel, { timeout: 15000 });
+      return sel;
+    } catch (_) { /* tenta próximo */ }
+  }
+  return null;
+}
 
 async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   log('ROBO', `Unlock Tool → iniciando para usuário: ${username}`);
@@ -39,17 +59,19 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
 
   try {
     // ── PASSO 1: Login ──────────────────────────────────────────
-    log('ROBO', 'Unlock Tool → acessando página de login...');
-    await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: TIMEOUT_MS });
+    log('ROBO', 'Unlock Tool → acessando página de login (aguardando Cloudflare)...');
+    await page.goto(LOGIN_URL, { waitUntil: 'networkidle', timeout: TIMEOUT_MS });
 
-    // Aguarda campo de usuário aparecer (pode demorar por Cloudflare)
-    await page.waitForSelector('input[type="text"], input[name="username"]', { timeout: TIMEOUT_MS });
-
-    const camposUsuario = await page.$$('input[type="text"], input[name="username"]');
-    if (camposUsuario.length === 0) {
-      return { ok: false, motivo: 'Campo de usuário não encontrado na página de login', intervencao: true };
+    // Aguarda formulário de login (Cloudflare pode demorar até 30s)
+    const seletorUsuario = await aguardarFormLogin(page);
+    if (!seletorUsuario) {
+      const html = (await page.content()).substring(0, 500);
+      log('AVISO', `Unlock Tool → HTML da pagina: ${html}`);
+      return { ok: false, motivo: 'Formulário de login não apareceu — Cloudflare bloqueou ou página mudou', intervencao: true };
     }
-    await camposUsuario[0].fill(username);
+
+    log('ROBO', `Unlock Tool → formulário encontrado (${seletorUsuario}), preenchendo...`);
+    await page.fill(seletorUsuario, username);
 
     const camposSenha = await page.$$('input[type="password"]');
     if (camposSenha.length === 0) {
