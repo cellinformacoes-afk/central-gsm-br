@@ -52,7 +52,10 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
-      '--disable-blink-features=AutomationControlled'
+      '--disable-blink-features=AutomationControlled',
+      '--disable-http2',         // Força HTTP/1.1 (proxy pode não suportar HTTP/2)
+      '--disable-quic',          // Desativa QUIC/HTTP3
+      '--ignore-certificate-errors', // Ignora erros SSL pelo proxy
     ]
   };
 
