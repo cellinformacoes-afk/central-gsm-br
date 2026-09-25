@@ -15,5 +15,5 @@ RUN npx playwright install chromium firefox
 # Copia o restante do codigo
 COPY . .
 
-# Inicia o Worker
-CMD ["node", "index.js"]
+# Inicia o Worker com display virtual (xvfb) para Firefox nao-headless bypassar Cloudflare
+CMD ["xvfb-run", "--server-args=-screen 0 1920x1080x24", "node", "index.js"]

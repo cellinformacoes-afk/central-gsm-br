@@ -1,4 +1,4 @@
-﻿const net  = require('net');
+const net  = require('net');
 const http = require('http');
 const { firefox } = require('playwright');
 const { log } = require('../lib/logger');
@@ -86,9 +86,18 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
     } catch (e) { log('AVISO', `proxy falhou: ${e.message}`); }
   }
 
-  const browser = await firefox.launch(launchOptions);
+  const browser = await firefox.launch({
+    headless: false,  // Xvfb fornece display virtual - Firefox nao-headless bypassa Cloudflare melhor
+    firefoxUserPrefs: {
+      'webgl.disabled': false,
+      'webgl.force-enabled': true,
+      'media.hardware-video-decoding.force-enabled': false,
+      'layers.acceleration.disabled': false,
+    }
+  });
   const context = await browser.newContext({
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0'
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
+    viewport: { width: 1920, height: 1080 },
   });
 
   // Patch: ocultar navigator.webdriver (Cloudflare usa isso para detectar bots)
