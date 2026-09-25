@@ -57,12 +57,17 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   };
 
   if (proxyServer) {
+    // Embute credenciais na URL do proxy: http://user:pass@host:port
+    let proxyUrl = proxyServer;
+    if (proxyUsername && !proxyServer.includes('@')) {
+      proxyUrl = proxyServer.replace('http://', `http://${proxyUsername}:${proxyPassword}@`);
+    }
     launchOptions.proxy = {
-      server: proxyServer,
+      server: proxyUrl,
       username: proxyUsername || undefined,
       password: proxyPassword || undefined
     };
-    log('ROBO', `Unlock Tool → usando proxy: ${proxyServer}`);
+    log('ROBO', `Unlock Tool → usando proxy (credenciais embutidas)`);
   } else {
     log('AVISO', 'Unlock Tool → sem proxy configurado (pode falhar no Cloudflare)');
   }
@@ -88,7 +93,7 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   try {
     // ── PASSO 1: Login ──────────────────────────────────────────
     log('ROBO', 'Unlock Tool → acessando página de login (aguardando Cloudflare)...');
-    await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
     // Aguarda Cloudflare processar o challenge (ele redireciona após ~5s)
     await page.waitForTimeout(8000);
 
