@@ -60,7 +60,9 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   try {
     // ── PASSO 1: Login ──────────────────────────────────────────
     log('ROBO', 'Unlock Tool → acessando página de login (aguardando Cloudflare)...');
-    await page.goto(LOGIN_URL, { waitUntil: 'networkidle', timeout: TIMEOUT_MS });
+    await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    // Aguarda Cloudflare processar o challenge (ele redireciona após ~5s)
+    await page.waitForTimeout(8000);
 
     // Aguarda formulário de login (Cloudflare pode demorar até 30s)
     const seletorUsuario = await aguardarFormLogin(page);
@@ -146,7 +148,10 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
 
   } catch (err) {
     log('ERRO', `Unlock Tool → erro inesperado: ${err.message}`);
-    return { ok: false, motivo: err.message, intervencao: err.message.includes('Timeout') || err.message.includes('Target closed') };
+    // page.goto timeout = problema temporário de rede/Cloudflare → deve RETRY, não intervention
+    const isNavigationTimeout = err.message.includes('page.goto') || err.message.includes('net::');
+    const isIntervencao = !isNavigationTimeout && (err.message.includes('Target closed'));
+    return { ok: false, motivo: err.message, intervencao: isIntervencao };
   } finally {
     await browser.close();
   }
