@@ -1,7 +1,11 @@
 const net  = require('net');
 const http = require('http');
-const { firefox } = require('playwright');
+const { chromium } = require('playwright-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const { log } = require('../lib/logger');
+
+// Aplica stealth plugin - corrige Canvas, WebGL, navigator.webdriver, plugins, etc.
+chromium.use(StealthPlugin());
 
 const LOGIN_URL  = 'https://unlocktool.net/post-in/';
 const CHANGE_URL = 'https://unlocktool.net/password-change/';
@@ -77,55 +81,54 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   const proxyUser = process.env.PROXY_USER;
   const proxyPass = process.env.PROXY_PASS;
   let localProxy = null;
-  const launchOptions = { headless: true };
+  let proxyConfig = undefined;
+
   if (proxyUser && proxyPass) {
     try {
       localProxy = await startLocalProxy(proxyHost, proxyPort, proxyUser, proxyPass);
-      launchOptions.proxy = { server: `http://127.0.0.1:${localProxy.port}` };
-      log('ROBO', `Unlock Tool -> Firefox porta ${localProxy.port} | user: ${proxyUser}`);
+      proxyConfig = { server: `http://127.0.0.1:${localProxy.port}` };
+      log('ROBO', `Unlock Tool -> Chromium porta ${localProxy.port} | user: ${proxyUser}`);
     } catch (e) { log('AVISO', `proxy falhou: ${e.message}`); }
   }
 
-  const browser = await firefox.launch({
+  // Chromium com stealth - bypass Canvas, WebGL, navigator.webdriver, plugins, etc.
+  const browser = await chromium.launch({
     headless: true,
-    proxy: launchOptions.proxy,
-    firefoxUserPrefs: {
-      'webgl.disabled': false,
-      'webgl.force-enabled': true,
-    }
-  });
-  const context = await browser.newContext({
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
-    viewport: { width: 1920, height: 1080 },
+    proxy: proxyConfig,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-blink-features=AutomationControlled',
+    ]
   });
 
-  // Patch: ocultar navigator.webdriver (Cloudflare usa isso para detectar bots)
-  await context.addInitScript(() => {
-    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-    Object.defineProperty(navigator, 'plugins', { get: () => [1,2,3,4,5] });
-    Object.defineProperty(navigator, 'languages', { get: () => ['pt-BR','pt','en-US','en'] });
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    viewport: { width: 1920, height: 1080 },
+    locale: 'pt-BR',
+    timezoneId: 'America/Sao_Paulo',
   });
 
   const page = await context.newPage();
-  // Nao bloquear recursos - Cloudflare precisa carregar seus scripts
 
   try {
-    log('ROBO', 'Unlock Tool -> [Firefox] navegando...');
+    log('ROBO', 'Unlock Tool -> [Chrome+Stealth] navegando...');
     await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     const urlInicial = page.url();
     const tituloInicial = await page.title().catch(() => 'N/A');
     log('ROBO', `URL inicial: ${urlInicial.substring(0, 80)} | titulo: ${tituloInicial}`);
 
-    // Aguardar Cloudflare: esperar ate titulo mudar de "Just a moment..." (max 60s)
-    log('ROBO', 'Aguardando Cloudflare challenge completar (max 60s)...');
+    // Aguardar Cloudflare challenge (max 90s)
+    log('ROBO', 'Aguardando Cloudflare challenge completar (max 90s)...');
     try {
       await page.waitForFunction(
         () => document.title !== 'Just a moment...' && document.title !== '',
-        { timeout: 60000, polling: 1000 }
+        { timeout: 90000, polling: 1000 }
       );
     } catch (_) {
-      log('AVISO', 'Cloudflare challenge nao completou em 60s');
+      log('AVISO', 'Cloudflare challenge nao completou em 90s');
     }
 
     const urlFinal = page.url();
@@ -137,7 +140,7 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
       let html = '(nao obtido)';
       try { html = (await page.content()).substring(0, 600); } catch (e) { html = e.message; }
       log('AVISO', `form nao encontrado. HTML: ${html}`);
-      return { ok: false, motivo: 'Formulario nao apareceu - Cloudflare bloqueou', intervencao: true };
+      return { ok: false, motivo: 'Formulario nao apareceu - Cloudflare bloqueou ou layout mudou', intervencao: true };
     }
 
     log('ROBO', `Formulario OK (${seletorUsuario}), preenchendo...`);
@@ -186,7 +189,7 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
 
     if (!sucesso) {
       const urlChg = page.url();
-      if (urlChg.includes('password-change')) return { ok: false, motivo: 'Sem confirmacao', intervencao: false };
+      if (urlChg.includes('password-change')) return { ok: false, motivo: 'Sem confirmacao de alteracao', intervencao: false };
     }
 
     log('OK', `Senha alterada para ${username}`);
