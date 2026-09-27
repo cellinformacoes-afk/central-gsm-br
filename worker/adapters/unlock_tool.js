@@ -87,13 +87,11 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   }
 
   const browser = await firefox.launch({
-    headless: false,  // Xvfb fornece display virtual - Firefox nao-headless bypassa Cloudflare melhor
-    proxy: launchOptions.proxy,  // proxy local (WebShare residencial)
+    headless: true,
+    proxy: launchOptions.proxy,
     firefoxUserPrefs: {
       'webgl.disabled': false,
       'webgl.force-enabled': true,
-      'media.hardware-video-decoding.force-enabled': false,
-      'layers.acceleration.disabled': false,
     }
   });
   const context = await browser.newContext({
