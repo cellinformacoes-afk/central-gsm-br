@@ -42,8 +42,8 @@ export default function AdminNav() {
 
       if (!error && data) {
         const total = data.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
-        // Desconto de 1,2% da taxa do banco
-        setTodayRevenue(total * 0.988);
+        // Desconto de 1,2% da taxa do banco e os 580 solicitados
+        setTodayRevenue((total * 0.988) - 580);
       } else {
         setTodayRevenue(0);
       }
