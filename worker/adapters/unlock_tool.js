@@ -126,31 +126,43 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
     const tituloInicial = await page.title().catch(() => 'N/A');
     log('ROBO', `URL inicial: ${urlInicial.substring(0, 80)} | titulo: ${tituloInicial}`);
 
-    // Aguardar Cloudflare challenge (max 90s)
-    log('ROBO', 'Aguardando Cloudflare challenge completar (max 90s)...');
+    // Aguardar o formulario de login aparecer (bypass Cloudflare em qualquer idioma)
+    // Isso evita o bug de "Um momento..." vs "Just a moment..." (PT vs EN)
+    log('ROBO', 'Aguardando formulario de login (max 90s - bypass Cloudflare)...');
+    let formSelector = null;
     try {
-      await page.waitForFunction(
-        () => document.title !== 'Just a moment...' && document.title !== '',
-        { timeout: 90000, polling: 1000 }
-      );
+      const seletores = [
+        'input[name="username"]',
+        'input[type="text"]',
+        'input[id*="user"]',
+        'input[placeholder*="user" i]',
+        'input[placeholder*="login" i]',
+        'form input'
+      ];
+      const selStr = seletores.join(', ');
+      await page.waitForSelector(selStr, { timeout: 90000 });
+      // Identificar qual seletor funcionou
+      for (const sel of seletores) {
+        const el = await page.$(sel);
+        if (el) { formSelector = sel; break; }
+      }
     } catch (_) {
-      log('AVISO', 'Cloudflare challenge nao completou em 90s');
+      // nao achou form em 90s - Cloudflare bloqueou
     }
 
     const urlFinal = page.url();
     const tituloFinal = await page.title().catch(() => 'N/A');
     log('ROBO', `URL apos challenge: ${urlFinal.substring(0, 80)} | titulo: ${tituloFinal}`);
 
-    const seletorUsuario = await aguardarFormLogin(page);
-    if (!seletorUsuario) {
+    if (!formSelector) {
       let html = '(nao obtido)';
-      try { html = (await page.content()).substring(0, 600); } catch (e) { html = e.message; }
-      log('AVISO', `form nao encontrado. HTML: ${html}`);
+      try { html = (await page.content()).substring(0, 400); } catch (e) { html = e.message; }
+      log('AVISO', `form nao encontrado apos 90s. titulo: ${tituloFinal} | HTML: ${html}`);
       return { ok: false, motivo: 'Formulario nao apareceu - Cloudflare bloqueou ou layout mudou', intervencao: true };
     }
 
-    log('ROBO', `Formulario OK (${seletorUsuario}), preenchendo...`);
-    await page.fill(seletorUsuario, username);
+    log('ROBO', `Formulario OK (${formSelector}), preenchendo...`);
+    await page.fill(formSelector, username);
     const camposSenha = await page.$$('input[type="password"]');
     if (!camposSenha.length) return { ok: false, motivo: 'Campo senha nao encontrado', intervencao: true };
     await camposSenha[0].fill(senhaAntiga);
