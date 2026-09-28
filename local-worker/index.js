@@ -693,10 +693,27 @@ async function processarUnlockTool(task) {
     if (camposTroca[1]) await camposTroca[1].fill(senhaNova);
     if (camposTroca[2]) await camposTroca[2].fill(senhaNova);
 
-    const btnSalvar = await page.$('button[type="submit"]') || await page.$('input[type="submit"]');
-    if (btnSalvar) await btnSalvar.click();
-    else await page.keyboard.press('Enter');
-
+    let btnClicado = false;
+    const btnSalvar = await page.$('button[type="submit"], input[type="submit"]');
+    if (btnSalvar) {
+      await btnSalvar.click();
+      btnClicado = true;
+    } else {
+      btnClicado = await page.evaluate(() => {
+        const btns = [...document.querySelectorAll('button, input[type="button"], input[type="submit"], a.btn, [role="button"]')];
+        const btn = btns.find(b => {
+          const txt = (b.textContent || b.value || '').toLowerCase();
+          return txt.includes('alterar') || txt.includes('change') || txt.includes('save') || txt.includes('salvar') || txt.includes('redefinir') || txt.includes('confirm');
+        });
+        if (btn) {
+          btn.click();
+          return true;
+        }
+        return false;
+      });
+      if (!btnClicado) await page.keyboard.press('Enter');
+    }
+    log('ROBO', `[UnlockTool] Botao de salvar clicado/Enter pressionado`);
     await page.waitForTimeout(4000);
     await page.goto('https://unlocktool.net/accounts/logout/', { timeout: 15000 }).catch(() => {});
 
