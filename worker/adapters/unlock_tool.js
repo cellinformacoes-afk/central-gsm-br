@@ -79,15 +79,21 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
   const proxyHost = process.env.PROXY_HOST || 'p.webshare.io';
   const proxyPort = parseInt(process.env.PROXY_PORT || '80', 10);
   const proxyUser = process.env.PROXY_USER;
-  const proxyPass = process.env.PROXY_PASS;
+  const proxyPassBase = process.env.PROXY_PASS;
   let localProxy = null;
   let proxyConfig = undefined;
 
-  if (proxyUser && proxyPass) {
+  if (proxyUser && proxyPassBase) {
     try {
+      // Gera session ID unico por tarefa (IPRoyal sticky: mesmo IP por 30min)
+      const sessionId = Math.random().toString(36).substring(2, 10);
+      const proxyPass = proxyPassBase.includes('_session-')
+        ? proxyPassBase  // ja tem session (WebShare ou outro)
+        : `${proxyPassBase}_session-${sessionId}_lifetime-30m`; // IPRoyal formato
+
       localProxy = await startLocalProxy(proxyHost, proxyPort, proxyUser, proxyPass);
       proxyConfig = { server: `http://127.0.0.1:${localProxy.port}` };
-      log('ROBO', `Unlock Tool -> Chromium porta ${localProxy.port} | user: ${proxyUser}`);
+      log('ROBO', `Unlock Tool -> Chromium porta ${localProxy.port} | user: ${proxyUser} | session: ${sessionId}`);
     } catch (e) { log('AVISO', `proxy falhou: ${e.message}`); }
   }
 
