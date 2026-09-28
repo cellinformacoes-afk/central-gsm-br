@@ -58,6 +58,7 @@ const FERRAMENTAS = {
     nome: 'TSM Tool',
     keywords: ['tsm'],
     loginUrl: 'https://tsm-tool.com/login',
+    logoutUrl: 'https://tsm-tool.com/?act=Logout',
     passwordChangeUrl: 'https://tsm-tool.com/?act=UserUpdate',
     userSel: 'input[placeholder*="Username" i], input[placeholder*="Email" i], input[name="email"], input[name="username"]',
     passSel: 'input[type="password"]',
@@ -303,9 +304,12 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
 
         let btn = null;
         if (lastPassField) {
-          // Pegar o primeiro botao que aparece APOS o ultimo campo de senha no DOM
+          // Pegar o primeiro botao de submit/save que aparece APOS o ultimo campo de senha no DOM
           btn = allBtns.find(b => {
-            return lastPassField.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING;
+            const isAfter = lastPassField.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING;
+            const txt = (b.textContent || b.value || '').toLowerCase().trim();
+            const isSaveBtn = b.type === 'submit' || txt.includes('update') || txt.includes('salvar') || txt.includes('save') || txt.includes('confirm') || txt.includes('change');
+            return isAfter && isSaveBtn;
           });
         }
         // Fallback: botao com texto de salvar/update
