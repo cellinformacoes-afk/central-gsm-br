@@ -20,21 +20,18 @@ const { log }       = require('./lib/logger');
 const { gerarSenha }= require('./lib/password_gen');
 const { alertarAdmin } = require('./lib/whatsapp');
 
-// Adaptadores por ferramenta
-const unlockTool    = require('./adapters/unlock_tool');
-
 // ── Configurações ─────────────────────────────────────────
 const INTERVALO_MS  = 5 * 60 * 1000;  // 5 minutos
 const MAX_TENTATIVAS = 4;
 
-// Mapa de palavras-chave → adaptador
+// Ferramentas que precisam do WORKER LOCAL (PC do usuario com Chrome real)
+// O cloud worker NAO interfere nessas tarefas - deixa pendente para o PC
+const FERRAMENTAS_LOCAL = ['unlock tool', 'unlocktool', 'unlock'];
+
+// Mapa de palavras-chave → adaptador (ferramentas cloud)
 const ADAPTADORES = {
-  'unlock tool':  unlockTool,
-  'unlocktool':   unlockTool,
-  'unlock':       unlockTool,
-  // Futuras ferramentas serão adicionadas aqui:
-  // 'tsm tool': tsmTool,
-  // 'android multi tool': amtTool,
+  // 'tsm tool': tsmTool,         // Em breve
+  // 'android multi tool': amtTool, // Em breve
 };
 
 // ── Funções auxiliares ────────────────────────────────────
@@ -146,6 +143,14 @@ async function processarTarefas() {
 
   for (const task of tarefas) {
     log('ROBO', `Processando: ${task.service_title} | Conta: ${task.payload?.email}`);
+
+    // UNLOCK TOOL: processado pelo worker LOCAL (Chrome real no PC - bypassa Cloudflare)
+    // Cloud worker nao interfere - deixa como pending para o PC pegar
+    const titulo = (task.service_title || '').toLowerCase();
+    if (FERRAMENTAS_LOCAL.some(k => titulo.includes(k))) {
+      log('INFO', `[UNLOCK TOOL] Requer worker local (Chrome real). Pulando no cloud...`);
+      continue;
+    }
 
     // Identifica o adaptador correto
     const adaptador = identificarAdaptador(task.service_title);
