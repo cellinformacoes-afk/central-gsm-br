@@ -89,7 +89,7 @@ async function resetarSenha({ username, senhaAntiga, senhaNova }) {
       const sessionId = Math.random().toString(36).substring(2, 10);
       const proxyPass = proxyPassBase.includes('_session-')
         ? proxyPassBase  // ja tem session (WebShare ou outro)
-        : `${proxyPassBase}_session-${sessionId}_country-br_lifetime-30m`; // IPRoyal BR sticky
+        : `${proxyPassBase}_session-${sessionId}_lifetime-30m`; // IPRoyal sticky (mobile/residencial)
 
       localProxy = await startLocalProxy(proxyHost, proxyPort, proxyUser, proxyPass);
       proxyConfig = { server: `http://127.0.0.1:${localProxy.port}` };
