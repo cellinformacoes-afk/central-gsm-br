@@ -79,6 +79,7 @@ const FERRAMENTAS = {
     nome: 'TFM Tool',
     keywords: ['tfm'],
     loginUrl: 'https://tfmtool.com/login',
+    logoutUrl: 'https://tfmtool.com/logout',
     passwordChangeUrl: 'https://tfmtool.com/user/setting',
     userSel: 'input#email, input[name="email"], input[placeholder*="Email" i]',
     passSel: 'input#password, input[type="password"]',
@@ -401,6 +402,39 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
   return false;
 }
 
+// ── Logout helper ─────────────────────────────────────────
+
+async function fazerLogout(page, config) {
+  try {
+    // 1: logoutUrl direto (mais rapido)
+    if (config.logoutUrl) {
+      await page.goto(config.logoutUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
+      await page.waitForTimeout(1500);
+      log('ROBO', `[${config.nome}] Logout via URL!`);
+      return true;
+    }
+    // 2: Clicar no link Logout/Sair na pagina
+    const logoutEl = await page.$('a:has-text("Logout"), a:has-text("logout"), a:has-text("Sair"), a:has-text("Sign out")').catch(() => null);
+    if (logoutEl) {
+      await logoutEl.click();
+      await page.waitForTimeout(1500);
+      log('ROBO', `[${config.nome}] Logout via click!`);
+      return true;
+    }
+    // 3: page.evaluate - encontrar link logout no DOM
+    const clicked = await page.evaluate(() => {
+      const links = [...document.querySelectorAll('a')];
+      const btn = links.find(l => /logout|sair|sign.?out/i.test(l.textContent || l.href || ''));
+      if (btn) { btn.click(); return true; }
+      return false;
+    });
+    if (clicked) { await page.waitForTimeout(1500); log('ROBO', `[${config.nome}] Logout via JS!`); return true; }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 // ── Processador GENERICO (TSM, AMT, TFM, DFT) ────────────
 
 async function processarFerramenta(task, config) {
@@ -445,7 +479,7 @@ async function processarFerramenta(task, config) {
                      !urlDepoisDeIr.toLowerCase().includes('challenge');
 
     if (jaLogado) {
-      log('ROBO', `[${config.nome}] Ja estava logado - verificando se e a conta certa...`);
+      log('ROBO', `[${config.nome}] Ja estava logado - verificando conta...`);
 
       // Navegar para pagina de conta para verificar o email logado
       const urlVerif = config.passwordChangeUrl || (new URL(config.loginUrl).origin + '/account');
@@ -458,14 +492,30 @@ async function processarFerramenta(task, config) {
         ).catch(() => '');
 
         if (emailLogado && emailLogado !== username.toLowerCase()) {
-          log('ERRO', `[${config.nome}] CONTA ERRADA logada! Logado: ${emailLogado} | Esperado: ${username}`);
-          return { ok: false, motivo: `Conta errada no Chrome: ${emailLogado} != ${username}. Faca logout manualmente`, intervencao: true };
+          log('ROBO', `[${config.nome}] Conta errada (${emailLogado}) - fazendo logout para logar na certa...`);
+
+          // Fazer logout automaticamente
+          const logoutFeito = await fazerLogout(page, config);
+          if (!logoutFeito) {
+            return { ok: false, motivo: `Conta errada logada: ${emailLogado}. Nao conseguiu fazer logout.`, intervencao: true };
+          }
+          // Continua para o login abaixo (jaLogado = false agora)
+          log('ROBO', `[${config.nome}] Logout feito! Logando na conta correta...`);
+        } else {
+          log('ROBO', `[${config.nome}] Conta verificada: ${emailLogado || username} ✅ Indo trocar senha...`);
         }
-        log('ROBO', `[${config.nome}] Conta verificada: ${emailLogado || username} ✅ Indo trocar senha...`);
       } catch {
-        log('ROBO', `[${config.nome}] Nao conseguiu verificar conta - prosseguindo...`);
+        log('ROBO', `[${config.nome}] Nao conseguiu verificar conta - fazendo logout preventivo...`);
+        await fazerLogout(page, config);
       }
-    } else {
+    }
+    // Se ainda nao logado (ou fez logout), vai para o formulario de login
+    if (!page.url().toLowerCase().includes('login')) {
+      await page.goto(config.loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await page.waitForTimeout(2000);
+    }
+    // Aguarda formulario aparecer (Cloudflare pode demorar)
+    {
       // Aguarda formulario aparecer (Cloudflare pode demorar)
       let formularioOk = false;
       for (let i = 0; i < 12 && !formularioOk; i++) {
