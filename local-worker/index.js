@@ -188,8 +188,8 @@ async function abrirChromeSeNecessario() {
     `--user-data-dir=${CHROME_PROFILE}`,
     '--no-first-run',
     '--no-default-browser-check',
-    '--window-size=1000,700',
-    '--window-position=50,50',
+    '--window-size=1280,900',
+    '--window-position=-32000,0',
   ], { detached: true, stdio: 'ignore' }).unref();
 
   for (let i = 0; i < 15; i++) {
