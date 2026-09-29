@@ -79,12 +79,12 @@ const FERRAMENTAS = {
   tfm: {
     nome: 'TFM Tool',
     keywords: ['tfm'],
-    loginUrl: 'https://tfmtool.com/login',
-    logoutUrl: 'https://tfmtool.com/logout',
-    passwordChangeUrl: 'https://tfmtool.com/user/setting',
-    userSel: 'input#email, input[name="email"], input[placeholder*="Email" i]',
-    passSel: 'input#password, input[type="password"]',
-    submitSel: 'button.btn-block, button[type="submit"]',
+    loginUrl: 'https://beta.tfmtool.com/auth/login',
+    logoutUrl: 'https://beta.tfmtool.com/auth/logout',
+    passwordChangeUrl: 'https://beta.tfmtool.com/dashboard/profile',
+    userSel: 'input#email, input[name="email"], input[name="username"], input[type="email"], input[placeholder*="email" i], input[placeholder*="user" i], input[type="text"]',
+    passSel: 'input#password, input[type="password"], input[name="password"]',
+    submitSel: 'button[type="submit"], input[type="submit"], button:has-text("Login"), button:has-text("Sign in"), button.btn',
     temCloudflare: false,
   },
   dft: {
@@ -239,6 +239,19 @@ async function encontrarUrlTrocaSenha(page, baseUrl) {
 // Preenche e submete formulario de troca de senha
 async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
   await page.waitForTimeout(3000);
+
+  // Tenta abrir modais de troca de senha (ex: TFM Beta)
+  await page.evaluate(() => {
+    const els = [...document.querySelectorAll('*')];
+    const btnModal = els.find(b => {
+      // Ignora elementos que tem filhos textuais soltos, foca nos mais internos
+      if (b.children.length > 0 && b.tagName !== 'BUTTON' && b.tagName !== 'A') return false; 
+      const txt = (b.textContent || '').trim().toLowerCase();
+      return txt === 'alterar a senha' || txt === 'change password' || txt === 'alterar senha';
+    });
+    if (btnModal) btnModal.click();
+  });
+  await page.waitForTimeout(1500);
 
   // Metodo 1: input[type="password"]
   let campos = await page.$$('input[type="password"]');
@@ -395,8 +408,11 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
   if (temSucesso) { log('ROBO', 'Sucesso confirmado por texto!'); return true; }
 
   // Se nao tem erro E a URL mudou (redirect apos submit), provavelmente deu certo
-  if (urlDepois !== urlAntes) {
-    log('ROBO', `URL mudou (${urlAntes} → ${urlDepois}) - assumindo sucesso`);
+  const baseAntes = urlAntes.split('#')[0].split('?')[0];
+  const baseDepois = urlDepois.split('#')[0].split('?')[0];
+  
+  if (baseDepois !== baseAntes) {
+    log('ROBO', `URL mudou (${baseAntes} → ${baseDepois}) - assumindo sucesso`);
     return true;
   }
 
@@ -472,6 +488,9 @@ async function processarFerramenta(task, config) {
     const context = browser.contexts()[0];
     page = await context.newPage();
     page.setDefaultTimeout(60000);
+
+    log('ROBO', `[${config.nome}] Limpando cookies da sessao anterior...`);
+    await context.clearCookies();
 
     // LOGIN
     log('ROBO', `[${config.nome}] Abrindo ${config.loginUrl}...`);
@@ -567,30 +586,34 @@ async function processarFerramenta(task, config) {
         return { ok: false, motivo: `Formulario de login nao apareceu - ${config.nome}`, intervencao: false };
       }
 
-      // Preenche login - simula digitacao humana
-      const userField = await page.$(config.userSel);
-      if (!userField) return { ok: false, motivo: `Campo usuario nao encontrado - ${config.nome}`, intervencao: true };
-      await userField.click();
-      await page.waitForTimeout(400);
-      await userField.fill(username);
+      const urlAntesPreencher = page.url().toLowerCase();
+      if (urlAntesPreencher.includes('login') || urlAntesPreencher.includes('challenge')) {
+        // Preenche login - simula digitacao humana
+        const userField = await page.$(config.userSel);
+        if (!userField) return { ok: false, motivo: `Campo usuario nao encontrado - ${config.nome}`, intervencao: true };
+        await userField.click();
+        await page.waitForTimeout(400);
+        await userField.fill(username);
 
-      // Pausa entre email e senha (como humano faria)
-      await page.waitForTimeout(800);
+        // Pausa entre email e senha (como humano faria)
+        await page.waitForTimeout(800);
 
-      const passField = await page.$(config.passSel);
-      if (!passField) return { ok: false, motivo: `Campo senha nao encontrado - ${config.nome}`, intervencao: true };
-      await passField.click();
-      await page.waitForTimeout(300);
-      await passField.fill(senhaAntiga);
+        const passField = await page.$(config.passSel);
+        if (!passField) return { ok: false, motivo: `Campo senha nao encontrado - ${config.nome}`, intervencao: true };
+        await passField.click();
+        await page.waitForTimeout(300);
+        await passField.fill(senhaAntiga);
 
-      await page.waitForTimeout(1000);
-      const submitBtn = await page.$(config.submitSel);
-      if (submitBtn) await submitBtn.click();
-      else await page.keyboard.press('Enter');
+        await page.waitForTimeout(1000);
+        const submitBtn = await page.$(config.submitSel);
+        if (submitBtn) await submitBtn.click();
+        else await page.keyboard.press('Enter');
 
-
-      log('ROBO', `[${config.nome}] Login enviado...`);
-      await page.waitForTimeout(5000);
+        log('ROBO', `[${config.nome}] Login enviado...`);
+        await page.waitForTimeout(5000);
+      } else {
+        log('ROBO', `[${config.nome}] Conta logada automaticamente, pulando envio do form...`);
+      }
 
       // Verifica se logou (URL mudou)
       const urlFinal = page.url();
@@ -767,8 +790,23 @@ async function processarTarefa(task) {
     return { ok: false, motivo: `Ferramenta desconhecida: "${task.service_title}"`, intervencao: true };
   }
 
-  if (toolKey === 'unlock') return processarUnlockTool(task);
-  return processarFerramenta(task, FERRAMENTAS[toolKey]);
+  let resultado;
+  for (let tentativa = 1; tentativa <= 2; tentativa++) {
+    if (toolKey === 'unlock') resultado = await processarUnlockTool(task);
+    else resultado = await processarFerramenta(task, FERRAMENTAS[toolKey]);
+    
+    // Se deu certo ou se for um erro que exija intervencao manual (ex: senha antiga errada), para de tentar
+    if (resultado.ok || resultado.intervencao) {
+      break;
+    }
+    
+    if (tentativa === 1) {
+      log('ROBO', `[${FERRAMENTAS[toolKey]?.nome || 'UnlockTool'}] Falha transiente (ex: Cloudflare). Fechando e tentando de novo...`);
+      await new Promise(r => setTimeout(r, 5000));
+    }
+  }
+  
+  return resultado;
 }
 
 // ── Sincroniza: cria tarefas para novas contas pending_reset ─
