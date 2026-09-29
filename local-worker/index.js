@@ -442,10 +442,13 @@ async function fazerLogout(page, config) {
 // ── Processador GENERICO (TSM, AMT, TFM, DFT) ────────────
 
 async function processarFerramenta(task, config) {
-  const { email: username, old_password: senhaAntiga } = task.payload || {};
+  let { email: username, old_password: senhaAntiga } = task.payload || {};
   if (!username || !senhaAntiga) {
     return { ok: false, motivo: 'Dados incompletos no payload', intervencao: true };
   }
+  
+  username = username.trim();
+  senhaAntiga = senhaAntiga.trim();
 
   // Cell Tool tem captcha de imagem - nao da pra automatizar
   if (config.temCaptchaImagem) {
@@ -634,10 +637,13 @@ async function processarFerramenta(task, config) {
 // ── UnlockTool (especifico - tem Turnstile no formulario) ─
 
 async function processarUnlockTool(task) {
-  const { email: username, old_password: senhaAntiga } = task.payload || {};
+  let { email: username, old_password: senhaAntiga } = task.payload || {};
   if (!username || !senhaAntiga) {
     return { ok: false, motivo: 'Dados incompletos no payload', intervencao: true };
   }
+  
+  username = username.trim();
+  senhaAntiga = senhaAntiga.trim();
 
   const senhaNova = task.payload?.new_password || gerarSenha();
   log('ROBO', `[UnlockTool] Processando: ${username}`);
@@ -654,9 +660,9 @@ async function processarUnlockTool(task) {
     page = await context.newPage();
     page.setDefaultTimeout(60000);
 
-    log('ROBO', '[UnlockTool] Fazendo logout preventivo para garantir conta certa...');
-    await page.goto('https://unlocktool.net/accounts/logout/', { timeout: 15000 }).catch(() => {});
-    await page.waitForTimeout(2000);
+    log('ROBO', '[UnlockTool] Limpando cookies para forcar logout (garantindo conta certa)...');
+    await context.clearCookies();
+    await page.waitForTimeout(1000);
 
     await page.goto('https://unlocktool.net/post-in/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
@@ -732,6 +738,14 @@ async function processarUnlockTool(task) {
     }
     log('ROBO', `[UnlockTool] Botao de salvar clicado/Enter pressionado`);
     await page.waitForTimeout(4000);
+
+    const htmlApos = await page.content();
+    const textoApos = htmlApos.toLowerCase();
+    if (textoApos.includes('incorrect') || textoApos.includes('incorreta') || textoApos.includes('invalid') || textoApos.includes('error') || textoApos.includes('erro')) {
+       log('ERRO', '[UnlockTool] Erro na hora de trocar a senha (provavel senha antiga incorreta).');
+       return { ok: false, motivo: 'Erro ao trocar senha na UnlockTool. Verifique.', intervencao: true };
+    }
+
     await page.goto('https://unlocktool.net/accounts/logout/', { timeout: 15000 }).catch(() => {});
 
     log('ROBO', `[UnlockTool] SUCESSO! ${username} → ${senhaNova}`);
