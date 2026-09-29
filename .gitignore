@@ -18,6 +18,7 @@ scripts/automation/sessions/
 
 # Arquivos sensíveis e temporários
 *.png
+<<<<<<< Updated upstream
 *.pfx
 *.p12
 script.js
@@ -27,3 +28,6 @@ tmp_*.ts
 users_dump*.json
 duplicates_*.json
 migrate_data.*
+=======
+.env*
+>>>>>>> Stashed changes
