@@ -46,18 +46,24 @@ export const asaas = {
         const customer = searchData.data[0];
         console.log(`Cliente encontrado: ${customer.id}`);
         
-        // Sempre garantimos que a notificação está desativada no cliente existente e atualizamos o CPF se necessário
-        console.log(`Garantindo notificações desativadas para o cliente existente ${customer.id}`);
+        // Sempre sincronizamos os dados do cliente no PIX (nome e CPF) para que o campo
+        // "devedor" do QR Code reflita exatamente quem está pagando. Muitos bancos recusam
+        // o PIX quando o nome/CPF do devedor não bate com o pagador. Se o nome ficar
+        // desatualizado (o antigo, que nunca era sincronizado), o banco mostra
+        // "copiar e colar ou QR code falhou".
+        const update: any = {
+          notificationDisabled: true
+        };
+        if (cpfCnpj) update.cpfCnpj = cpfCnpj;          // sempre atualiza o CPF/CNPJ do usuário
+        if (name) update.name = name;                   // sempre atualiza o nome do usuário
+        console.log(`Sincronizando dados do cliente ${customer.id}: nome e CPF/CNPJ`);
         await fetch(`${ASAAS_API_URL}/customers/${customer.id}`, {
           method: 'POST',
           headers: {
             'access_token': ASAAS_API_KEY.trim(),
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ 
-            ...(cpfCnpj && !customer.cpfCnpj ? { cpfCnpj } : {}),
-            notificationDisabled: true 
-          })
+          body: JSON.stringify(update)
         });
         
         return customer.id;
