@@ -189,7 +189,7 @@ async function abrirChromeSeNecessario() {
     '--no-first-run',
     '--no-default-browser-check',
     '--window-size=1280,900',
-    '--window-position=-32000,0',
+    '--start-minimized',
   ], { detached: true, stdio: 'ignore' }).unref();
 
   for (let i = 0; i < 15; i++) {
