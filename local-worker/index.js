@@ -423,7 +423,7 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
   // Verifica SUCESSO por palavras-chave no texto visivel
   const temSucesso = ['success', 'sucesso', 'alterada', 'changed', 'updated', 'atualizada',
     'salvo', 'saved', 'password updated', 'senha alterada', 'profile updated',
-    'perfil atualizado'].some(s => textoVisivel.includes(s));
+    'perfil atualizado', 'password changed', 'senha atualizada'].some(s => textoVisivel.includes(s));
   if (temSucesso) { log('ROBO', 'Sucesso confirmado por texto!'); return true; }
 
   // Se nao tem erro E a URL mudou (redirect apos submit), provavelmente deu certo
@@ -433,6 +433,15 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
   if (baseDepois !== baseAntes) {
     log('ROBO', `URL mudou (${baseAntes} → ${baseDepois}) - assumindo sucesso`);
     return true;
+  }
+
+  // Se o modal fechou (nao ha mais campos de senha na tela) e nao tem erro = sucesso!
+  if (clicou) {
+    const camposRestantes = await page.$$('input[type="password"]').catch(() => []);
+    if (camposRestantes.length === 0) {
+      log('ROBO', 'Modal fechou apos clique (sem campos de senha visiveis) - assumindo sucesso!');
+      return true;
+    }
   }
 
   // Sem sucesso confirmado
