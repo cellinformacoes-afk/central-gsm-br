@@ -477,10 +477,23 @@ async function processarFerramenta(task, config) {
 
     // Verificar se ja esta logado (redirecionou para fora do login)
     const urlDepoisDeIr = page.url();
-    const jaLogado = !urlDepoisDeIr.toLowerCase().includes('login') &&
-                     !urlDepoisDeIr.toLowerCase().includes('signin') &&
-                     !urlDepoisDeIr.toLowerCase().includes('cloudflare') &&
-                     !urlDepoisDeIr.toLowerCase().includes('challenge');
+    let jaLogado = !urlDepoisDeIr.toLowerCase().includes('login') &&
+                   !urlDepoisDeIr.toLowerCase().includes('signin') &&
+                   !urlDepoisDeIr.toLowerCase().includes('cloudflare') &&
+                   !urlDepoisDeIr.toLowerCase().includes('challenge');
+
+    // Se nao redirecionou, procura por um botao de "Logout" na pagina para confirmar
+    if (!jaLogado) {
+      const temLogout = await page.evaluate(() => {
+        const els = [...document.querySelectorAll('a, button, span, div')];
+        return els.some(el => {
+          const txt = (el.textContent || '').toLowerCase().trim();
+          const href = (el.href || '').toLowerCase();
+          return txt === 'logout' || txt === 'sign out' || txt === 'sair' || href.includes('logout');
+        });
+      });
+      if (temLogout) jaLogado = true;
+    }
 
     if (jaLogado) {
       log('ROBO', `[${config.nome}] Ja estava logado - verificando conta...`);
