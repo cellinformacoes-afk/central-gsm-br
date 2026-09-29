@@ -654,6 +654,10 @@ async function processarUnlockTool(task) {
     page = await context.newPage();
     page.setDefaultTimeout(60000);
 
+    log('ROBO', '[UnlockTool] Fazendo logout preventivo para garantir conta certa...');
+    await page.goto('https://unlocktool.net/accounts/logout/', { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(2000);
+
     await page.goto('https://unlocktool.net/post-in/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     let formularioOk = false;
