@@ -307,9 +307,23 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
   const urlAntes = page.url();
   await page.waitForTimeout(500);
 
-  // Clicar botao - 5 estrategias
+  // Clicar botao - estrategias em ordem de prioridade
   let clicou = false;
 
+  // PRIORIDADE 0: Playwright getByText - clique fisico real (funciona em Vue/Nuxt modals)
+  if (!clicou) {
+    for (const texto of ['Atualizar senha', 'Update password', 'Atualizar Senha', 'Update Password']) {
+      try {
+        const btn = page.getByText(texto, { exact: true });
+        if (await btn.count() > 0) {
+          await btn.first().click({ force: true });
+          clicou = true;
+          log('ROBO', `Botao clicado por getByText exato: "${texto}"`);
+          break;
+        }
+      } catch {}
+    }
+  }
   // 0: page.evaluate - clica no botao DEPOIS dos campos de senha (evita clicar no botao errado)
   if (!clicou) {
     try {
