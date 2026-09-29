@@ -254,12 +254,17 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
   await page.waitForTimeout(1500);
 
   // Metodo 1: input[type="password"]
-  let campos = await page.$$('input[type="password"]');
+  let campos = [];
+  for (let i = 0; i < 10; i++) {
+    campos = await page.$$('input[type="password"]');
+    if (campos.length >= 3) break;
+    await page.waitForTimeout(500);
+  }
 
   // Metodo 2: placeholder com senha/password
-  if (!campos.length) {
-    campos = await page.$$('input[placeholder*="password" i], input[placeholder*="senha" i]');
-    if (campos.length) log('ROBO', `Campo senha encontrado por placeholder (${campos.length})`);
+  if (campos.length < 3) {
+    const altCampos = await page.$$('input[placeholder*="password" i], input[placeholder*="senha" i]');
+    if (altCampos.length >= 3) campos = altCampos;
   }
 
   // Metodo 3: name ou id com senha/password
@@ -321,7 +326,7 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
           btn = allBtns.find(b => {
             const isAfter = lastPassField.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING;
             const txt = (b.textContent || b.value || '').toLowerCase().trim();
-            const isSaveBtn = b.type === 'submit' || txt.includes('update') || txt.includes('salvar') || txt.includes('save') || txt.includes('confirm') || txt.includes('change');
+            const isSaveBtn = b.type === 'submit' || txt.includes('update') || txt.includes('salvar') || txt.includes('save') || txt.includes('confirm') || txt.includes('change') || txt.includes('atualizar');
             return isAfter && isSaveBtn;
           });
         }
@@ -329,7 +334,7 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
         if (!btn) {
           btn = allBtns.find(el => {
             const txt = (el.textContent || el.value || '').toLowerCase().trim();
-            return txt.includes('update') || txt.includes('salvar') || txt.includes('save') || txt.includes('atualizar') || txt.includes('confirmar');
+            return txt.includes('update') || txt.includes('salvar') || txt.includes('save') || txt.includes('atualizar') || txt.includes('confirmar') || txt === 'atualizar senha' || txt === 'update password';
           });
         }
         if (btn) {
@@ -518,37 +523,40 @@ async function processarFerramenta(task, config) {
     }
 
     if (jaLogado) {
-      log('ROBO', `[${config.nome}] Ja estava logado - verificando conta...`);
+      log('ROBO', `[${config.nome}] Ja estava logado - fazendo logout...`);
 
-      // Navegar para pagina de conta para verificar o email logado
-      const urlVerif = config.passwordChangeUrl || (new URL(config.loginUrl).origin + '/account');
+      // Tenta navegar diretamente para a URL de logout
+      const logoutUrl = config.logoutUrl || (new URL(config.loginUrl).origin + '/auth/logout');
       try {
-        await page.goto(urlVerif, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await page.goto(logoutUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
         await page.waitForTimeout(2000);
-        const emailLogado = await page.$eval(
-          'input[type="email"], input[name="email"], input[placeholder*="email" i]',
-          el => (el.value || el.textContent || '').trim().toLowerCase()
-        ).catch(() => '');
+        log('ROBO', `[${config.nome}] Apos logout URL: ${page.url()}`);
+      } catch {}
 
-        if (emailLogado && emailLogado !== username.toLowerCase()) {
-          log('ROBO', `[${config.nome}] Conta errada (${emailLogado}) - fazendo logout para logar na certa...`);
-
-          // Fazer logout automaticamente
-          const logoutFeito = await fazerLogout(page, config);
-          if (!logoutFeito) {
-            return { ok: false, motivo: `Conta errada logada: ${emailLogado}. Nao conseguiu fazer logout.`, intervencao: true };
-          }
-          // Continua para o login abaixo (jaLogado = false agora)
-          log('ROBO', `[${config.nome}] Logout feito! Logando na conta correta...`);
-        } else {
-          log('ROBO', `[${config.nome}] Conta verificada: ${emailLogado || username} ✅ Indo trocar senha...`);
-        }
-      } catch {
-        log('ROBO', `[${config.nome}] Nao conseguiu verificar conta - fazendo logout preventivo...`);
-        await fazerLogout(page, config);
+      // Se ainda nao foi pra pagina de login, tenta clicar no avatar e depois Sair
+      if (!page.url().toLowerCase().includes('login')) {
+        log('ROBO', `[${config.nome}] URL de logout nao redirecionou - tentando clicar em Sair...`);
+        await page.evaluate(() => {
+          const headerBtns = [...document.querySelectorAll('header button, nav button, header [role="button"]')];
+          const lastBtn = headerBtns[headerBtns.length - 1];
+          if (lastBtn) lastBtn.click();
+        });
+        await page.waitForTimeout(1500);
+        await page.evaluate(() => {
+          const els = [...document.querySelectorAll('*')];
+          const sair = els.find(el => {
+            if (el.children.length > 0) return false;
+            const txt = (el.textContent || '').trim().toLowerCase();
+            return txt === 'sair' || txt === 'logout' || txt === 'sign out' || txt === 'log out';
+          });
+          if (sair) (sair.closest('a') || sair.closest('button') || sair).click();
+        });
+        await page.waitForTimeout(2000);
       }
+
+      log('ROBO', `[${config.nome}] Logout concluido! URL: ${page.url()}`);
     }
-    // Se ainda nao logado (ou fez logout), vai para o formulario de login
+    // Vai para o formulario de login (sempre, apos logout ou se nao estava logado)
     if (!page.url().toLowerCase().includes('login')) {
       await page.goto(config.loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await page.waitForTimeout(2000);
