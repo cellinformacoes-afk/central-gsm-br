@@ -18,7 +18,8 @@ function CountdownTimer({ expiryDate }: { expiryDate: string }) {
         return;
       }
 
-      const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      // Use total hours instead of modulo 24 so rentals > 24h display correctly
+      const h = Math.floor(distance / (1000 * 60 * 60));
       const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const s = Math.floor((distance % (1000 * 60)) / 1000);
 
