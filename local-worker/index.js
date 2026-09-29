@@ -494,8 +494,18 @@ async function processarFerramenta(task, config) {
     page = await context.newPage();
     page.setDefaultTimeout(60000);
 
-    log('ROBO', `[${config.nome}] Limpando cookies da sessao anterior...`);
+    log('ROBO', `[${config.nome}] Limpando cookies e sessao anterior...`);
     await context.clearCookies();
+    // Limpar localStorage e sessionStorage (sites SPA como TFM usam isso para sessao)
+    try {
+      const origin = new URL(config.loginUrl).origin;
+      await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 15000 });
+      await page.evaluate(() => {
+        try { localStorage.clear(); } catch {}
+        try { sessionStorage.clear(); } catch {}
+      });
+      log('ROBO', `[${config.nome}] localStorage e sessionStorage limpos!`);
+    } catch {}
 
     // LOGIN
     log('ROBO', `[${config.nome}] Abrindo ${config.loginUrl}...`);
