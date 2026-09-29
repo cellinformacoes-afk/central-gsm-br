@@ -352,7 +352,7 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
   if (!clicou) {
     try {
       const btnLocator = page.locator('button, input[type="submit"], a, [role="button"]').filter({
-        hasText: /salvar|save|update|atualizar|confirmar|update profile|atualizar perfil/i
+        hasText: /salvar|save|update|atualizar|confirmar|update profile|atualizar perfil|atualizar senha|update password/i
       });
       if (await btnLocator.count() > 0) {
         await btnLocator.first().click();
@@ -365,14 +365,14 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
   // 2: getByRole button
   if (!clicou) {
     try {
-      const btn = page.getByRole('button', { name: /update|salvar|save|atualizar/i });
+      const btn = page.getByRole('button', { name: /update|salvar|save|atualizar|atualizar senha|update password/i });
       if (await btn.count() > 0) { await btn.first().click(); clicou = true; log('ROBO', 'Botao clicado por getByRole!'); }
     } catch {}
   }
 
   // 3: text selector direto do Playwright
   if (!clicou) {
-    for (const txt of ['Update Profile', 'Atualizar perfil', 'Salvar alterações', 'Save', 'Update']) {
+    for (const txt of ['Atualizar senha', 'Update password', 'Update Profile', 'Atualizar perfil', 'Salvar alterações', 'Save', 'Update']) {
       const el = await page.$(`text=${txt}`).catch(() => null);
       if (el) { await el.click(); clicou = true; log('ROBO', `Botao clicado por text="${txt}"!`); break; }
     }
