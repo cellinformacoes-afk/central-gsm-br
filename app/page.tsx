@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from 'react';
 import { proxy } from '@/lib/supabase-proxy';
 import { fetchAuthSession } from '@/lib/auth';
@@ -25,7 +25,7 @@ export default function Home() {
   const [selectedService, setSelectedService] = useState<any>(null);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [imei, setImei] = useState('');
-  const [creditQuantity, setCreditQuantity] = useState(5);
+  const [creditQuantity, setCreditQuantity] = useState(12);
   const [email, setEmail] = useState('');
   
   const router = useRouter();
@@ -106,8 +106,8 @@ export default function Home() {
         alert("Por favor, insira um e-mail válido.");
         return;
       }
-      if (!creditQuantity || creditQuantity < 5) {
-        alert("O pedido mínimo é de 5 créditos.");
+      if (!creditQuantity || creditQuantity < 12) {
+        alert("O pedido mínimo é de 12 créditos.");
         return;
       }
       const confirmEmail = window.confirm(`O e-mail "${email.trim()}" é o e-mail de destino para os créditos?`);
@@ -151,7 +151,7 @@ export default function Home() {
       setSelectedService(null);
       setImei('');
       setEmail('');
-      setCreditQuantity(5);
+      setCreditQuantity(12);
       router.push('/pedidos');
     } catch (error: any) {
       console.error(error);
@@ -194,7 +194,7 @@ export default function Home() {
                           {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isCreditService(selectedService) ? selectedService.price * creditQuantity : selectedService.price)}
                        </p>
                     </div>
-                    <button onClick={() => { setSelectedService(null); setImei(''); setEmail(''); setCreditQuantity(5); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
+                    <button onClick={() => { setSelectedService(null); setImei(''); setEmail(''); setCreditQuantity(12); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
                  </div>
 
                  <div className="space-y-6">
@@ -205,7 +205,7 @@ export default function Home() {
                       <div className="animate-in slide-in-from-top-2 duration-300 space-y-4">
                         <div>
                           <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Quantidade de Créditos</label>
-                          <p className="text-[10px] text-[#FFC107] font-bold mb-3">Pedido mínimo: 05 créditos</p>
+                          <p className="text-[10px] text-[#FFC107] font-bold mb-3">Pedido mínimo: 12 créditos</p>
                           <input 
                             type="number" 
                             value={creditQuantity}
@@ -221,11 +221,11 @@ export default function Home() {
                               }
                             }}
                             onBlur={() => {
-                              if (creditQuantity < 5) setCreditQuantity(5);
+                              if (creditQuantity < 12) setCreditQuantity(12);
                             }}
-                            min={5}
+                            min={12}
                             step={1}
-                            placeholder="Mínimo 5 créditos"
+                            placeholder="Mínimo 12 créditos"
                             className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-mono text-center tracking-[0.2em] focus:border-[#00D2AD] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <p className="text-[10px] text-gray-500 mt-2 text-center">Total: <span className="text-[#00D2AD] font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price * creditQuantity)}</span></p>
@@ -425,7 +425,7 @@ export default function Home() {
               key={service.id} 
               onClick={() => {
                 if (isCreditService(service)) {
-                  setCreditQuantity(5);
+                  setCreditQuantity(12);
                   setEmail('');
                 }
                 setSelectedService(service);
