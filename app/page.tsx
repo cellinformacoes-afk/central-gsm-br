@@ -27,6 +27,7 @@ export default function Home() {
   const [imei, setImei] = useState('');
   const [creditQuantity, setCreditQuantity] = useState(12);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   
   const router = useRouter();
 
@@ -83,35 +84,37 @@ export default function Home() {
     }
 
 
-    if (selectedService.category_id === 3) {
-      if (!email.trim()) {
-        alert("Por favor, digite o e-mail para ativação.");
-        return;
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email.trim())) {
-        alert("Por favor, insira um e-mail válido.");
-        return;
-      }
-    }
+    // (validação de licenças movida abaixo, junto com username)
 
-    // Validação para créditos
+    // Validação para créditos (Samsung Tool usa username, não email)
     if (isCreditService(selectedService)) {
-      if (!email.trim()) {
-        alert("Por favor, digite o e-mail que receberá os créditos.");
-        return;
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email.trim())) {
-        alert("Por favor, insira um e-mail válido.");
+      if (!username.trim()) {
+        alert("Por favor, digite o username da conta que receberá os créditos.");
         return;
       }
       if (!creditQuantity || creditQuantity < 12) {
         alert("O pedido mínimo é de 12 créditos.");
         return;
       }
-      const confirmEmail = window.confirm(`O e-mail "${email.trim()}" é o e-mail de destino para os créditos?`);
-      if (!confirmEmail) {
+      const confirmUser = window.confirm(`O username "${username.trim()}" é o destino dos créditos?`);
+      if (!confirmUser) {
+        return;
+      }
+    }
+
+    // Validação para licenças (email + username obrigatórios)
+    if (selectedService.category_id === 3) {
+      if (!email.trim()) {
+        alert("Por favor, digite o e-mail da conta para ativação.");
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        alert("Por favor, insira um e-mail válido.");
+        return;
+      }
+      if (!username.trim()) {
+        alert("Por favor, digite o username da conta.");
         return;
       }
     }
@@ -130,7 +133,7 @@ export default function Home() {
       const result = await proxy.rpc('purchase_service_v2', {
         p_user_id: session.user.id,
         p_service_id: selectedService.id,
-        p_input_data: { imei: imei.trim(), email: email.trim() },
+        p_input_data: { imei: imei.trim(), email: email.trim(), username: username.trim() },
         p_quantity: qty
       });
 
@@ -151,6 +154,7 @@ export default function Home() {
       setSelectedService(null);
       setImei('');
       setEmail('');
+      setUsername('');
       setCreditQuantity(12);
       router.push('/pedidos');
     } catch (error: any) {
@@ -194,7 +198,7 @@ export default function Home() {
                           {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isCreditService(selectedService) ? selectedService.price * creditQuantity : selectedService.price)}
                        </p>
                     </div>
-                    <button onClick={() => { setSelectedService(null); setImei(''); setEmail(''); setCreditQuantity(12); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
+                    <button onClick={() => { setSelectedService(null); setImei(''); setEmail(''); setUsername(''); setCreditQuantity(12); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
                  </div>
 
                  <div className="space-y-6">
@@ -231,12 +235,12 @@ export default function Home() {
                           <p className="text-[10px] text-gray-500 mt-2 text-center">Total: <span className="text-[#00D2AD] font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price * creditQuantity)}</span></p>
                         </div>
                         <div>
-                          <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">E-mail que receberá os créditos</label>
+                          <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Username da conta que receberá os créditos</label>
                           <input 
-                            type="email" 
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="EX: cliente@email.com"
+                             type="text" 
+                             value={username}
+                             onChange={(e) => setUsername(e.target.value)}
+                             placeholder="EX: meuusername"
                             className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
                           />
                         </div>
@@ -262,19 +266,31 @@ export default function Home() {
                     )}
 
 
-                    {/* Conditional Input for Email (Only for Licenças / Ativação Category) */}
-                    {selectedService.category_id === 3 && (
-                      <div className="animate-in slide-in-from-top-2 duration-300">
-                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Digite o E-mail para Ativação</label>
-                        <input 
-                          type="email" 
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="EX: cliente@email.com"
-                          className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
-                        />
-                      </div>
-                    )}
+                     {/* Inputs para Licenças / Ativação (email + username obrigatórios) */}
+                     {selectedService.category_id === 3 && (
+                       <div className="animate-in slide-in-from-top-2 duration-300 space-y-4">
+                         <div>
+                           <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">E-mail da conta para Ativação</label>
+                           <input 
+                             type="email" 
+                             value={email}
+                             onChange={(e) => setEmail(e.target.value)}
+                             placeholder="EX: cliente@email.com"
+                             className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Username da conta</label>
+                           <input 
+                             type="text" 
+                             value={username}
+                             onChange={(e) => setUsername(e.target.value)}
+                             placeholder="EX: meuusername"
+                             className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
+                           />
+                         </div>
+                       </div>
+                     )}
 
                     {selectedService.category_id !== 9 && (
                       <div className="bg-[#112328] p-4 rounded-xl border border-[#00D2AD]/10 text-xs text-gray-400 font-medium">
@@ -424,10 +440,9 @@ export default function Home() {
             <div 
               key={service.id} 
               onClick={() => {
-                if (isCreditService(service)) {
-                  setCreditQuantity(12);
-                  setEmail('');
-                }
+                setEmail('');
+                setUsername('');
+                if (isCreditService(service)) setCreditQuantity(12);
                 setSelectedService(service);
               }}
               className={`bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center transition-all relative overflow-hidden hover:shadow-[0_0_40px_rgba(0,210,173,0.1)] hover:-translate-y-2 hover:border-[#00D2AD]/40 cursor-pointer group`}
