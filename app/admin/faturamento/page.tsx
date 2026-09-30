@@ -18,14 +18,14 @@ export default function AdminFaturamentoPage() {
   useEffect(() => {
     checkAdmin();
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    const todayStr = now.toLocaleDateString('en-CA'); // en-CA retorna formato YYYY-MM-DD no timezone local
     setStartDate(todayStr);
     setEndDate(todayStr);
   }, []);
 
   useEffect(() => {
     if (startDate && endDate) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toLocaleDateString('en-CA'); // data local BR
       setIsToday(startDate === today && endDate === today);
       fetchData();
     }

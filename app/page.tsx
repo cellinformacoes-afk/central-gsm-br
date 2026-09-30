@@ -113,8 +113,8 @@ export default function Home() {
         alert("Por favor, insira um e-mail válido.");
         return;
       }
-      if (!username.trim()) {
-        alert("Por favor, digite o username da conta.");
+      if ([85,87,88,95].includes(selectedService.id) && !username.trim()) {
+        alert("Por favor, digite o username da conta Unlock Tool.");
         return;
       }
     }
@@ -266,7 +266,7 @@ export default function Home() {
                     )}
 
 
-                     {/* Inputs para Licenças / Ativação (email + username obrigatórios) */}
+                     {/* Inputs para Licencas / Ativacao - email obrigatorio; username so para Unlock Tool */}
                      {selectedService.category_id === 3 && (
                        <div className="animate-in slide-in-from-top-2 duration-300 space-y-4">
                          <div>
@@ -279,16 +279,18 @@ export default function Home() {
                              className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
                            />
                          </div>
-                         <div>
-                           <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Username da conta</label>
-                           <input 
-                             type="text" 
-                             value={username}
-                             onChange={(e) => setUsername(e.target.value)}
-                             placeholder="EX: meuusername"
-                             className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
-                           />
-                         </div>
+                         {[85,87,88,95].includes(selectedService.id) && (
+                          <div>
+                            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Username da conta (Unlock Tool)</label>
+                            <input 
+                              type="text" 
+                              value={username}
+                              onChange={(e) => setUsername(e.target.value)}
+                              placeholder="EX: meuusername"
+                              className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
+                            />
+                          </div>
+                         )}
                        </div>
                      )}
 
