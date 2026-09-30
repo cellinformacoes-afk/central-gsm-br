@@ -12,7 +12,6 @@ export default function AdminFaturamentoPage() {
   const [totalPix, setTotalPix] = useState(0);
   const [totalCard, setTotalCard] = useState(0);
   const [licenseCount, setLicenseCount] = useState(0);
-  const [isToday, setIsToday] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -25,8 +24,6 @@ export default function AdminFaturamentoPage() {
 
   useEffect(() => {
     if (startDate && endDate) {
-      const today = new Date().toLocaleDateString('en-CA'); // data local BR
-      setIsToday(startDate === today && endDate === today);
       fetchData();
     }
   }, [startDate, endDate]);
@@ -94,10 +91,9 @@ export default function AdminFaturamentoPage() {
   const fmt = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   const formatDate = (d: string) => new Date(d).toLocaleString('pt-BR');
 
-  const descontoHoje = isToday ? 150 : 0;
   const descontoLicencas = licenseCount * 50;
   const totalBruto = totalPix + totalCard;
-  const lucroLiquido = totalBruto - descontoHoje - descontoLicencas;
+  const lucroLiquido = totalBruto - descontoLicencas;
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
@@ -127,10 +123,9 @@ export default function AdminFaturamentoPage() {
                <div>
                   <p className="text-[10px] font-black text-[#00D2AD] uppercase tracking-widest mb-1">Lucro Liquido</p>
                   <h3 className="text-4xl font-black text-white truncate">{fmt(lucroLiquido)}</h3>
-                  {(descontoHoje > 0 || descontoLicencas > 0) && (
+                  {(descontoLicencas > 0) && (
                     <div className="mt-2 space-y-1">
                       <p className="text-[9px] text-gray-500 font-bold">Bruto: <span className="text-gray-400">{fmt(totalBruto)}</span></p>
-                      {descontoHoje > 0 && <p className="text-[9px] text-red-400 font-bold">- Desconto hoje: {fmt(descontoHoje)}</p>}
                       {descontoLicencas > 0 && <p className="text-[9px] text-orange-400 font-bold">- Custo licencas ({licenseCount}x R$50): {fmt(descontoLicencas)}</p>}
                     </div>
                   )}
@@ -160,10 +155,9 @@ export default function AdminFaturamentoPage() {
          </div>
       </div>
 
-      {(descontoHoje > 0 || descontoLicencas > 0) && (
+      {(descontoLicencas > 0) && (
         <div className="mb-6 bg-[#1e293b]/50 border border-[#334155] rounded-2xl p-4 flex flex-wrap gap-6 text-xs font-bold text-gray-400">
           <span>Total bruto: <span className="text-white">{fmt(totalBruto)}</span></span>
-          {descontoHoje > 0 && <span className="text-red-400">Desconto fixo hoje: -{fmt(descontoHoje)}</span>}
           {descontoLicencas > 0 && <span className="text-orange-400">Custo licencas ({licenseCount} venda{licenseCount !== 1 ? 's' : ''} x R$50): -{fmt(descontoLicencas)}</span>}
           <span className="text-[#00D2AD]">Lucro liquido: {fmt(lucroLiquido)}</span>
         </div>
