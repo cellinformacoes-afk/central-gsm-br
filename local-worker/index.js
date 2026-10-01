@@ -572,7 +572,7 @@ async function processarFerramenta(task, config) {
       // Tenta navegar diretamente para a URL de logout
       const logoutUrl = config.logoutUrl || (new URL(config.loginUrl).origin + '/auth/logout');
       try {
-        await page.goto(logoutUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await page.goto(logoutUrl, { waitUntil: 'load', timeout: 15000 });
         await page.waitForTimeout(2000);
         log('ROBO', `[${config.nome}] Apos logout URL: ${page.url()}`);
       } catch {}
@@ -584,7 +584,7 @@ async function processarFerramenta(task, config) {
           const headerBtns = [...document.querySelectorAll('header button, nav button, header [role="button"]')];
           const lastBtn = headerBtns[headerBtns.length - 1];
           if (lastBtn) lastBtn.click();
-        });
+        }).catch(() => {});
         await page.waitForTimeout(1500);
         await page.evaluate(() => {
           const els = [...document.querySelectorAll('*')];
@@ -594,7 +594,7 @@ async function processarFerramenta(task, config) {
             return txt === 'sair' || txt === 'logout' || txt === 'sign out' || txt === 'log out';
           });
           if (sair) (sair.closest('a') || sair.closest('button') || sair).click();
-        });
+        }).catch(() => {});
         await page.waitForTimeout(2000);
       }
 
@@ -602,8 +602,8 @@ async function processarFerramenta(task, config) {
     }
     // Vai para o formulario de login (sempre, apos logout ou se nao estava logado)
     if (!page.url().toLowerCase().includes('login')) {
-      await page.goto(config.loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.waitForTimeout(2000);
+      await page.goto(config.loginUrl, { waitUntil: 'load', timeout: 30000 }).catch(() => {});
+      await page.waitForTimeout(config.temCloudflare ? 2000 : 5000);
     }
     // Aguarda formulario aparecer (Cloudflare Turnstile pode demorar)
     {
