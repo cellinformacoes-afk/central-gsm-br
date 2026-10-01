@@ -1,7 +1,7 @@
 /**
  * =========================================================
  *  CENTRAL GSM — WORKER LOCAL (PC) — 100% AUTOMATICO
- *  Suporta: UnlockTool, TSM, Android Multi, TFM, Cell Tool, DFT Pro
+ *  Suporta: UnlockTool, TSM, Android Multi, TFM
  *  Chrome abre sozinho via CDP — Cloudflare bypassa!
  * =========================================================
  */
@@ -87,16 +87,6 @@ const FERRAMENTAS = {
     submitSel: 'button[type="submit"], input[type="submit"], button:has-text("Login"), button:has-text("Sign in"), button.btn',
     temCloudflare: false,
   },
-  dft: {
-    nome: 'DFT Pro',
-    keywords: ['dft'],
-    loginUrl: 'https://www.dftpro.com/user/login.php',
-    passwordChangeUrl: null,
-    userSel: 'input[placeholder="Username" i], input[name="username"]',
-    passSel: 'input[type="password"]',
-    submitSel: 'button.btn-login-custom, button[type="submit"], input[type="submit"]',
-    temCloudflare: true,
-  },
 };
 
 // ── Detectar ferramenta pelo service_title ────────────────
@@ -138,7 +128,7 @@ async function marcarRodando(id) {
 
 async function marcarSucesso(id) {
   await supabase.from('automation_tasks')
-    .update({ status: 'completed', updated_at: new Date().toISOString() })
+    .update({ status: 'done', updated_at: new Date().toISOString() })
     .eq('id', id);
 }
 
@@ -162,7 +152,10 @@ async function atualizarConta(accountId, novaSenha, email) {
     })
     .eq('id', accountId);
   if (error) log('ERRO', `Falha ao atualizar conta: ${error.message}`);
-  else log('INFO', `✅ Conta ${email} atualizada! Nova senha: ${novaSenha}`);
+  else {
+    log('INFO', `✅ Conta atualizada: ${email}`);
+    log('INFO', `🔑 NOVA SENHA: [${novaSenha}] ← guarde se precisar corrigir manualmente`);
+  }
 }
 
 // ── Chrome: auto-abrir se necessario ─────────────────────
@@ -207,9 +200,10 @@ async function abrirChromeSeNecessario() {
 // ── Helpers ───────────────────────────────────────────────
 
 function gerarSenha() {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#';
+  // Sem caracteres especiais (!@#) - alguns sites recusam e causam falha na troca
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let s = '';
-  for (let i = 0; i < 12; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 14; i++) s += chars[Math.floor(Math.random() * chars.length)];
   return s;
 }
 
@@ -291,17 +285,33 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
     return false;
   }
 
+  // Triple-click + fill garante que o campo e limpo antes de preencher (evita senhas incorretas)
+  async function preencherCampo(campo, valor) {
+    await campo.click({ clickCount: 3 });
+    await page.waitForTimeout(150);
+    await campo.fill('');
+    await page.waitForTimeout(100);
+    await campo.fill(valor);
+    // Verificar se o valor foi preenchido corretamente
+    const valorAtual = await campo.inputValue().catch(() => '');
+    if (valorAtual !== valor) {
+      log('ROBO', `AVISO: campo nao preencheu corretamente! Tentando de novo...`);
+      await campo.click({ clickCount: 3 });
+      await campo.fill(valor);
+    }
+  }
+
   if (campos.length === 1) {
-    // TSM Tool / AMT: apenas 1 campo - so a nova senha
-    await campos[0].fill(senhaNova);
-    log('ROBO', 'Preenchendo campo unico de senha');
+    await preencherCampo(campos[0], senhaNova);
+    log('ROBO', 'Campo unico de senha preenchido');
   } else if (campos.length >= 3) {
-    await campos[0].fill(senhaAntiga); // Senha atual
-    await campos[1].fill(senhaNova);   // Nova senha
-    await campos[2].fill(senhaNova);   // Confirmar
+    await preencherCampo(campos[0], senhaAntiga); // Senha atual
+    await preencherCampo(campos[1], senhaNova);   // Nova senha
+    await preencherCampo(campos[2], senhaNova);   // Confirmar
+    log('ROBO', `Senhas preenchidas: antiga=${senhaAntiga.length}chars, nova=${senhaNova.length}chars`);
   } else {
-    await campos[0].fill(senhaNova);   // Nova senha
-    await campos[1].fill(senhaNova);   // Confirmar
+    await preencherCampo(campos[0], senhaNova);   // Nova senha
+    await preencherCampo(campos[1], senhaNova);   // Confirmar
   }
 
   const urlAntes = page.url();
@@ -530,10 +540,11 @@ async function processarFerramenta(task, config) {
       log('ROBO', `[${config.nome}] localStorage e sessionStorage limpos!`);
     } catch {}
 
-    // LOGIN
+    // LOGIN — usa 'load' (espera JS renderizar) em vez de 'domcontentloaded'
     log('ROBO', `[${config.nome}] Abrindo ${config.loginUrl}...`);
-    await page.goto(config.loginUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForTimeout(2000);
+    await page.goto(config.loginUrl, { waitUntil: 'load', timeout: 60000 });
+    // Pausa extra para sites SPA (ex: TSM Tool) terminarem de renderizar
+    await page.waitForTimeout(config.temCloudflare ? 2000 : 5000);
 
     // Verificar se ja esta logado (redirecionou para fora do login)
     const urlDepoisDeIr = page.url();
@@ -594,12 +605,11 @@ async function processarFerramenta(task, config) {
       await page.goto(config.loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await page.waitForTimeout(2000);
     }
-    // Aguarda formulario aparecer (Cloudflare pode demorar)
+    // Aguarda formulario aparecer (Cloudflare Turnstile pode demorar)
     {
-      // Aguarda formulario aparecer (Cloudflare pode demorar)
       let formularioOk = false;
-      for (let i = 0; i < 12 && !formularioOk; i++) {
-        await page.waitForTimeout(3000);
+      for (let i = 0; i < 15 && !formularioOk; i++) {
+        await page.waitForTimeout(4000);
         const campo = await page.$(config.userSel).catch(() => null);
         if (campo) { formularioOk = true; break; }
 
@@ -609,18 +619,47 @@ async function processarFerramenta(task, config) {
           formularioOk = true; break;
         }
 
-        // Tentar clicar checkbox Cloudflare (main page ou iframe)
+        // Movimento de mouse humano para ajudar Turnstile auto-resolver
         try {
-          const cbMain = await page.$('input[type="checkbox"]');
-          if (cbMain) { await cbMain.click(); log('ROBO', `[${config.nome}] Cloudflare clicado!`); }
+          await page.mouse.move(200 + Math.random() * 400, 200 + Math.random() * 300);
+          await page.waitForTimeout(300);
+          await page.mouse.move(300 + Math.random() * 300, 150 + Math.random() * 200);
         } catch {}
+
+        // Tentar clicar no widget Turnstile (iframe do Cloudflare)
+        let cfClicado = false;
         for (const frame of page.frames()) {
           try {
-            const cb = await frame.$('input[type="checkbox"]');
-            if (cb) { await cb.click(); break; }
+            const src = frame.url();
+            if (src.includes('challenges.cloudflare.com') || src.includes('cloudflare.com/cdn-cgi')) {
+              // Turnstile: clicar no corpo do iframe
+              await frame.click('body', { timeout: 3000 }).catch(() => {});
+              cfClicado = true;
+              log('ROBO', `[${config.nome}] Turnstile iframe clicado! (${i + 1})`);
+              await page.waitForTimeout(6000); // dar tempo pro challenge resolver
+              break;
+            }
+            // Fallback: checkbox convencional dentro do frame
+            const cb = await frame.$('input[type="checkbox"], [role="checkbox"]');
+            if (cb) { await cb.click(); cfClicado = true; break; }
           } catch {}
         }
-        log('ROBO', `[${config.nome}] Aguardando login... (${i + 1}/12)`);
+        // Tentar tambem na pagina principal
+        if (!cfClicado) {
+          try {
+            const cbMain = await page.$('input[type="checkbox"], [role="checkbox"]');
+            if (cbMain) { await cbMain.click(); log('ROBO', `[${config.nome}] Checkbox principal clicado!`); }
+          } catch {}
+        }
+
+        // A cada 5 tentativas sem sucesso, recarregar a pagina
+        if (i > 0 && i % 5 === 0) {
+          log('ROBO', `[${config.nome}] Recarregando pagina apos ${i + 1} tentativas...`);
+          await page.goto(config.loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
+          await page.waitForTimeout(3000);
+        }
+
+        log('ROBO', `[${config.nome}] Aguardando Cloudflare... (${i + 1}/15)`);
       }
 
       if (!formularioOk) {
@@ -629,11 +668,12 @@ async function processarFerramenta(task, config) {
 
       const urlAntesPreencher = page.url().toLowerCase();
       if (urlAntesPreencher.includes('login') || urlAntesPreencher.includes('challenge')) {
-        // Preenche login - simula digitacao humana
+        // Preenche login - triple-click antes de preencher (evita mistura com valor anterior)
         const userField = await page.$(config.userSel);
         if (!userField) return { ok: false, motivo: `Campo usuario nao encontrado - ${config.nome}`, intervencao: true };
-        await userField.click();
-        await page.waitForTimeout(400);
+        await userField.click({ clickCount: 3 });
+        await page.waitForTimeout(150);
+        await userField.fill('');
         await userField.fill(username);
 
         // Pausa entre email e senha (como humano faria)
@@ -641,8 +681,9 @@ async function processarFerramenta(task, config) {
 
         const passField = await page.$(config.passSel);
         if (!passField) return { ok: false, motivo: `Campo senha nao encontrado - ${config.nome}`, intervencao: true };
-        await passField.click();
-        await page.waitForTimeout(300);
+        await passField.click({ clickCount: 3 });
+        await page.waitForTimeout(150);
+        await passField.fill('');
         await passField.fill(senhaAntiga);
 
         await page.waitForTimeout(1000);
@@ -656,11 +697,12 @@ async function processarFerramenta(task, config) {
         log('ROBO', `[${config.nome}] Conta logada automaticamente, pulando envio do form...`);
       }
 
-      // Verifica se logou (URL mudou)
+      // Verifica se logou usando texto visivel (nao HTML completo)
       const urlFinal = page.url();
       if (urlFinal.includes('login') || urlFinal.includes('signin')) {
-        const html = await page.content();
-        if (html.toLowerCase().includes('invalid') || html.toLowerCase().includes('incorret') || html.toLowerCase().includes('errad') || html.toLowerCase().includes('credenciais')) {
+        const textoLogin = await page.evaluate(() => (document.body?.innerText || '').toLowerCase()).catch(() => '');
+        const errosLogin = ['invalid', 'incorret', 'errad', 'credenciais', 'wrong password', 'senha incorreta', 'usuario nao encontrado', 'user not found'];
+        if (errosLogin.some(e => textoLogin.includes(e))) {
           return { ok: false, motivo: `Senha antiga incorreta - ${config.nome}`, intervencao: true };
         }
       }
@@ -731,19 +773,48 @@ async function processarUnlockTool(task) {
     await page.goto('https://unlocktool.net/post-in/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     let formularioOk = false;
-    for (let i = 0; i < 6 && !formularioOk; i++) {
-      await page.waitForTimeout(3000);
+    for (let i = 0; i < 12 && !formularioOk; i++) {
+      await page.waitForTimeout(4000);
       const temForm = await page.$('input[name="username"], input[type="text"], form input').catch(() => null);
       if (temForm) { formularioOk = true; break; }
 
+      // Movimento de mouse humano
+      try {
+        await page.mouse.move(200 + Math.random() * 400, 200 + Math.random() * 300);
+        await page.waitForTimeout(300);
+      } catch {}
+
+      // Tentar clicar no iframe Turnstile do Cloudflare
+      let cfClicado = false;
       for (const frame of page.frames()) {
         try {
-          const cb = await frame.$('input[type="checkbox"]');
-          if (cb) { await cb.click(); break; }
+          const src = frame.url();
+          if (src.includes('challenges.cloudflare.com') || src.includes('cloudflare.com/cdn-cgi')) {
+            await frame.click('body', { timeout: 3000 }).catch(() => {});
+            cfClicado = true;
+            log('ROBO', `[UnlockTool] Turnstile iframe clicado! (${i + 1})`);
+            await page.waitForTimeout(6000);
+            break;
+          }
+          const cb = await frame.$('input[type="checkbox"], [role="checkbox"]');
+          if (cb) { await cb.click(); cfClicado = true; break; }
         } catch {}
       }
-      log('ROBO', `[UnlockTool] Aguardando... (${i + 1}/6)`);
-      await page.waitForTimeout(8000);
+      if (!cfClicado) {
+        try {
+          const cbMain = await page.$('input[type="checkbox"], [role="checkbox"]');
+          if (cbMain) { await cbMain.click(); }
+        } catch {}
+      }
+
+      // A cada 4 tentativas sem sucesso, recarregar
+      if (i > 0 && i % 4 === 0) {
+        log('ROBO', `[UnlockTool] Recarregando pagina apos ${i + 1} tentativas...`);
+        await page.goto('https://unlocktool.net/post-in/', { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
+        await page.waitForTimeout(3000);
+      }
+
+      log('ROBO', `[UnlockTool] Aguardando Cloudflare... (${i + 1}/12)`);
     }
 
     if (!formularioOk) return { ok: false, motivo: 'Formulario UnlockTool nao apareceu', intervencao: false };
@@ -776,9 +847,19 @@ async function processarUnlockTool(task) {
     const camposTroca = await page.$$('input[type="password"]');
     if (camposTroca.length < 2) return { ok: false, motivo: `Campos de troca nao encontrados`, intervencao: true };
 
-    await camposTroca[0].fill(senhaAntiga);
-    if (camposTroca[1]) await camposTroca[1].fill(senhaNova);
-    if (camposTroca[2]) await camposTroca[2].fill(senhaNova);
+    // Triple-click em cada campo antes de preencher (evita mistura com valor anterior)
+    async function preencherCampoUnlock(campo, valor) {
+      await campo.click({ clickCount: 3 });
+      await page.waitForTimeout(150);
+      await campo.fill('');
+      await page.waitForTimeout(100);
+      await campo.fill(valor);
+    }
+
+    await preencherCampoUnlock(camposTroca[0], senhaAntiga);
+    if (camposTroca[1]) await preencherCampoUnlock(camposTroca[1], senhaNova);
+    if (camposTroca[2]) await preencherCampoUnlock(camposTroca[2], senhaNova);
+    log('ROBO', `[UnlockTool] Campos de troca preenchidos: antiga=${senhaAntiga.length}chars, nova=${senhaNova.length}chars`);
 
     let btnClicado = false;
     const btnSalvar = await page.$('button[type="submit"], input[type="submit"]');
@@ -803,11 +884,13 @@ async function processarUnlockTool(task) {
     log('ROBO', `[UnlockTool] Botao de salvar clicado/Enter pressionado`);
     await page.waitForTimeout(4000);
 
-    const htmlApos = await page.content();
-    const textoApos = htmlApos.toLowerCase();
-    if (textoApos.includes('incorrect') || textoApos.includes('incorreta') || textoApos.includes('invalid') || textoApos.includes('error') || textoApos.includes('erro')) {
-       log('ERRO', '[UnlockTool] Erro na hora de trocar a senha (provavel senha antiga incorreta).');
-       return { ok: false, motivo: 'Erro ao trocar senha na UnlockTool. Verifique.', intervencao: true };
+    // Usar innerText (texto visivel) - nao HTML completo que tem 'error' em JS/CSS
+    const textoApos = await page.evaluate(() => (document.body?.innerText || '').toLowerCase()).catch(() => '');
+    const errosVisiveis = ['incorrect password', 'wrong password', 'senha incorreta', 'senha atual incorreta',
+      'invalid password', 'current password incorrect', 'passwords do not match', 'senhas nao coincidem'];
+    if (errosVisiveis.some(e => textoApos.includes(e))) {
+       log('ERRO', '[UnlockTool] Erro visivel na troca de senha (senha antiga incorreta ou senhas diferentes).');
+       return { ok: false, motivo: 'Erro ao trocar senha na UnlockTool. Senha antiga incorreta.', intervencao: true };
     }
 
     await page.goto('https://unlocktool.net/accounts/logout/', { timeout: 15000 }).catch(() => {});
@@ -862,10 +945,11 @@ async function sincronizarTarefas() {
 
     if (!pendentes?.length) return;
 
-    // Buscar tarefas ja existentes (pending ou running)
+    // Buscar tarefas ja existentes (pending ou running) do tipo password_reset
     const { data: tarefasExist } = await supabase
       .from('automation_tasks')
       .select('account_id')
+      .eq('type', 'password_reset')
       .in('status', ['pending', 'running']);
 
     const contasComTarefa = new Set((tarefasExist || []).map(t => t.account_id));
@@ -884,6 +968,7 @@ async function sincronizarTarefas() {
       if (!email || !senha || !titulo) continue;
 
       await supabase.from('automation_tasks').insert({
+        type: 'password_reset',
         account_id: conta.id,
         service_title: titulo,
         status: 'pending',
@@ -984,7 +1069,7 @@ async function ciclo() {
 async function main() {
   log('INFO', '================================================');
   log('INFO', '  CENTRAL GSM - Worker Local (Multi-Tool)      ');
-  log('INFO', '  UnlockTool | TSM | AMT | TFM | Cell | DFT   ');
+  log('INFO', '  UnlockTool | TSM | AMT | TFM                ');
   log('INFO', '================================================');
   log('INFO', `Verificando a cada ${INTERVALO_MS / 60000} minutos`);
   log('INFO', 'Chrome abre automaticamente quando necessario.');
