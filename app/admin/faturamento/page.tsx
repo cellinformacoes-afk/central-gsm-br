@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -98,12 +98,28 @@ export default function AdminFaturamentoPage() {
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
       <AdminNav />
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
         <div>
            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">RELATORIO DE <span className="text-[#00D2AD]">LUCRO</span></h1>
            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-2">Faturamento liquido apos custos de licencas e taxas</p>
         </div>
-        <div className="flex flex-col md:flex-row gap-4 items-center bg-[#0f172a] p-3 rounded-2xl border border-[#334155]">
+        <div className="flex flex-col gap-3">
+          {/* Botoes de filtro rapido */}
+          <div className="flex flex-wrap gap-2 justify-end">
+            {[
+              { label: 'Hoje', fn: () => { const d = new Date().toLocaleDateString('en-CA'); setStartDate(d); setEndDate(d); } },
+              { label: 'Ontem', fn: () => { const d = new Date(); d.setDate(d.getDate()-1); const s = d.toLocaleDateString('en-CA'); setStartDate(s); setEndDate(s); } },
+              { label: 'Esta Semana', fn: () => { const now = new Date(); const day = now.getDay(); const mon = new Date(now); mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1)); setStartDate(mon.toLocaleDateString('en-CA')); setEndDate(now.toLocaleDateString('en-CA')); } },
+              { label: 'Este Mes', fn: () => { const now = new Date(); const ini = new Date(now.getFullYear(), now.getMonth(), 1); setStartDate(ini.toLocaleDateString('en-CA')); setEndDate(now.toLocaleDateString('en-CA')); } },
+              { label: 'Este Ano', fn: () => { const now = new Date(); const ini = new Date(now.getFullYear(), 0, 1); setStartDate(ini.toLocaleDateString('en-CA')); setEndDate(now.toLocaleDateString('en-CA')); } },
+            ].map(({ label, fn }) => (
+              <button key={label} onClick={fn} className="bg-[#1e293b] hover:bg-[#00D2AD]/20 text-gray-400 hover:text-[#00D2AD] px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border border-[#334155] hover:border-[#00D2AD]/40">
+                {label}
+              </button>
+            ))}
+          </div>
+          {/* Filtro por data customizada */}
+          <div className="flex flex-col md:flex-row gap-3 items-center bg-[#0f172a] p-3 rounded-2xl border border-[#334155]">
             <div className="flex flex-col">
               <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 ml-1">De:</label>
               <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-[#1e293b] text-white border border-[#334155] rounded-xl px-4 py-2 text-sm outline-none focus:border-[#00D2AD]" />
@@ -113,6 +129,7 @@ export default function AdminFaturamentoPage() {
               <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-[#1e293b] text-white border border-[#334155] rounded-xl px-4 py-2 text-sm outline-none focus:border-[#00D2AD]" />
             </div>
             <button onClick={fetchData} className="bg-[#00D2AD]/10 hover:bg-[#00D2AD] text-[#00D2AD] hover:text-[#0f172a] mt-4 md:mt-5 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-[#00D2AD]/30">Filtrar</button>
+          </div>
         </div>
       </div>
 
