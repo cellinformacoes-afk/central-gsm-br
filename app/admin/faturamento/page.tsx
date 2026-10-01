@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -11,7 +11,7 @@ export default function AdminFaturamentoPage() {
   const [endDate, setEndDate] = useState('');
   const [totalPix, setTotalPix] = useState(0);
   const [totalCard, setTotalCard] = useState(0);
-  const [licenseCount, setLicenseCount] = useState(0);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -75,14 +75,6 @@ export default function AdminFaturamentoPage() {
       else if (t.type === 'credit_card') card += amt;
     });
 
-    // Buscar pedidos de licencas no periodo (category_id = 3)
-    const { data: licOrders } = await supabase
-      .from('orders')
-      .select('id, services(category_id)')
-      .gte('created_at', start.toISOString())
-      .lt('created_at', end.toISOString());
-    const licCount = licOrders ? licOrders.filter((o: any) => o.services?.category_id === 3).length : 0;
-    setLicenseCount(licCount);
     setTotalPix(pix);
     setTotalCard(card);
     setLoading(false);
@@ -91,9 +83,7 @@ export default function AdminFaturamentoPage() {
   const fmt = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   const formatDate = (d: string) => new Date(d).toLocaleString('pt-BR');
 
-  const descontoLicencas = licenseCount * 50;
   const totalBruto = totalPix + totalCard;
-  const lucroLiquido = totalBruto - descontoLicencas;
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
@@ -138,14 +128,8 @@ export default function AdminFaturamentoPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2"></div>
             <div className="flex justify-between items-start relative z-10">
                <div>
-                  <p className="text-[10px] font-black text-[#00D2AD] uppercase tracking-widest mb-1">Lucro Liquido</p>
-                  <h3 className="text-4xl font-black text-white truncate">{fmt(lucroLiquido)}</h3>
-                  {(descontoLicencas > 0) && (
-                    <div className="mt-2 space-y-1">
-                      <p className="text-[9px] text-gray-500 font-bold">Bruto: <span className="text-gray-400">{fmt(totalBruto)}</span></p>
-                      {descontoLicencas > 0 && <p className="text-[9px] text-orange-400 font-bold">- Custo licencas ({licenseCount}x R$50): {fmt(descontoLicencas)}</p>}
-                    </div>
-                  )}
+                   <p className="text-[10px] font-black text-[#00D2AD] uppercase tracking-widest mb-1">Total Bruto</p>
+                   <h3 className="text-4xl font-black text-white truncate">{fmt(totalBruto)}</h3>
                </div>
                <div className="w-12 h-12 bg-[#00D2AD]/10 rounded-2xl flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(0,210,173,0.2)] group-hover:scale-110 transition-transform">💰</div>
             </div>
@@ -172,13 +156,7 @@ export default function AdminFaturamentoPage() {
          </div>
       </div>
 
-      {(descontoLicencas > 0) && (
-        <div className="mb-6 bg-[#1e293b]/50 border border-[#334155] rounded-2xl p-4 flex flex-wrap gap-6 text-xs font-bold text-gray-400">
-          <span>Total bruto: <span className="text-white">{fmt(totalBruto)}</span></span>
-          {descontoLicencas > 0 && <span className="text-orange-400">Custo licencas ({licenseCount} venda{licenseCount !== 1 ? 's' : ''} x R$50): -{fmt(descontoLicencas)}</span>}
-          <span className="text-[#00D2AD]">Lucro liquido: {fmt(lucroLiquido)}</span>
-        </div>
-      )}
+
 
       <div className="bg-[#1e293b] rounded-3xl border border-[#334155] overflow-hidden">
         <div className="p-6 border-b border-[#334155]">
