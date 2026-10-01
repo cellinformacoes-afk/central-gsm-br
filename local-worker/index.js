@@ -540,11 +540,20 @@ async function processarFerramenta(task, config) {
       log('ROBO', `[${config.nome}] localStorage e sessionStorage limpos!`);
     } catch {}
 
-    // LOGIN — usa 'load' (espera JS renderizar) em vez de 'domcontentloaded'
+    // LOGIN — aguarda pagina carregar; captura redirecionamentos rapidos (ex: TSM na 1a tentativa)
     log('ROBO', `[${config.nome}] Abrindo ${config.loginUrl}...`);
-    await page.goto(config.loginUrl, { waitUntil: 'load', timeout: 60000 });
+    try {
+      await page.goto(config.loginUrl, { waitUntil: 'load', timeout: 60000 });
+    } catch (navErr) {
+      if (navErr.message.includes('context') || navErr.message.includes('navigation') || navErr.message.includes('destroyed')) {
+        log('ROBO', `[${config.nome}] Redirecionamento detectado - aguardando estabilizar...`);
+        await page.waitForTimeout(4000); // aguarda redirect concluir
+      } else {
+        throw navErr; // erro inesperado - propaga normalmente
+      }
+    }
     // Pausa extra para sites SPA (ex: TSM Tool) terminarem de renderizar
-    await page.waitForTimeout(config.temCloudflare ? 2000 : 5000);
+    await page.waitForTimeout(config.temCloudflare ? 2000 : 4000);
 
     // Verificar se ja esta logado (redirecionou para fora do login)
     const urlDepoisDeIr = page.url();
