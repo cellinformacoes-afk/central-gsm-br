@@ -63,7 +63,7 @@ const FERRAMENTAS = {
     userSel: 'input[placeholder*="Username" i], input[placeholder*="Email" i], input[name="email"], input[name="username"]',
     passSel: 'input[type="password"]',
     submitSel: 'input.btn-primary, button[type="submit"], input[type="submit"]',
-    temCloudflare: false,
+    temCloudflare: true,
   },
   androidmulti: {
     nome: 'Android Multi Tool',
@@ -628,36 +628,51 @@ async function processarFerramenta(task, config) {
           formularioOk = true; break;
         }
 
-        // Movimento de mouse humano para ajudar Turnstile auto-resolver
+        // Movimento de mouse humano
         try {
           await page.mouse.move(200 + Math.random() * 400, 200 + Math.random() * 300);
           await page.waitForTimeout(300);
           await page.mouse.move(300 + Math.random() * 300, 150 + Math.random() * 200);
         } catch {}
 
-        // Tentar clicar no widget Turnstile (iframe do Cloudflare)
+        // Metodo 1: frameLocator (melhor para Turnstile cross-origin)
         let cfClicado = false;
-        for (const frame of page.frames()) {
-          try {
-            const src = frame.url();
-            if (src.includes('challenges.cloudflare.com') || src.includes('cloudflare.com/cdn-cgi')) {
-              // Turnstile: clicar no corpo do iframe
-              await frame.click('body', { timeout: 3000 }).catch(() => {});
-              cfClicado = true;
-              log('ROBO', `[${config.nome}] Turnstile iframe clicado! (${i + 1})`);
-              await page.waitForTimeout(6000); // dar tempo pro challenge resolver
-              break;
-            }
-            // Fallback: checkbox convencional dentro do frame
-            const cb = await frame.$('input[type="checkbox"], [role="checkbox"]');
-            if (cb) { await cb.click(); cfClicado = true; break; }
-          } catch {}
+        try {
+          const turnstileFrame = page.frameLocator('iframe[src*="challenges.cloudflare.com"], iframe[src*="cloudflare.com/cdn-cgi"]');
+          const cb = turnstileFrame.locator('input[type="checkbox"], [role="checkbox"], body');
+          await cb.first().click({ timeout: 3000 });
+          cfClicado = true;
+          log('ROBO', `[${config.nome}] Turnstile clicado via frameLocator! (${i + 1})`);
+          await page.waitForTimeout(6000);
+        } catch {}
+
+        // Metodo 2: iterar frames manualmente
+        if (!cfClicado) {
+          for (const frame of page.frames()) {
+            try {
+              const src = frame.url();
+              if (src.includes('challenges.cloudflare.com') || src.includes('cloudflare.com/cdn-cgi') || src.includes('turnstile')) {
+                await frame.click('input[type="checkbox"], body', { timeout: 3000 }).catch(() => {});
+                cfClicado = true;
+                log('ROBO', `[${config.nome}] Turnstile iframe clicado! (${i + 1})`);
+                await page.waitForTimeout(6000);
+                break;
+              }
+              const cb = await frame.$('input[type="checkbox"], [role="checkbox"]');
+              if (cb) { await cb.click(); cfClicado = true; break; }
+            } catch {}
+          }
         }
-        // Tentar tambem na pagina principal
+
+        // Metodo 3: elemento .cf-turnstile na pagina principal
         if (!cfClicado) {
           try {
-            const cbMain = await page.$('input[type="checkbox"], [role="checkbox"]');
-            if (cbMain) { await cbMain.click(); log('ROBO', `[${config.nome}] Checkbox principal clicado!`); }
+            const cfEl = await page.$('.cf-turnstile, [data-sitekey], iframe[src*="cloudflare"]');
+            if (cfEl) { await cfEl.click(); cfClicado = true; log('ROBO', `[${config.nome}] .cf-turnstile clicado!`); }
+            else {
+              const cbMain = await page.$('input[type="checkbox"], [role="checkbox"]');
+              if (cbMain) { await cbMain.click(); log('ROBO', `[${config.nome}] Checkbox principal clicado!`); }
+            }
           } catch {}
         }
 
