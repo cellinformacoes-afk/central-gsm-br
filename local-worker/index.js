@@ -562,7 +562,7 @@ async function processarFerramenta(task, config) {
           const href = (el.href || '').toLowerCase();
           return txt === 'logout' || txt === 'sign out' || txt === 'sair' || href.includes('logout');
         });
-      });
+      }).catch(() => false); // pagina pode estar redirecionando
       if (temLogout) jaLogado = true;
     }
 
@@ -966,6 +966,12 @@ async function sincronizarTarefas() {
       const senha = conta.credentials?.password;
       const titulo = mapaServico[conta.service_id];
       if (!email || !senha || !titulo) continue;
+
+      // Pular ferramentas nao suportadas (ex: DFT removido)
+      if (!detectarFerramenta(titulo)) {
+        log('INFO', `[${titulo}] Ferramenta nao suportada pelo robo - pulando`);
+        continue;
+      }
 
       await supabase.from('automation_tasks').insert({
         type: 'password_reset',
