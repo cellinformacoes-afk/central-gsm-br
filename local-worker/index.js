@@ -521,8 +521,9 @@ async function processarFerramenta(task, config) {
   if (!chromeOk) return { ok: false, motivo: 'Chrome nao abriu', intervencao: true };
 
   let page = null;
+  let browser = null;
   try {
-    const browser = await chromium.connectOverCDP(CDP_URL);
+    browser = await chromium.connectOverCDP(CDP_URL);
     const context = browser.contexts()[0];
     page = await context.newPage();
     page.setDefaultTimeout(60000);
@@ -761,6 +762,7 @@ async function processarFerramenta(task, config) {
     return { ok: false, motivo: err.message, intervencao: false };
   } finally {
     if (page) await page.close().catch(() => {});
+    if (browser) await browser.disconnect().catch(() => {}); // libera memoria
   }
 }
 
@@ -782,8 +784,9 @@ async function processarUnlockTool(task) {
   if (!chromeOk) return { ok: false, motivo: 'Chrome nao abriu', intervencao: true };
 
   let page = null;
+  let browser = null;
   try {
-    const browser = await chromium.connectOverCDP(CDP_URL);
+    browser = await chromium.connectOverCDP(CDP_URL);
     log('ROBO', '[UnlockTool] Conectado ao Chrome!');
 
     const context = browser.contexts()[0];
@@ -927,6 +930,7 @@ async function processarUnlockTool(task) {
     return { ok: false, motivo: err.message, intervencao: false };
   } finally {
     if (page) await page.close().catch(() => {});
+    if (browser) await browser.disconnect().catch(() => {}); // libera memoria
   }
 }
 

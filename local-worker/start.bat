@@ -8,5 +8,5 @@ echo ================================================
 echo.
 SET PATH=%PATH%;C:\Program Files\nodejs
 cd /d "%~dp0"
-node index.js
+node --max-old-space-size=4096 --expose-gc index.js
 pause
