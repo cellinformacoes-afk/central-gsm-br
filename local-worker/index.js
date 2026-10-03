@@ -762,7 +762,7 @@ async function processarFerramenta(task, config) {
     return { ok: false, motivo: err.message, intervencao: false };
   } finally {
     if (page) await page.close().catch(() => {});
-    if (browser) await browser.disconnect().catch(() => {}); // libera memoria
+    // browser CDP e descartado pelo GC automaticamente
   }
 }
 
@@ -930,7 +930,7 @@ async function processarUnlockTool(task) {
     return { ok: false, motivo: err.message, intervencao: false };
   } finally {
     if (page) await page.close().catch(() => {});
-    if (browser) await browser.disconnect().catch(() => {}); // libera memoria
+    // browser CDP e descartado pelo GC automaticamente
   }
 }
 

@@ -73,11 +73,35 @@ export async function POST(request: NextRequest) {
       'be247f8a-0f23-4d4a-84b8-20c4ae95471a', // Elite Importados (elitecell2027@gmail.com)
       '523eddd4-ec49-45cd-b3c2-d5ba3b1718e9', // Paulo Dir dos Santos Junior (ps2543569@gmail.com) - MED indevido 22/09/2026
       'a3591f78-6f27-4233-b783-349fb8318223', // Renato Abib Dutra Miguel (renatoadmiguel@yahoo.com.br) - MED indevido 22/09/2026
+      '0adf7e01-756a-4d10-9adf-558ea01aef84', // Natanael Paulo / Miguel (natanael2025paulo@gmail.com) - MED indevido 30/09/2026
+      '098af57c-0492-4ad2-b3df-3e6a517ae825', // Bryan Marques (menoor0209@gmail.com) - MED indevido 02/10/2026
+      'f5123b97-d34d-4de3-bfef-f8302237b56f', // Diego Araujo da Silva (diegosilvacda2019@gmail.com) - MED indevido
+      '6e4e26ad-7dda-41d6-a68b-20724ec9a8aa', // Jose Aparecido (japlf77@gmail.com) - MED indevido
+      '35d0028d-3546-40b9-a632-7748a27be0a2', // Joao Victor Mendes Nogueira (victormendesnogueira@gmail.com) - MED indevido 30/09/2026
     ];
 
-    
     if (data.user && blockedUsers.includes(data.user.id)) {
       return NextResponse.json({ error: 'Sua conta foi bloqueada por violação dos termos (Contestação Indevida).' }, { status: 403 });
+    }
+
+    // Verificar se o usuário está com role banned no banco
+    if (data.user?.id) {
+      try {
+        const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${data.user.id}&select=role`, {
+          headers: {
+            'apikey': serviceRoleKey,
+            'Authorization': `Bearer ${serviceRoleKey}`,
+          }
+        });
+        if (profileRes.ok) {
+          const profiles = await profileRes.json();
+          if (profiles?.[0]?.role === 'banned') {
+            return NextResponse.json({ error: 'Sua conta foi bloqueada por violação dos termos (Contestação Indevida).' }, { status: 403 });
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao verificar role banned:', err);
+      }
     }
 
     return NextResponse.json({
