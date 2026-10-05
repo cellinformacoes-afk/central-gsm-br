@@ -111,7 +111,7 @@ async function buscarTarefa() {
     .or(`next_retry_at.is.null,next_retry_at.lte.${agora}`)
     .not('account_id', 'is', null)   // ignora tarefas sem conta vinculada
     .order('created_at', { ascending: true })
-    .limit(20);
+    .limit(1000); // limite alto: tarefas de ferramentas nao suportadas (Samsung, DFT...) nao podem travar a fila
 
   if (error) { log('ERRO', `Supabase: ${error.message}`); return null; }
   if (!data || data.length === 0) return null;
