@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
+    if (profile?.role === 'banned') {
+      return NextResponse.json({ session: null, profile: null, error: 'Sua conta foi bloqueada por violação dos termos (Contestação Indevida).' }, { status: 403 });
+    }
+
     return NextResponse.json({
       session: { user: { id: user.id, email: user.email } },
       profile: profile || null,
