@@ -145,16 +145,25 @@ async function marcarFalha(task, motivo, intervencao) {
 }
 
 async function atualizarConta(accountId, novaSenha, email) {
+  // Buscar a conta atual para preservar outros campos em credentials se houver
+  const { data: contaAtual } = await supabase.from('service_accounts').select('credentials').eq('id', accountId).single();
+  const credsAtualizadas = {
+    ...(contaAtual?.credentials || {}),
+    email: email,
+    password: novaSenha
+  };
+
   const { error } = await supabase.from('service_accounts')
     .update({
       status: 'available',
-      credentials: { email, password: novaSenha }
+      credentials: credsAtualizadas,
+      last_renewed_at: new Date().toISOString()
     })
     .eq('id', accountId);
   if (error) log('ERRO', `Falha ao atualizar conta: ${error.message}`);
   else {
-    log('INFO', `✅ Conta atualizada: ${email}`);
-    log('INFO', `🔑 NOVA SENHA: [${novaSenha}] ← guarde se precisar corrigir manualmente`);
+    log('INFO', `✅ Conta atualizada no banco: ${email}`);
+    log('INFO', `🔑 NOVA SENHA SALVA: [${novaSenha}] ← guarde se precisar corrigir manualmente`);
   }
 }
 
@@ -317,6 +326,17 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
   const urlAntes = page.url();
   await page.waitForTimeout(500);
 
+  // Tratar dialogs (ex: alert('Senha alterada com sucesso!'))
+  let dialogMsg = '';
+  const onDialog = async d => {
+    try {
+      dialogMsg = (d.message() || '').toLowerCase();
+      log('ROBO', `[Alerta Popup] "${dialogMsg}"`);
+      await d.accept().catch(() => {});
+    } catch {}
+  };
+  page.on('dialog', onDialog);
+
   // Clicar botao - estrategias em ordem de prioridade
   let clicou = false;
 
@@ -413,37 +433,77 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
     log('ROBO', 'Pressionando Enter como fallback');
   }
 
-  // Aguarda resposta (ate 6 segundos)
-  await page.waitForTimeout(6000);
+  // Monitora ativamente por até 6 segundos a cada 500ms
+  let temSucesso = false;
+  let temErro = false;
 
-  const urlDepois = page.url();
+  for (let step = 0; step < 12; step++) {
+    await page.waitForTimeout(500);
 
-  // Checar apenas TEXTO VISIVEL (nao HTML completo que tem 'error' em JS/CSS)
-  const textoVisivel = await page.evaluate(() => (document.body?.innerText || '').toLowerCase()).catch(() => '');
+    // 1. Checar se apareceu popup dialog
+    if (dialogMsg) {
+      if (['incorret', 'invalid', 'wrong', 'erro', 'mismatch'].some(e => dialogMsg.includes(e))) {
+        temErro = true;
+        log('ROBO', `Erro via popup dialog: "${dialogMsg}"`);
+        break;
+      }
+      if (['success', 'sucesso', 'alterad', 'changed', 'updated', 'atualizad', 'ok', 'salv'].some(s => dialogMsg.includes(s))) {
+        temSucesso = true;
+        log('ROBO', `Sucesso confirmado via popup dialog: "${dialogMsg}"`);
+        break;
+      }
+    }
 
-  // Verifica ERROS visiveis para o usuario
-  const temErro = ['senha incorreta', 'senha atual incorreta', 'current password incorrect',
-    'invalid password', 'wrong password', 'incorrect password', 'password mismatch',
-    'senhas nao coincidem', 'passwords do not match'].some(e => textoVisivel.includes(e));
-  if (temErro) {
-    log('ROBO', 'Formulario retornou ERRO visivel de senha');
-    return false;
+    // 2. Checar texto visivel
+    const textoVisivel = await page.evaluate(() => (document.body?.innerText || '').toLowerCase()).catch(() => '');
+
+    // Verifica ERROS visiveis para o usuario
+    temErro = ['senha incorreta', 'senha atual incorreta', 'current password incorrect',
+      'invalid password', 'wrong password', 'incorrect password', 'password mismatch',
+      'senhas nao coincidem', 'passwords do not match', 'current password is not correct'].some(e => textoVisivel.includes(e));
+    if (temErro) {
+      log('ROBO', 'Formulario retornou ERRO visivel de senha');
+      break;
+    }
+
+    // Verifica SUCESSO por palavras-chave
+    const palavrasSucesso = ['success', 'sucesso', 'alterada', 'changed', 'updated', 'atualizada',
+      'salvo', 'saved', 'password updated', 'senha alterada', 'profile updated',
+      'perfil atualizado', 'password changed', 'senha atualizada', 'user updated',
+      'successfully', 'sucesso!', 'salvo com sucesso', 'details updated', 'password has been changed'];
+    if (palavrasSucesso.some(s => textoVisivel.includes(s))) {
+      temSucesso = true;
+      log('ROBO', 'Sucesso confirmado por texto visivel na pagina!');
+      break;
+    }
+
+    // 3. Verificar alertas CSS (Bootstrap, Tailwind, SweetAlert)
+    const temAlerta = await page.evaluate(() => {
+      const selectors = ['.alert-success', '.toast-success', '.swal2-success', '[role="alert"].success', '.text-success', '.bg-success'];
+      return selectors.some(s => !!document.querySelector(s));
+    }).catch(() => false);
+
+    if (temAlerta) {
+      temSucesso = true;
+      log('ROBO', 'Sucesso confirmado por elemento de alerta/toast!');
+      break;
+    }
+
+    // 4. Se a URL mudou (redirect apos submit), provavelmente deu certo
+    const urlAtual = page.url();
+    const baseAntes = urlAntes.split('#')[0].split('?')[0];
+    const baseDepois = urlAtual.split('#')[0].split('?')[0];
+    if (baseDepois !== baseAntes && !baseDepois.includes('login') && !baseDepois.includes('challenge')) {
+      temSucesso = true;
+      log('ROBO', `URL mudou (${baseAntes} → ${baseDepois}) - redirect confirma sucesso!`);
+      break;
+    }
   }
 
-  // Verifica SUCESSO por palavras-chave no texto visivel
-  const temSucesso = ['success', 'sucesso', 'alterada', 'changed', 'updated', 'atualizada',
-    'salvo', 'saved', 'password updated', 'senha alterada', 'profile updated',
-    'perfil atualizado', 'password changed', 'senha atualizada'].some(s => textoVisivel.includes(s));
-  if (temSucesso) { log('ROBO', 'Sucesso confirmado por texto!'); return true; }
+  page.off('dialog', onDialog);
 
-  // Se nao tem erro E a URL mudou (redirect apos submit), provavelmente deu certo
-  const baseAntes = urlAntes.split('#')[0].split('?')[0];
-  const baseDepois = urlDepois.split('#')[0].split('?')[0];
-  
-  if (baseDepois !== baseAntes) {
-    log('ROBO', `URL mudou (${baseAntes} → ${baseDepois}) - assumindo sucesso`);
-    return true;
-  }
+  if (temErro) return false;
+  if (temSucesso) return true;
 
   // Se o modal fechou (nao ha mais campos de senha na tela) e nao tem erro = sucesso!
   if (clicou) {
@@ -456,7 +516,7 @@ async function trocarSenhaNaPagina(page, senhaAntiga, senhaNova) {
 
   // Sem sucesso confirmado
   if (!clicou) log('ROBO', 'Nenhum botao foi clicado!');
-  else log('ROBO', 'Botao clicado mas sem confirmacao de sucesso na pagina');
+  else log('ROBO', 'Botao clicado mas sem confirmacao visual explícita');
   return false;
 }
 
@@ -488,6 +548,46 @@ async function fazerLogout(page, config) {
     });
     if (clicked) { await page.waitForTimeout(1500); log('ROBO', `[${config.nome}] Logout via JS!`); return true; }
     return false;
+  } catch {
+    return false;
+  }
+}
+
+// ── Teste de Login (Validacao Real) ───────────────────────
+
+async function testarLogin(page, config, username, senha) {
+  try {
+    log('ROBO', `[${config.nome}] Testando se a nova senha funciona via login...`);
+    await page.goto(config.loginUrl, { waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => {});
+    await page.waitForTimeout(3000);
+
+    const userField = await page.$(config.userSel).catch(() => null);
+    const passField = await page.$(config.passSel).catch(() => null);
+    if (!userField || !passField) return false;
+
+    await userField.click({ clickCount: 3 });
+    await userField.fill('');
+    await userField.fill(username);
+    await page.waitForTimeout(400);
+
+    await passField.click({ clickCount: 3 });
+    await passField.fill('');
+    await passField.fill(senha);
+    await page.waitForTimeout(600);
+
+    const submitBtn = await page.$(config.submitSel).catch(() => null);
+    if (submitBtn) await submitBtn.click();
+    else await page.keyboard.press('Enter');
+
+    await page.waitForTimeout(5000);
+
+    const urlAtual = page.url().toLowerCase();
+    if (!urlAtual.includes('login') && !urlAtual.includes('signin') && !urlAtual.includes('challenge')) {
+      return true;
+    }
+    const texto = await page.evaluate(() => (document.body?.innerText || '').toLowerCase()).catch(() => '');
+    const temErro = ['invalid', 'incorret', 'errad', 'wrong', 'incorreta'].some(e => texto.includes(e));
+    return !temErro && !urlAtual.includes('login');
   } catch {
     return false;
   }
@@ -749,7 +849,17 @@ async function processarFerramenta(task, config) {
     log('ROBO', `[${config.nome}] Trocando senha em: ${urlSenha}`);
     await page.goto(urlSenha, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-    const sucesso = await trocarSenhaNaPagina(page, senhaAntiga, senhaNova);
+    let sucesso = await trocarSenhaNaPagina(page, senhaAntiga, senhaNova);
+    if (!sucesso) {
+      log('ROBO', `[${config.nome}] Confirmacao visual incerta. Deslogando e testando login com nova senha...`);
+      await fazerLogout(page, config);
+      const logouComNova = await testarLogin(page, config, username, senhaNova);
+      if (logouComNova) {
+        log('ROBO', `[${config.nome}] ✅ Confirmado via login real! A senha nova funciona perfeitamente!`);
+        sucesso = true;
+      }
+    }
+
     if (!sucesso) {
       log('ERRO', `[${config.nome}] Troca de senha falhou ou nao confirmada - verificar manualmente!`);
       return { ok: false, motivo: `Troca nao confirmada - ${config.nome}. Verifique manualmente`, intervencao: true };
@@ -869,9 +979,13 @@ async function processarUnlockTool(task) {
     }
 
     await page.goto('https://unlocktool.net/password-change/', { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(3000);
 
-    const camposTroca = await page.$$('input[type="password"]');
+    let camposTroca = [];
+    for (let c = 0; c < 6; c++) {
+      await page.waitForTimeout(2000);
+      camposTroca = await page.$$('input[type="password"]');
+      if (camposTroca.length >= 2) break;
+    }
     if (camposTroca.length < 2) return { ok: false, motivo: `Campos de troca nao encontrados`, intervencao: true };
 
     // Triple-click em cada campo antes de preencher (evita mistura com valor anterior)
@@ -1001,6 +1115,22 @@ async function sincronizarTarefas() {
         continue;
       }
 
+      // ⚠️ SEGURANÇA MÁXIMA: Verificar se a conta possui um aluguel ativo com cliente
+      const agoraSinc = new Date().toISOString();
+      const { data: alugueisAtivos } = await supabase
+        .from('rentals')
+        .select('id, expires_at')
+        .eq('credentials->>email', email)
+        .eq('is_active', true)
+        .gt('expires_at', agoraSinc)
+        .limit(1);
+
+      if (alugueisAtivos && alugueisAtivos.length > 0) {
+        log('AVISO', `⛔ CONTA ALUGADA! ${email} está em uso por cliente até ${alugueisAtivos[0].expires_at}. Restaurando status para 'rented' e pulando.`);
+        await supabase.from('service_accounts').update({ status: 'rented' }).eq('id', conta.id);
+        continue;
+      }
+
       await supabase.from('automation_tasks').insert({
         type: 'password_reset',
         account_id: conta.id,
@@ -1055,6 +1185,28 @@ async function ciclo() {
       await supabase.from('automation_tasks')
         .update({ status: 'skipped', error_message: 'Conta alugada', updated_at: new Date().toISOString() })
         .eq('id', task.id);
+      continue;
+    }
+
+    // ⚠️ SEGURANÇA MÁXIMA: Verificar se a conta possui um aluguel ativo com cliente
+    const agoraCiclo = new Date().toISOString();
+    const emailConta = task.payload?.email || conta.credentials?.email;
+    const { data: alugueisAtivosCiclo } = await supabase
+      .from('rentals')
+      .select('id, expires_at')
+      .eq('credentials->>email', emailConta)
+      .eq('is_active', true)
+      .gt('expires_at', agoraCiclo)
+      .limit(1);
+
+    if (alugueisAtivosCiclo && alugueisAtivosCiclo.length > 0) {
+      log('AVISO', `⛔ CONTA COM ALUGUEL ATIVO ATÉ ${alugueisAtivosCiclo[0].expires_at}! Pulando reset para não derrubar cliente!`);
+      await supabase.from('service_accounts').update({ status: 'rented' }).eq('id', task.account_id);
+      await supabase.from('automation_tasks').update({ 
+        status: 'skipped', 
+        error_message: `Aluguel ativo até ${alugueisAtivosCiclo[0].expires_at}`,
+        updated_at: new Date().toISOString()
+      }).eq('id', task.id);
       continue;
     }
 

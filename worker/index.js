@@ -26,7 +26,7 @@ const MAX_TENTATIVAS = 4;
 
 // Ferramentas que precisam do WORKER LOCAL (PC do usuario com Chrome real)
 // O cloud worker NAO interfere nessas tarefas - deixa pendente para o PC
-const FERRAMENTAS_LOCAL = ['unlock tool', 'unlocktool', 'unlock'];
+const FERRAMENTAS_LOCAL = ['unlock tool', 'unlocktool', 'unlock', 'tsm', 'android multi', 'android_multi', 'tfm'];
 
 // Mapa de palavras-chave → adaptador (ferramentas cloud)
 const ADAPTADORES = {

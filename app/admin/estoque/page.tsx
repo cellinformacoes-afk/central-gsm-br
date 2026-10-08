@@ -83,6 +83,16 @@ export default function AdminEstoquePage() {
     if (error) {
       alert("Erro ao atualizar senha");
     } else {
+      // Cancelar qualquer tarefa pendente do robô para esta conta para não sobrescrever
+      await supabase
+        .from('automation_tasks')
+        .update({ 
+          status: 'done', 
+          error_message: 'Senha alterada manualmente pelo admin' 
+        })
+        .eq('account_id', editingAccount.id)
+        .in('status', ['pending', 'running', 'needs_intervention']);
+
       setIsModalOpen(false);
       setNewPass('');
       setLastCopiedAccountId(null);
