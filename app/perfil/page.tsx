@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { proxy } from '@/lib/supabase-proxy';
 import { fetchAuthSession } from '@/lib/auth';
+import { isValidCPF } from '@/lib/utils/cpf-validator';
 
 export default function Profile() {
   const [profile, setProfile] = useState<any>(null);
@@ -48,8 +49,8 @@ export default function Profile() {
 
   const handleUpdateCpf = async () => {
     const cleanCpf = newCpf.replace(/\D/g, '');
-    if (cleanCpf.length !== 11) {
-      alert("Por favor, insira um CPF válido com 11 dígitos.");
+    if (!isValidCPF(cleanCpf)) {
+      alert("Por favor, insira um CPF válido da Receita Federal.");
       return;
     }
 

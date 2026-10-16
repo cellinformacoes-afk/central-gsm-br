@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { isValidCPF } from "@/lib/utils/cpf-validator";
 
 export default function Cadastro() {
   const [name, setName] = useState("");
@@ -36,8 +37,8 @@ export default function Cadastro() {
     }
     
     const cleanCpf = cpf.replace(/\D/g, "");
-    if (cleanCpf.length !== 11) {
-      setError("Por favor, insira um CPF válido com 11 dígitos.");
+    if (!isValidCPF(cleanCpf)) {
+      setError("Por favor, insira um CPF válido da Receita Federal.");
       return;
     }
 

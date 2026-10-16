@@ -1,20 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { isValidCPF } from '@/lib/utils/cpf-validator';
 
 export async function POST(req: Request) {
   try {
     const { email, password, name, cpf } = await req.json();
 
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !cpf) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios' }, { status: 400 });
+    }
+
+    const cleanCpf = cpf.replace(/\D/g, "");
+
+    if (!isValidCPF(cleanCpf)) {
+      return NextResponse.json({ error: 'CPF inválido. Por favor, insira um CPF válido.' }, { status: 400 });
     }
 
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
-
-    const cleanCpf = cpf.replace(/\D/g, "");
 
     // 0. Check if CPF is blacklisted
     const { data: blacklisted, error: blacklistError } = await supabaseAdmin
