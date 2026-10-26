@@ -5,7 +5,14 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/perfil', '/pedidos/'], // Don't index private pages
+      disallow: [
+        '/admin/',
+        '/api/',
+        '/perfil',
+        '/pedidos',
+        '/extrato',
+        '/saldo',
+      ],
     },
     sitemap: 'https://centralgsm.com.br/sitemap.xml',
   };

@@ -348,7 +348,9 @@ export default function Home() {
               <div className="border-2 border-dashed border-[#00D2AD]/40 bg-[#00D2AD]/5 rounded-2xl p-6 mt-6">
                 <label className="flex items-center gap-4 cursor-pointer group">
                   <input type="checkbox" checked={checkboxChecked} onChange={(e) => setCheckboxChecked(e.target.checked)} className="w-6 h-6 rounded-lg border-2 border-gray-600 text-[#00D2AD] focus:ring-[#00D2AD] bg-[#0f172a] transition-all" />
-                  <span className="text-sm text-gray-200 font-bold group-hover:text-white transition-colors">Declaro que <strong className="text-[#00D2AD]">Li!</strong> e <strong className="text-[#00D2AD]">ESTOU DE ACORDO</strong> com todos os termos.</span>
+                  <span className="text-sm text-gray-200 font-bold group-hover:text-white transition-colors">
+                    Declaro que <strong className="text-[#00D2AD]">Li!</strong> e <strong className="text-[#00D2AD]">ESTOU DE ACORDO</strong> com os <a href="/termos" target="_blank" className="underline text-[#00D2AD]">Termos de Uso</a> e a <a href="/politica-de-privacidade" target="_blank" className="underline text-[#00D2AD]">Política de Privacidade</a>.
+                  </span>
                 </label>
               </div>
             </div>

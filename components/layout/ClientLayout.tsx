@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { proxy } from '@/lib/supabase-proxy';
 import { fetchAuthSession, getStoredAccessToken } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+import Footer from '@/components/layout/Footer';
 
 export default function ClientLayout({
   children,
@@ -340,9 +341,7 @@ export default function ClientLayout({
         {children}
       </main>
 
-      <footer className="w-full border-t border-[#334155] p-8 text-center text-gray-500 text-sm mt-12 bg-[#0f172a]">
-        <p>© 2026 JACKSON & ISRAEL GSM - Todos os direitos reservados.</p>
-      </footer>
+      <Footer />
     </div>
   );
 }

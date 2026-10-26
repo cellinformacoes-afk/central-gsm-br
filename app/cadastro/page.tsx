@@ -169,10 +169,13 @@ export default function Cadastro() {
               />
               <label htmlFor="accept-terms-checkbox" className="text-xs text-gray-300 font-medium leading-relaxed select-none cursor-pointer">
                 Li e concordo com os{" "}
-                <Link href="/planos" target="_blank" className="text-[#00D2AD] font-bold hover:underline">
-                  Termos de Uso e Responsabilidade
+                <Link href="/termos" target="_blank" className="text-[#00D2AD] font-bold hover:underline">
+                  Termos de Uso
                 </Link>{" "}
-                da plataforma.
+                e a{" "}
+                <Link href="/politica-de-privacidade" target="_blank" className="text-[#00D2AD] font-bold hover:underline">
+                  Política de Privacidade
+                </Link>.
               </label>
             </div>
 
