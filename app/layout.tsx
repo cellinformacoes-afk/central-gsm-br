@@ -75,7 +75,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   // Schema.org Structured Data (JSON-LD) para exibição rica no Google
   const schemaOrganization = {
@@ -121,17 +120,11 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} min-h-screen bg-[#0f172a]`}>
-        {/* Google Tag Manager / Google Ads */}
+        {/* Google Analytics 4 & Google Ads Tag */}
         <Script
           strategy="afterInteractive"
-          src="https://www.googletagmanager.com/gtag/js?id=AW-18049987745"
+          src="https://www.googletagmanager.com/gtag/js?id=G-2J3MMZV0N4"
         />
-        {gaId && (
-          <Script
-            strategy="afterInteractive"
-            src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-          />
-        )}
         <Script
           id="google-tracking"
           strategy="afterInteractive"
@@ -141,9 +134,11 @@ export default function RootLayout({
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
 
+              // Google Analytics 4
+              gtag('config', 'G-2J3MMZV0N4');
+
               // Google Ads
               gtag('config', 'AW-18049987745');
-              ${gaId ? `gtag('config', '${gaId}');` : ''}
             `,
           }}
         />
