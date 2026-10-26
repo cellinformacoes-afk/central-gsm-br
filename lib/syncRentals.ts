@@ -44,7 +44,7 @@ export async function syncStuckRentals(): Promise<SyncRentalsResult> {
     }
 
     const activeEmails = new Set<string>();
-    (activeRentals || []).forEach(r => {
+    (activeRentals || []).forEach((r: any) => {
       const email = r.credentials?.email?.trim().toLowerCase();
       if (email) activeEmails.add(email);
     });
@@ -62,7 +62,7 @@ export async function syncStuckRentals(): Promise<SyncRentalsResult> {
 
     // 4. Identificar contas presas (sem nenhum aluguel ativo correspondente)
     const stuckIds: string[] = [];
-    for (const acc of rentedAccounts || []) {
+    for (const acc of (rentedAccounts as any[]) || []) {
       const email = acc.credentials?.email?.trim().toLowerCase();
       if (!email || !activeEmails.has(email)) {
         stuckIds.push(acc.id);
