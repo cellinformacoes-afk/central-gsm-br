@@ -95,7 +95,7 @@ export default function AdminEstoquePage() {
     const { error } = await supabase
       .from('service_accounts')
       .update({
-        credentials: { ...editingAccount.credentials, password: newPass },
+        credentials: { ...editingAccount.credentials, password: newPass.trim() },
         status: 'available'
       })
       .eq('id', editingAccount.id);
@@ -139,7 +139,7 @@ export default function AdminEstoquePage() {
 
     const { error } = await supabase.from('service_accounts').insert({
       service_id: parseInt(formData.service_id),
-      credentials: { email: formData.email, password: formData.password },
+      credentials: { email: formData.email.trim(), password: formData.password.trim() },
       status: 'available'
     });
 
