@@ -219,33 +219,53 @@ export default function PedidosPage() {
                           }`}>
                             {order.status}
                           </span>
-                          
-                          {/* Botão para ver credenciais se for aluguel */}
-                          {order.rentals && order.rentals.length > 0 && (
-                            <div className="mt-3 bg-[#0f172a] p-4 rounded-xl border border-[#00D2AD]/30 text-left min-w-[200px] animate-in zoom-in duration-300">
-                               <p className="text-[#00D2AD] text-[10px] font-black uppercase tracking-tighter mb-2">🔑 Dados de Acesso</p>
-                               <div className="space-y-2">
-                                  <div className="flex items-center justify-between bg-[#1e293b]/50 px-3 py-1.5 rounded-lg border border-[#334155]/50 gap-2">
-                                     <p className="text-white text-xs font-mono truncate select-all flex-1">
-                                        <span className="text-[#00D2AD] font-bold text-[9px] uppercase mr-1.5">Email:</span>
-                                        {order.rentals[0].credentials.email}
-                                     </p>
-                                     <CopyButton text={order.rentals[0].credentials.email} />
-                                  </div>
-                                  <div className="flex items-center justify-between bg-[#1e293b]/50 px-3 py-1.5 rounded-lg border border-[#334155]/50 gap-2">
-                                     <p className="text-white text-xs font-mono truncate select-all flex-1">
-                                        <span className="text-[#00D2AD] font-bold text-[9px] uppercase mr-1.5">Senha:</span>
-                                        {order.rentals[0].credentials.password}
-                                     </p>
-                                     <CopyButton text={order.rentals[0].credentials.password} />
-                                  </div>
-                               </div>
-                               <div className="mt-4 pt-4 border-t border-[#334155] flex items-center justify-between">
-                                  <span className="text-gray-500 text-[9px] uppercase font-bold">Expira em:</span>
-                                  <CountdownTimer expiryDate={order.rentals[0].expires_at} />
-                               </div>
-                            </div>
-                          )}
+                                                 {/* Botão para ver credenciais se for aluguel */}
+                          {order.rentals && order.rentals.length > 0 && (() => {
+                            const rental = order.rentals[0];
+                            const isExpired = new Date(rental.expires_at).getTime() <= Date.now();
+
+                            return (
+                              <div className={`mt-3 bg-[#0f172a] p-4 rounded-xl border ${isExpired ? 'border-red-500/30' : 'border-[#00D2AD]/30'} text-left min-w-[200px] animate-in zoom-in duration-300`}>
+                                 <div className="flex items-center justify-between mb-2">
+                                   <p className={`${isExpired ? 'text-red-400' : 'text-[#00D2AD]'} text-[10px] font-black uppercase tracking-tighter`}>
+                                     {isExpired ? '⛔ Aluguel Expirado' : '🔑 Dados de Acesso'}
+                                   </p>
+                                   {isExpired && (
+                                     <span className="text-[9px] font-bold uppercase bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20">Finalizado</span>
+                                   )}
+                                 </div>
+
+                                 {isExpired ? (
+                                   <div className="p-3 bg-red-500/5 rounded-lg border border-red-500/10 text-center">
+                                     <p className="text-gray-400 text-[11px] font-medium">O tempo deste aluguel encerrou.</p>
+                                     <p className="text-[10px] text-gray-500 mt-1">A senha é renovada para o próximo usuário.</p>
+                                   </div>
+                                 ) : (
+                                   <div className="space-y-2">
+                                      <div className="flex items-center justify-between bg-[#1e293b]/50 px-3 py-1.5 rounded-lg border border-[#334155]/50 gap-2">
+                                         <p className="text-white text-xs font-mono truncate select-all flex-1">
+                                            <span className="text-[#00D2AD] font-bold text-[9px] uppercase mr-1.5">Email:</span>
+                                            {rental.credentials?.email}
+                                         </p>
+                                         <CopyButton text={rental.credentials?.email || ''} />
+                                      </div>
+                                      <div className="flex items-center justify-between bg-[#1e293b]/50 px-3 py-1.5 rounded-lg border border-[#334155]/50 gap-2">
+                                         <p className="text-white text-xs font-mono truncate select-all flex-1">
+                                            <span className="text-[#00D2AD] font-bold text-[9px] uppercase mr-1.5">Senha:</span>
+                                            {rental.credentials?.password}
+                                         </p>
+                                         <CopyButton text={rental.credentials?.password || ''} />
+                                      </div>
+                                   </div>
+                                 )}
+
+                                 <div className="mt-4 pt-4 border-t border-[#334155] flex items-center justify-between">
+                                    <span className="text-gray-500 text-[9px] uppercase font-bold">{isExpired ? 'Status:' : 'Expira em:'}</span>
+                                    <CountdownTimer expiryDate={rental.expires_at} />
+                                 </div>
+                              </div>
+                            );
+                          })()}
 
                           {/* Botão de Download para Arquivos e Métodos */}
                           {order.status === 'Concluído' && order.services?.download_url && (

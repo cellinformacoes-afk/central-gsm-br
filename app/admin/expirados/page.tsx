@@ -31,6 +31,12 @@ export default function ExpiradosPage() {
 
   const fetchExpirados = async () => {
     setLoading(true);
+    try {
+      await fetch('/api/admin/sync-rentals', { method: 'POST' });
+    } catch (e) {
+      console.error('Erro ao sincronizar aluguéis:', e);
+    }
+
     // Busca contas pendentes de reset
     const { data, error } = await supabase
       .from('service_accounts')

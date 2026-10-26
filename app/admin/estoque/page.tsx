@@ -13,12 +13,32 @@ export default function AdminEstoquePage() {
   const [editingAccount, setEditingAccount] = useState<any>(null);
   const [newPass, setNewPass] = useState('');
   const [filter, setFilter] = useState<'all' | 'available' | 'rented' | 'pending_reset'>('all');
+  const [syncing, setSyncing] = useState(false);
   
   // New Account Form
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({ service_id: '', email: '', password: '', duration_hours: '', price: '' });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [lastCopiedAccountId, setLastCopiedAccountId] = useState<string | null>(null);
+
+  const handleSyncExpired = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch('/api/admin/sync-rentals', { method: 'POST' });
+      const data = await res.json();
+      if (data.fixedAccounts > 0 || data.deactivatedRentals > 0) {
+        alert(`Sincronização concluída!\n${data.deactivatedRentals || 0} aluguel(is) expirados desativados.\n${data.fixedAccounts || 0} conta(s) movida(s) para Reset Pendente.`);
+      } else {
+        alert('Tudo atualizado! Nenhuma conta presa ou aluguel vencido encontrado.');
+      }
+    } catch (e: any) {
+      console.error('Erro ao sincronizar:', e);
+      alert('Erro ao sincronizar expirações: ' + e.message);
+    } finally {
+      await fetchData();
+      setSyncing(false);
+    }
+  };
 
   const copyToClipboard = (text: string, key: string, accountId?: string) => {
     if (!text) return;
@@ -183,6 +203,15 @@ export default function AdminEstoquePage() {
               Pendentes
             </button>
           </div>
+          <button 
+            onClick={handleSyncExpired}
+            disabled={syncing}
+            title="Verifica aluguéis expirados e move contas para reset pendente"
+            className="bg-white/5 hover:bg-white/10 text-white px-4 py-3 rounded-xl font-bold uppercase text-[10px] tracking-wider flex items-center gap-2 border border-white/10 transition-all disabled:opacity-50"
+          >
+            <span className={syncing ? 'animate-spin' : ''}>🔄</span>
+            {syncing ? 'Sincronizando...' : 'Sincronizar Expirados'}
+          </button>
           <button 
             onClick={() => setShowAddForm(!showAddForm)}
             className="bg-[#00D2AD] text-[#0f172a] px-6 py-3 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg hover:-translate-y-1 transition-all"

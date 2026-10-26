@@ -2,6 +2,8 @@ node_modules
 .next
 .DS_Store
 *.pem
+*.pfx
+*.p12
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -10,17 +12,19 @@ yarn-error.log*
 .vercel
 .env
 .env*.local
+.env*
 build
 dist
 
-# Automation sessions
+# Automation sessions & Chrome profiles
 scripts/automation/sessions/
+local-worker/chrome-real-profile/
+chrome-real-profile/
+local-worker/node_modules/
+local-worker/.env*
 
 # Arquivos sensíveis e temporários
 *.png
-<<<<<<< Updated upstream
-*.pfx
-*.p12
 script.js
 tmp_*.js
 tmp_*.ts
@@ -28,6 +32,3 @@ tmp_*.ts
 users_dump*.json
 duplicates_*.json
 migrate_data.*
-=======
-.env*
->>>>>>> Stashed changes

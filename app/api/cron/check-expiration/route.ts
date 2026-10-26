@@ -24,7 +24,17 @@ export async function GET() {
 
     const { expiredCount } = result as { expiredCount: number };
 
-    // Sincroniza PIX Efí pagos mas ainda pendentes (plano Hobby limita a 1 cron por dia)
+    // 2. Sincroniza aluguéis vencidos e contas presas em 'rented'
+    let stuckStats = { fixedAccounts: 0, deactivatedRentals: 0 };
+    try {
+      const { syncStuckRentals } = await import('@/lib/syncRentals');
+      const res = await syncStuckRentals();
+      stuckStats = { fixedAccounts: res.fixedAccounts, deactivatedRentals: res.deactivatedRentals };
+    } catch (e: any) {
+      console.error('[CRON] Erro ao sincronizar alugueis presos:', e.message);
+    }
+
+    // 3. Sincroniza PIX Efí pagos mas ainda pendentes (plano Hobby limita a 1 cron por dia)
     let pixStats = { checked: 0, credited: 0, errors: [] as any[] };
     try {
       pixStats = await syncEfiPendingPayments();
@@ -40,6 +50,8 @@ export async function GET() {
     return NextResponse.json({ 
       success: true, 
       processed: expiredCount,
+      stuck_fixed: stuckStats.fixedAccounts,
+      rentals_deactivated: stuckStats.deactivatedRentals,
       pix_efi: pixStats.credited > 0 ? `✅ ${pixStats.credited} PIX recuperados` : 'nenhum pendente',
       timestamp: new Date().toISOString()
     });
