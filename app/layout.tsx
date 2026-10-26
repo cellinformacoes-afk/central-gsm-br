@@ -2,7 +2,6 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import { Metadata } from 'next';
 import ClientLayout from '@/components/layout/ClientLayout';
-import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -113,21 +112,12 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="dark">
       <head>
-        {/* Schema.org Dados Estruturados para o Google */}
+        {/* Google tag (gtag.js) - Deve ficar logo após o início do <head> */}
         <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrganization) }}
-        />
-      </head>
-      <body className={`${inter.className} min-h-screen bg-[#0f172a]`}>
-        {/* Google Analytics 4 & Google Ads Tag */}
-        <Script
-          strategy="afterInteractive"
+          async
           src="https://www.googletagmanager.com/gtag/js?id=G-2J3MMZV0N4"
         />
-        <Script
-          id="google-tracking"
-          strategy="afterInteractive"
+        <script
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
@@ -142,6 +132,13 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* Schema.org Dados Estruturados para o Google */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrganization) }}
+        />
+      </head>
+      <body className={`${inter.className} min-h-screen bg-[#0f172a]`}>
         <ClientLayout>
           {children}
         </ClientLayout>
