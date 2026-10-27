@@ -52,23 +52,9 @@ export default function AdminNav() {
     fetchRevenue();
   }, []);
 
-  const [pendingCount, setPendingCount] = useState(0);
-
-  useEffect(() => {
-    async function fetchPending() {
-      const { count } = await supabase
-        .from('service_accounts')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending_reset');
-      if (count !== null && count !== undefined) setPendingCount(count);
-    }
-    fetchPending();
-  }, []);
-
   const links = [
     { href: '/admin/pedidos', label: '🛒 Pedidos' },
     { href: '/admin/estoque', label: '📦 Gestão de Estoque' },
-    { href: '/admin/expirados', label: '⚠️ Contas Expiradas' },
     { href: '/admin/faturamento', label: '💰 Faturamento' },
     { href: '/admin/servicos', label: '🛠️ Gerenciar Serviços' },
     { href: '/admin/conciliacao', label: '⚡ Devolução de Saldo' },
@@ -90,11 +76,6 @@ export default function AdminNav() {
             }`}
           >
             <span className="text-sm">🛡️</span> ADM
-            {pendingCount > 0 && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] text-white font-bold animate-pulse">
-                {pendingCount}
-              </span>
-            )}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="12"
@@ -115,24 +96,18 @@ export default function AdminNav() {
             <div className="absolute left-0 top-full mt-2 z-50 bg-[#0f172a] border border-[#334155] rounded-2xl shadow-2xl p-2 min-w-[260px]">
               {links.map((link) => {
                 const isActive = pathname === link.href;
-                const isExpirados = link.href === '/admin/expirados';
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className={`flex items-center justify-between rounded-lg font-black uppercase text-xs tracking-widest px-4 py-2.5 whitespace-nowrap transition-all ${
+                    className={`block rounded-lg font-black uppercase text-xs tracking-widest px-4 py-2.5 whitespace-nowrap transition-all ${
                       isActive
                         ? "bg-[#00D2AD]/10 text-[#00D2AD] border border-[#00D2AD]/30"
                         : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
                     }`}
                   >
-                    <span>{link.label}</span>
-                    {isExpirados && pendingCount > 0 && (
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white">
-                        {pendingCount}
-                      </span>
-                    )}
+                    {link.label}
                   </Link>
                 );
               })}
