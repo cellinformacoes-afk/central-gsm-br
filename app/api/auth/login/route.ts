@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
       '6e4e26ad-7dda-41d6-a68b-20724ec9a8aa', // Jose Aparecido (japlf77@gmail.com) - MED indevido
       '35d0028d-3546-40b9-a632-7748a27be0a2', // Joao Victor Mendes Nogueira (victormendesnogueira@gmail.com) - MED indevido 30/09/2026
       '8120284e-60b7-422f-a536-2164dab63476', // Manoel Jose dos Santos Filho (manoellmoralrl@gmail.com) - MED indevido 12/10/2026
+      'b81a2014-5b3c-43f8-8ac5-5a39f6a131c2', // Renato Saraiva (saraiva.etep@gmail.com) - MED indevido Santander 26/10/2026
     ];
 
     if (data.user && blockedUsers.includes(data.user.id)) {
