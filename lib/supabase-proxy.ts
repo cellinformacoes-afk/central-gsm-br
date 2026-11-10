@@ -1,3 +1,5 @@
+import { supabase } from '@/lib/supabase';
+
 interface Filter {
   column: string;
   op: 'eq' | 'neq' | 'in' | 'lte' | 'gte' | 'like' | 'ilike' | 'is';
@@ -18,10 +20,24 @@ interface QueryOptions {
   single?: boolean;
 }
 
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+  } catch (err) {
+    console.error('Erro ao obter token de sessao para proxy:', err);
+  }
+  return headers;
+}
+
 async function proxyQuery<T = any>(options: QueryOptions): Promise<T> {
+  const headers = await getAuthHeaders();
   const res = await fetch('/api/proxy', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(options),
   });
   const json = await res.json();
@@ -30,9 +46,10 @@ async function proxyQuery<T = any>(options: QueryOptions): Promise<T> {
 }
 
 async function proxyRpc<T = any>(fn: string, params?: Record<string, any>): Promise<T> {
+  const headers = await getAuthHeaders();
   const res = await fetch('/api/proxy', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ rpc: fn, rpcParams: params || {} }),
   });
   const json = await res.json();
