@@ -245,6 +245,12 @@ export default function AdminPedidosPage() {
                             <p className="text-yellow-400 font-black text-xs uppercase">{order.input_data.username}</p>
                           </div>
                         )}
+                        {order.input_data?.notes && (
+                          <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">
+                            <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">Observações (Notes):</p>
+                            <p className="text-white font-black text-xs whitespace-pre-wrap">{order.input_data.notes}</p>
+                          </div>
+                        )}
                         {order.input_data?.imei && (
                           <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg">
                             <p className="text-[9px] text-gray-500 font-bold uppercase mb-0.5">IMEI:</p>

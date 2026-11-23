@@ -56,8 +56,10 @@ export default function AdminNav() {
     { href: '/admin/pedidos', label: '🛒 Pedidos' },
     { href: '/admin/estoque', label: '📦 Gestão de Estoque' },
     { href: '/admin/faturamento', label: '💰 Faturamento' },
+    { href: '/admin/banco', label: '🏦 Bancos' },
     { href: '/admin/servicos', label: '🛠️ Gerenciar Serviços' },
     { href: '/admin/conciliacao', label: '⚡ Devolução de Saldo' },
+    { href: '/admin/fraudes', label: '🚫 Bloqueio & Anti-Fraude' },
     { href: '/admin/noticia', label: '📢 Balão de Aviso' },
   ];
 

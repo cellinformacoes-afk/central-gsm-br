@@ -1,8 +1,21 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getAsaasCredentials } from '@/lib/asaas';
+import { getGatewaySettings } from '@/lib/gateway-config';
 
 export async function POST(request: Request) {
   try {
+    const settings = await getGatewaySettings();
+    const tokenHeader = request.headers.get('asaas-access-token');
+
+    // Se o webhook token estiver configurado, valida a assinatura/token
+    if (settings.asaas?.webhook_token && tokenHeader) {
+      if (tokenHeader.trim() !== settings.asaas.webhook_token.trim()) {
+        console.warn('Asaas Webhook: Token inválido recebido.');
+        return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+      }
+    }
+
     const body = await request.json();
     const event = body.event;
     const payment = body.payment;
@@ -14,6 +27,8 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString()
     });
 
+    const { apiKey, apiUrl } = await getAsaasCredentials();
+
     // =====================================================
     // COBRANÇAS ASAAS (Cartão / PIX Dinâmico)
     // =====================================================
@@ -21,9 +36,9 @@ export async function POST(request: Request) {
       const paymentId = payment.id;
 
       // ANTI-FRAUDE: verifica o pagamento diretamente no Asaas
-      const asaasResponse = await fetch(`${process.env.ASAAS_API_URL || 'https://api.asaas.com/v3'}/payments/${paymentId}`, {
+      const asaasResponse = await fetch(`${apiUrl}/payments/${paymentId}`, {
         headers: {
-          'access_token': (process.env.ASAAS_API_KEY || '').trim(),
+          'access_token': apiKey,
           'Content-Type': 'application/json'
         }
       });

@@ -1,5 +1,4 @@
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY || '';
-const ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
+import { getGatewaySettings } from '@/lib/gateway-config';
 
 export interface AsaasCustomer {
   id: string;
@@ -15,27 +14,32 @@ export interface AsaasPayment {
   pixCopyPaste: string;
 }
 
+export async function getAsaasCredentials() {
+  const settings = await getGatewaySettings();
+  const apiKey = (settings.asaas?.api_key || process.env.ASAAS_API_KEY || '').trim();
+  const env = settings.asaas?.environment || 'production';
+  const apiUrl = env === 'sandbox' ? 'https://sandbox.asaas.com/api/v3' : (process.env.ASAAS_API_URL || 'https://api.asaas.com/v3');
+  return { apiKey, apiUrl };
+}
+
 export const asaas = {
   async getOrCreateCustomer(email: string, name?: string, cpfCnpj?: string): Promise<string> {
     try {
-      console.log(`Buscando cliente Asaas por email: ${email}`);
-      console.log(`Usando URL: ${ASAAS_API_URL}`);
-      console.log(`Tamanho da API Key: ${ASAAS_API_KEY.length}`);
-      console.log(`Início da Key: ${ASAAS_API_KEY.substring(0, 5)}...`);
-      console.log(`Fim da Key: ...${ASAAS_API_KEY.substring(ASAAS_API_KEY.length - 5)}`);
+      const { apiKey, apiUrl } = await getAsaasCredentials();
+      if (!apiKey) throw new Error('Chave API do Asaas não configurada. Configure na aba de Bancos no painel.');
 
-      // 1. Search for customer
-      const searchResponse = await fetch(`${ASAAS_API_URL}/customers?email=${email}`, {
+      console.log(`Buscando cliente Asaas por email: ${email} na URL: ${apiUrl}`);
+
+      // 1. Buscar cliente por email
+      const searchResponse = await fetch(`${apiUrl}/customers?email=${encodeURIComponent(email)}`, {
         headers: {
-          'access_token': ASAAS_API_KEY.trim(),
+          'access_token': apiKey,
           'Content-Type': 'application/json'
         }
       });
 
       const searchRawText = await searchResponse.text();
-      console.log(`Resposta buscador Asaas: Status ${searchResponse.status}`);
-      
-      let searchData;
+      let searchData: any;
       try {
         searchData = JSON.parse(searchRawText);
       } catch (e) {
@@ -45,57 +49,48 @@ export const asaas = {
       if (searchData.data && searchData.data.length > 0) {
         const customer = searchData.data[0];
         console.log(`Cliente encontrado: ${customer.id}`);
-        
-        // Sempre sincronizamos os dados do cliente no PIX (nome e CPF) para que o campo
-        // "devedor" do QR Code reflita exatamente quem está pagando. Muitos bancos recusam
-        // o PIX quando o nome/CPF do devedor não bate com o pagador. Se o nome ficar
-        // desatualizado (o antigo, que nunca era sincronizado), o banco mostra
-        // "copiar e colar ou QR code falhou".
-        const update: any = {
-          notificationDisabled: true
-        };
-        if (cpfCnpj) update.cpfCnpj = cpfCnpj;          // sempre atualiza o CPF/CNPJ do usuário
-        if (name) update.name = name;                   // sempre atualiza o nome do usuário
-        console.log(`Sincronizando dados do cliente ${customer.id}: nome e CPF/CNPJ`);
-        await fetch(`${ASAAS_API_URL}/customers/${customer.id}`, {
+
+        const update: any = { notificationDisabled: true };
+        if (cpfCnpj) update.cpfCnpj = cpfCnpj.replace(/\D/g, '');
+        if (name) update.name = name;
+
+        await fetch(`${apiUrl}/customers/${customer.id}`, {
           method: 'POST',
           headers: {
-            'access_token': ASAAS_API_KEY.trim(),
+            'access_token': apiKey,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(update)
         });
-        
+
         return customer.id;
       }
 
       console.log(`Cliente não encontrado, criando novo...`);
 
-      // 2. Create customer if not found
-      const createResponse = await fetch(`${ASAAS_API_URL}/customers`, {
+      // 2. Criar cliente caso não exista
+      const createResponse = await fetch(`${apiUrl}/customers`, {
         method: 'POST',
         headers: {
-          'access_token': ASAAS_API_KEY.trim(),
+          'access_token': apiKey,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           name: name || email.split('@')[0],
           email: email,
-          cpfCnpj: cpfCnpj,
-          notificationDisabled: true // Desativa todas as notificações (SMS/WhatsApp) na origem
+          cpfCnpj: cpfCnpj ? cpfCnpj.replace(/\D/g, '') : undefined,
+          notificationDisabled: true
         })
       });
 
       const createRawText = await createResponse.text();
-      console.log(`Resposta criador Asaas: Status ${createResponse.status}`);
-      
-      let createData;
+      let createData: any;
       try {
         createData = JSON.parse(createRawText);
       } catch (e) {
         throw new Error(`Erro ao converter resposta create Asaas para JSON. Status: ${createResponse.status}`);
       }
-      
+
       if (createData.errors) {
         throw new Error(createData.errors[0].description);
       }
@@ -109,17 +104,20 @@ export const asaas = {
 
   async createPixPayment(customerId: string, amount: number, description: string, userId: string): Promise<any> {
     try {
-      const response = await fetch(`${ASAAS_API_URL}/payments`, {
+      const { apiKey, apiUrl } = await getAsaasCredentials();
+      if (!apiKey) throw new Error('Chave API do Asaas não configurada.');
+
+      const response = await fetch(`${apiUrl}/payments`, {
         method: 'POST',
         headers: {
-          'access_token': ASAAS_API_KEY.trim(),
+          'access_token': apiKey,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           customer: customerId,
           billingType: 'PIX',
           value: amount,
-          dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString().split('T')[0], // 1 day due date
+          dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString().split('T')[0],
           description: description,
           externalReference: userId
         })
@@ -130,10 +128,10 @@ export const asaas = {
         throw new Error(data.errors[0].description);
       }
 
-      // Get Pix QR Code
-      const qrResponse = await fetch(`${ASAAS_API_URL}/payments/${data.id}/pixQrCode`, {
+      // Buscar QR Code e Copia e Cola do Pix
+      const qrResponse = await fetch(`${apiUrl}/payments/${data.id}/pixQrCode`, {
         headers: {
-          'access_token': ASAAS_API_KEY.trim(),
+          'access_token': apiKey,
           'Content-Type': 'application/json'
         }
       });
@@ -142,8 +140,8 @@ export const asaas = {
       return {
         id: data.id,
         invoiceUrl: data.invoiceUrl,
-        qrCode: qrData.encodedImage, // Base64 image
-        copyPaste: qrData.payload,   // Pix copy/paste payload
+        qrCode: qrData.encodedImage, // Imagem Base64
+        copyPaste: qrData.payload,   // String Copia e Cola
       };
     } catch (error: any) {
       console.error('Error in asaas.createPixPayment:', error);
@@ -153,17 +151,20 @@ export const asaas = {
 
   async createCardPayment(customerId: string, amount: number, description: string, userId: string): Promise<any> {
     try {
-      const response = await fetch(`${ASAAS_API_URL}/payments`, {
+      const { apiKey, apiUrl } = await getAsaasCredentials();
+      if (!apiKey) throw new Error('Chave API do Asaas não configurada.');
+
+      const response = await fetch(`${apiUrl}/payments`, {
         method: 'POST',
         headers: {
-          'access_token': ASAAS_API_KEY.trim(),
+          'access_token': apiKey,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           customer: customerId,
-          billingType: 'UNDEFINED', // Deixa UNDEFINED para o cliente poder escolher cartão na tela do Asaas
+          billingType: 'UNDEFINED',
           value: amount,
-          dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString().split('T')[0], // Vence amanhã
+          dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString().split('T')[0],
           description: description,
           externalReference: userId
         })
@@ -176,7 +177,7 @@ export const asaas = {
 
       return {
         id: data.id,
-        invoiceUrl: data.invoiceUrl, // URL de pagamento segura do Asaas
+        invoiceUrl: data.invoiceUrl,
       };
     } catch (error: any) {
       console.error('Error in asaas.createCardPayment:', error);
@@ -186,36 +187,38 @@ export const asaas = {
 
   async getPaymentStatus(paymentId: string): Promise<string> {
     try {
-      console.log(`Verificando status do pagamento ${paymentId} no Asaas...`);
-      const response = await fetch(`${ASAAS_API_URL}/payments/${paymentId}`, {
+      const { apiKey, apiUrl } = await getAsaasCredentials();
+      if (!apiKey) return 'pending';
+
+      const response = await fetch(`${apiUrl}/payments/${paymentId}`, {
         headers: {
-          'access_token': ASAAS_API_KEY.trim(),
+          'access_token': apiKey,
           'Content-Type': 'application/json'
         }
       });
       const data = await response.json();
-      console.log(`Status bruto recebido do Asaas para ${paymentId}: ${data.status}`);
-      
-      // Asaas status mapping to common status
-      // RECEIVED, CONFIRMED -> approved
+
       if (data.status === 'RECEIVED' || data.status === 'CONFIRMED') {
         return 'approved';
       }
       if (data.status === 'OVERDUE') return 'expired';
       if (data.status === 'REFUNDED') return 'refunded';
-      
-      return data.status.toLowerCase();
+
+      return data.status ? data.status.toLowerCase() : 'pending';
     } catch (error: any) {
       console.error('Error in asaas.getPaymentStatus:', error);
-      throw error;
+      return 'pending';
     }
   },
 
   async listUserPayments(userId: string): Promise<any[]> {
     try {
-      const response = await fetch(`${ASAAS_API_URL}/payments?externalReference=${userId}`, {
+      const { apiKey, apiUrl } = await getAsaasCredentials();
+      if (!apiKey) return [];
+
+      const response = await fetch(`${apiUrl}/payments?externalReference=${userId}`, {
         headers: {
-          'access_token': ASAAS_API_KEY.trim(),
+          'access_token': apiKey,
           'Content-Type': 'application/json'
         }
       });

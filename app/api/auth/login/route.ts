@@ -63,6 +63,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 401 });
     }
 
+    // Bloqueio dinâmico via Blacklist (E-mail do login)
+    const cleanAttemptEmail = email.toLowerCase().trim();
+    try {
+      const blRes = await fetch(`${supabaseUrl}/rest/v1/cpf_blacklist?cpf=eq.${encodeURIComponent(cleanAttemptEmail)}&select=cpf,reason`, {
+        headers: {
+          'apikey': serviceRoleKey,
+          'Authorization': `Bearer ${serviceRoleKey}`,
+        }
+      });
+      if (blRes.ok) {
+        const blItems = await blRes.json();
+        if (blItems && blItems.length > 0) {
+          const reason = blItems[0]?.reason ? ` Motivo: ${blItems[0].reason}` : '';
+          return NextResponse.json({ error: `Sua conta foi suspensa permanentemente.${reason}` }, { status: 403 });
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao consultar blacklist por email no login:', e);
+    }
+
     // Bloqueio manual de golpistas (contestação indevida)
     const blockedUsers = [
       'cfef9d31-0685-44b6-95f1-9cbfe60ac558', // Bernardo
@@ -86,10 +106,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Sua conta foi bloqueada por violação dos termos (Contestação Indevida).' }, { status: 403 });
     }
 
-    // Verificar se o usuário está com role banned no banco
+    // Verificar se o usuário está com role banned no banco ou CPF na blacklist
     if (data.user?.id) {
       try {
-        const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${data.user.id}&select=role`, {
+        const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${data.user.id}&select=role,cpf`, {
           headers: {
             'apikey': serviceRoleKey,
             'Authorization': `Bearer ${serviceRoleKey}`,
@@ -97,12 +117,29 @@ export async function POST(request: NextRequest) {
         });
         if (profileRes.ok) {
           const profiles = await profileRes.json();
-          if (profiles?.[0]?.role === 'banned') {
+          const userProf = profiles?.[0];
+          if (userProf?.role === 'banned') {
             return NextResponse.json({ error: 'Sua conta foi bloqueada por violação dos termos (Contestação Indevida).' }, { status: 403 });
+          }
+          if (userProf?.cpf) {
+            const cleanUserCpf = String(userProf.cpf).replace(/\D/g, '');
+            const cpfCheck = await fetch(`${supabaseUrl}/rest/v1/cpf_blacklist?cpf=eq.${cleanUserCpf}&select=cpf,reason`, {
+              headers: {
+                'apikey': serviceRoleKey,
+                'Authorization': `Bearer ${serviceRoleKey}`,
+              }
+            });
+            if (cpfCheck.ok) {
+              const cpfItems = await cpfCheck.json();
+              if (cpfItems && cpfItems.length > 0) {
+                const reason = cpfItems[0]?.reason ? ` Motivo: ${cpfItems[0].reason}` : '';
+                return NextResponse.json({ error: `Sua conta foi suspensa permanentemente.${reason}` }, { status: 403 });
+              }
+            }
           }
         }
       } catch (err) {
-        console.error('Erro ao verificar role banned:', err);
+        console.error('Erro ao verificar role/cpf banned:', err);
       }
     }
 

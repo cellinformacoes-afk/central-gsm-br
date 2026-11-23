@@ -21,10 +21,10 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // 0. Check if CPF is blacklisted
-    const { data: blacklisted, error: blacklistError } = await supabaseAdmin
+    // 0. Check if CPF or Email is blacklisted
+    const { data: blacklistedCpf, error: blacklistError } = await supabaseAdmin
       .from('cpf_blacklist')
-      .select('cpf')
+      .select('cpf, reason')
       .eq('cpf', cleanCpf)
       .maybeSingle();
 
@@ -36,8 +36,22 @@ export async function POST(req: Request) {
       }
     }
 
-    if (blacklisted) {
-      return NextResponse.json({ error: 'Este CPF está bloqueado por questões de segurança.' }, { status: 403 });
+    if (blacklistedCpf) {
+      const reason = blacklistedCpf.reason ? ` Motivo: ${blacklistedCpf.reason}` : '';
+      return NextResponse.json({ error: `Este CPF está bloqueado por questões de segurança.${reason}` }, { status: 403 });
+    }
+
+    // 0.1 Check if Email is blacklisted
+    const cleanEmail = email.toLowerCase().trim();
+    const { data: blacklistedEmail } = await supabaseAdmin
+      .from('cpf_blacklist')
+      .select('cpf, reason')
+      .eq('cpf', cleanEmail)
+      .maybeSingle();
+
+    if (blacklistedEmail) {
+      const reason = blacklistedEmail.reason ? ` Motivo: ${blacklistedEmail.reason}` : '';
+      return NextResponse.json({ error: `Este e-mail está bloqueado por questões de segurança.${reason}` }, { status: 403 });
     }
 
     // 1. Create the user in Auth

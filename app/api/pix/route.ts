@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { efibank } from '@/lib/efibank';
+import { asaas } from '@/lib/asaas';
+import { getGatewaySettings } from '@/lib/gateway-config';
 
 export async function POST(request: Request) {
   try {
@@ -15,8 +17,11 @@ export async function POST(request: Request) {
     }
 
     const baseAmount = parseFloat(amount);
+    if (isNaN(baseAmount) || baseAmount < 1) {
+      return NextResponse.json({ error: 'Valor inválido para recarga' }, { status: 400 });
+    }
 
-    // Busca email do perfil
+    // Busca email e CPF do perfil
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('email, cpf')
@@ -24,20 +29,48 @@ export async function POST(request: Request) {
       .single();
 
     const customerCpf = cpf || profile?.cpf;
+    const customerEmail = profile?.email || `cliente_${userId}@centralgsm.com.br`;
 
-    console.log('--- Gerando PIX Dinâmico Efí Bank ---');
-    console.log('User:', userId, '| Valor: R$', baseAmount);
+    // Carrega qual gateway de pagamento está ativo
+    const settings = await getGatewaySettings();
+    const activeGateway = settings.active_gateway || 'asaas';
 
-    // Gera cobrança PIX no Efí Bank
-    const pixPayment = await efibank.createPixPayment(
-      baseAmount,
-      description || `Recarga Central GSM - R$ ${baseAmount}`,
-      userId,
-      customerCpf,
-      payerName
-    );
+    let pixPayment: any = null;
 
-    // Salva transação pendente no banco com o txid (id) do Efí Bank
+    if (activeGateway === 'asaas') {
+      console.log('--- Gerando PIX Dinâmico Asaas ---');
+      console.log('User:', userId, '| Valor: R$', baseAmount);
+
+      const customerId = await asaas.getOrCreateCustomer(
+        customerEmail,
+        payerName,
+        customerCpf
+      );
+
+      pixPayment = await asaas.createPixPayment(
+        customerId,
+        baseAmount,
+        description || `Recarga Central GSM - R$ ${baseAmount}`,
+        userId
+      );
+    } else {
+      console.log('--- Gerando PIX Dinâmico Efí Bank ---');
+      console.log('User:', userId, '| Valor: R$', baseAmount);
+
+      pixPayment = await efibank.createPixPayment(
+        baseAmount,
+        description || `Recarga Central GSM - R$ ${baseAmount}`,
+        userId,
+        customerCpf,
+        payerName
+      );
+    }
+
+    if (!pixPayment?.id) {
+      throw new Error(`Falha ao gerar cobrança no banco ${activeGateway}. Verifique as chaves configuradas.`);
+    }
+
+    // Salva transação pendente no banco
     const { error: dbError } = await supabaseAdmin
       .from('transactions')
       .insert({
@@ -45,7 +78,8 @@ export async function POST(request: Request) {
         amount: baseAmount,
         status: 'pending',
         external_id: pixPayment.id,
-        type: 'pix'
+        type: 'pix',
+        description: `Recarga via ${activeGateway === 'asaas' ? 'Asaas' : 'Efí Bank'}`
       });
 
     if (dbError) {
@@ -57,7 +91,8 @@ export async function POST(request: Request) {
       id: pixPayment.id,
       copy_paste: pixPayment.copyPaste,
       qr_code_base64: pixPayment.qrCode,
-      qr_code_url: null
+      qr_code_url: pixPayment.invoiceUrl || null,
+      gateway: activeGateway
     });
 
   } catch (error: any) {

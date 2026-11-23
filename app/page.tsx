@@ -28,6 +28,7 @@ export default function Home() {
   const [creditQuantity, setCreditQuantity] = useState(12);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+  const [notes, setNotes] = useState('');
   
   const router = useRouter();
 
@@ -73,6 +74,21 @@ export default function Home() {
 
   const isCreditService = (service: any) => service?.categories?.slug === 'creditos';
 
+  // Regras especificas de alguns servicos de creditos (pedido minimo e campos pedidos).
+  // Servicos que NAO estao nesta lista continuam com a regra padrao: minimo 12 + username.
+  const CREDIT_RULES: Record<number, { min: number; email?: boolean; username?: boolean; notes?: boolean }> = {
+    58: { min: 5, email: true },                  // ANDROID MULT TOOL
+    57: { min: 5, email: true },                  // PHOENIX SERVICE TOOL
+    55: { min: 5, username: true },               // MR AUTH
+    56: { min: 5, email: true, username: true },  // TFM TOOL
+    100: { min: 5, username: true },              // Xiaomi BD Auth Tool
+    101: { min: 5, username: true },              // Fenix tool
+    102: { min: 5, username: true, notes: true }, // MOTO M TOOL
+  };
+  const DEFAULT_CREDIT_RULE = { min: 12, email: false, username: true, notes: false };
+  const getCreditRule = (service: any) => CREDIT_RULES[service?.id] || DEFAULT_CREDIT_RULE;
+  const creditMin = getCreditRule(selectedService).min;
+
   const handlePurchase = async () => {
     if (!selectedService) return;
 
@@ -86,17 +102,34 @@ export default function Home() {
 
     // (validação de licenças movida abaixo, junto com username)
 
-    // Validação para créditos (Samsung Tool usa username, não email)
+    // Validação para créditos (cada serviço pede os campos definidos em CREDIT_RULES)
     if (isCreditService(selectedService)) {
-      if (!username.trim()) {
+      const rule = getCreditRule(selectedService);
+      if (rule.email) {
+        if (!email.trim()) {
+          alert("Por favor, digite o e-mail da conta que receberá os créditos.");
+          return;
+        }
+        const emailRegexCred = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegexCred.test(email.trim())) {
+          alert("Por favor, insira um e-mail válido.");
+          return;
+        }
+      }
+      if (rule.username && !username.trim()) {
         alert("Por favor, digite o username da conta que receberá os créditos.");
         return;
       }
-      if (!creditQuantity || creditQuantity < 12) {
-        alert("O pedido mínimo é de 12 créditos.");
+      if (rule.notes && !notes.trim()) {
+        alert("Por favor, preencha o campo Enter Notes.");
         return;
       }
-      const confirmUser = window.confirm(`O username "${username.trim()}" é o destino dos créditos?`);
+      if (!creditQuantity || creditQuantity < rule.min) {
+        alert(`O pedido mínimo é de ${rule.min} créditos.`);
+        return;
+      }
+      const destino = [rule.email ? email.trim() : '', rule.username ? username.trim() : ''].filter(Boolean).join(' / ');
+      const confirmUser = window.confirm(`"${destino}" é o destino dos créditos?`);
       if (!confirmUser) {
         return;
       }
@@ -133,7 +166,7 @@ export default function Home() {
       const result = await proxy.rpc('purchase_service_v2', {
         p_user_id: session.user.id,
         p_service_id: selectedService.id,
-        p_input_data: { imei: imei.trim(), email: email.trim(), username: username.trim() },
+        p_input_data: { imei: imei.trim(), email: email.trim(), username: username.trim(), ...(notes.trim() ? { notes: notes.trim() } : {}) },
         p_quantity: qty
       });
 
@@ -155,6 +188,7 @@ export default function Home() {
       setImei('');
       setEmail('');
       setUsername('');
+      setNotes('');
       setCreditQuantity(12);
       router.push('/pedidos');
     } catch (error: any) {
@@ -198,7 +232,7 @@ export default function Home() {
                           {selectedService.category_id === 9 ? 'GRÁTIS' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isCreditService(selectedService) ? selectedService.price * creditQuantity : selectedService.price)}
                        </p>
                     </div>
-                    <button onClick={() => { setSelectedService(null); setImei(''); setEmail(''); setUsername(''); setCreditQuantity(12); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
+                    <button onClick={() => { setSelectedService(null); setImei(''); setEmail(''); setUsername(''); setNotes(''); setCreditQuantity(12); }} className="text-gray-500 hover:text-white text-2xl font-bold">×</button>
                  </div>
 
                  <div className="space-y-6">
@@ -209,7 +243,7 @@ export default function Home() {
                       <div className="animate-in slide-in-from-top-2 duration-300 space-y-4">
                         <div>
                           <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Quantidade de Créditos</label>
-                          <p className="text-[10px] text-[#FFC107] font-bold mb-3">Pedido mínimo: 12 créditos</p>
+                          <p className="text-[10px] text-[#FFC107] font-bold mb-3">Pedido mínimo: {creditMin} créditos</p>
                           <input 
                             type="number" 
                             value={creditQuantity}
@@ -225,15 +259,28 @@ export default function Home() {
                               }
                             }}
                             onBlur={() => {
-                              if (creditQuantity < 12) setCreditQuantity(12);
+                              if (creditQuantity < creditMin) setCreditQuantity(creditMin);
                             }}
-                            min={12}
+                            min={creditMin}
                             step={1}
-                            placeholder="Mínimo 12 créditos"
+                            placeholder={`Mínimo ${creditMin} créditos`}
                             className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white font-mono text-center tracking-[0.2em] focus:border-[#00D2AD] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <p className="text-[10px] text-gray-500 mt-2 text-center">Total: <span className="text-[#00D2AD] font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedService.price * creditQuantity)}</span></p>
                         </div>
+                        {getCreditRule(selectedService).email && (
+                        <div>
+                          <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">E-mail da conta que receberá os créditos</label>
+                          <input 
+                             type="email" 
+                             value={email}
+                             onChange={(e) => setEmail(e.target.value)}
+                             placeholder="EX: cliente@email.com"
+                            className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
+                          />
+                        </div>
+                        )}
+                        {getCreditRule(selectedService).username && (
                         <div>
                           <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Username da conta que receberá os créditos</label>
                           <input 
@@ -244,6 +291,19 @@ export default function Home() {
                             className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-4 px-4 text-white text-center focus:border-[#00D2AD] outline-none"
                           />
                         </div>
+                        )}
+                        {getCreditRule(selectedService).notes && (
+                        <div>
+                          <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Enter Notes</label>
+                          <textarea 
+                             value={notes}
+                             onChange={(e) => setNotes(e.target.value)}
+                             placeholder="Enter Notes"
+                             rows={3}
+                            className="w-full bg-[#0f172a] border border-[#334155] rounded-xl py-3 px-4 text-white focus:border-[#00D2AD] outline-none resize-none"
+                          />
+                        </div>
+                        )}
                       </div>
                     )}
 
@@ -446,7 +506,8 @@ export default function Home() {
               onClick={() => {
                 setEmail('');
                 setUsername('');
-                if (isCreditService(service)) setCreditQuantity(12);
+                setNotes('');
+                if (isCreditService(service)) setCreditQuantity(getCreditRule(service).min);
                 setSelectedService(service);
               }}
               className={`bg-[#1e293b] rounded-3xl p-6 shadow-2xl border border-[#334155] flex items-center transition-all relative overflow-hidden hover:shadow-[0_0_40px_rgba(0,210,173,0.1)] hover:-translate-y-2 hover:border-[#00D2AD]/40 cursor-pointer group`}
