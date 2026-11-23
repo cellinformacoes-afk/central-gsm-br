@@ -426,6 +426,19 @@ export default function AdminBancoPage() {
                   </button>
                 </div>
 
+                {/* Dica com os campos exatos que o Asaas pede */}
+                <div className="bg-[#070b14] border border-[#334155] rounded-xl p-4 text-xs space-y-2 mb-4">
+                  <p className="font-bold text-[#00D2AD] uppercase tracking-wider flex items-center gap-1.5">
+                    <span>📌</span> O que preencher nos campos do Asaas:
+                  </p>
+                  <ul className="space-y-1.5 text-gray-300">
+                    <li>• <b>Versão da API:</b> Selecione <b>v3</b></li>
+                    <li>• <b>Tipo de envio:</b> Selecione <b>Sequencial</b></li>
+                    <li>• <b>Token de autenticação:</b> Clique em <b>Gerar Token</b> no Asaas, copie e cole no campo abaixo.</li>
+                    <li>• <b>Eventos:</b> Abra a aba <b>Cobranças</b> e marque: <b>Pagamento recebido</b> e <b>Pagamento confirmado</b>.</li>
+                  </ul>
+                </div>
+
                 <div className="mt-4 pt-3 border-t border-[#334155]/60">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-xs font-bold text-gray-400">
