@@ -25,10 +25,10 @@ export default function AdminBancoPage() {
   const [efiCertBase64, setEfiCertBase64] = useState('');
   const [showEfiSecret, setShowEfiSecret] = useState(false);
 
-  // URLs de Webhook
+  // URLs de Webhook com www oficial
   const [webhookUrls, setWebhookUrls] = useState({
-    asaas: 'https://centralgsm.com.br/api/webhooks/asaas',
-    efibank: 'https://centralgsm.com.br/api/webhooks/efibank',
+    asaas: 'https://www.centralgsm.com.br/api/webhooks/asaas',
+    efibank: 'https://www.centralgsm.com.br/api/webhooks/efibank',
   });
 
   // Feedbacks

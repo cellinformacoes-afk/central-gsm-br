@@ -35,8 +35,11 @@ export async function GET(request: NextRequest) {
 
     const settings = await getGatewaySettings();
 
-    // Retorna as configurações com a chave do webhook e a URL pronta
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://centralgsm.com.br';
+    // Retorna as configurações com a chave do webhook e a URL pronta com www oficial (evita redirect 307)
+    let origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.centralgsm.com.br';
+    if (!origin.includes('www.') && origin.includes('centralgsm.com.br')) {
+      origin = origin.replace('https://centralgsm.com.br', 'https://www.centralgsm.com.br');
+    }
     
     return NextResponse.json({
       success: true,
