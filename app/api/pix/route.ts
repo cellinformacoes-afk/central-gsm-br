@@ -35,6 +35,10 @@ export async function POST(request: Request) {
     const settings = await getGatewaySettings();
     const activeGateway = settings.active_gateway || 'asaas';
 
+    if (activeGateway === 'none') {
+      return NextResponse.json({ error: 'Recargas via PIX estão temporariamente desativadas. Tente novamente mais tarde.' }, { status: 400 });
+    }
+
     let pixPayment: any = null;
 
     if (activeGateway === 'asaas') {

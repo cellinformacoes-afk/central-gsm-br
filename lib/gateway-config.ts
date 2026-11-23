@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export interface GatewaySettings {
-  active_gateway: 'asaas' | 'efibank';
+  active_gateway: 'asaas' | 'efibank' | 'none';
   asaas: {
     enabled: boolean;
     environment: 'production' | 'sandbox';
