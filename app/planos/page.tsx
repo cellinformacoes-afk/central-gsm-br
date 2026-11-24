@@ -166,10 +166,14 @@ function PlanosContent() {
       const termsAcceptedAt = new Date().toISOString();
       const termsAcceptedVersion = "v1.0";
 
-      await proxy.rpc("create_plan_purchase_request", {
+      const result: any = await proxy.rpc("create_plan_purchase_request", {
         p_plan_name: selectedPlan.name,
         p_cost: selectedPlan.cost,
       });
+      if (!result || result.success === false) {
+        alert(result?.error || "Não foi possível criar a solicitação. Tente novamente.");
+        return;
+      }
 
       const { error: termsError } = await supabase.from("profiles").update({
         terms_accepted_at: termsAcceptedAt,
