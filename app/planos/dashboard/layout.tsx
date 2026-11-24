@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { fetchAuthSession } from '@/lib/auth';
 import Link from 'next/link';
 
 export default function PlanosDashboardLayout({
@@ -22,82 +23,112 @@ export default function PlanosDashboardLayout({
 
   useEffect(() => {
     async function checkAccess() {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
+      const { session: s, profile: p } = await fetchAuthSession();
+      setSession(s);
       
-      if (session) {
-        // Fetch plan from database with safety fallback
-        const { data: profile, error: profileError } = await supabase
+      if (s) {
+        // Fetch fresh profile data
+        const { data: profile } = await supabase
           .from('profiles')
           .select('plan, plan_expiration_date, role')
-          .eq('id', session.user.id)
+          .eq('id', s.user.id)
           .single();
 
-        if (profileError) {
-          console.log('Note: Database plan check failed:', profileError.message);
+        const userRole = profile?.role || p?.role || 'user';
+        const isAdmin = userRole === 'admin';
+        
+        // Check if there is an approved plan request
+        let activePlan = profile?.plan || p?.plan || 'free';
+        let expiration = profile?.plan_expiration_date;
+
+        if (activePlan === 'free') {
+          const { data: approvedReq } = await supabase
+            .from('plan_purchase_requests')
+            .select('plan_name, expiration_date')
+            .eq('user_id', s.user.id)
+            .eq('status', 'approved')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (approvedReq) {
+            activePlan = approvedReq.plan_name || 'basico';
+            expiration = approvedReq.expiration_date;
+          }
         }
 
-        const userPlan = profile?.plan || 'free';
-        const expiration = profile?.plan_expiration_date;
-        const userRole = profile?.role || 'user';
-        
-        // 1. Check for expiration
-        if (userPlan !== 'free' && expiration) {
+        // Admin has permanent full Premium access
+        if (isAdmin) {
+          activePlan = 'premium';
+        }
+
+        // Expiration check (only for non-admin)
+        if (!isAdmin && activePlan !== 'free' && expiration) {
           const now = new Date();
           const expDate = new Date(expiration);
           
           if (now > expDate) {
             console.log('Dashboard: Plan expired. Resetting to free.');
-            await supabase.from('profiles').update({ plan: 'free' }).eq('id', session.user.id);
+            await supabase.from('profiles').update({ plan: 'free' }).eq('id', s.user.id);
             router.push('/planos');
             return;
           }
         }
 
-        let days = null;
-        if (userPlan !== 'free' && expiration) {
+        // Calculate days remaining
+        let days: number | null = null;
+        if (isAdmin) {
+          days = 999;
+        } else if (activePlan !== 'free' && expiration) {
           const now = new Date();
           const expDate = new Date(expiration);
           const diffTime = expDate.getTime() - now.getTime();
           days = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
         }
 
-        setPlan(userPlan);
+        // If user has no active plan and is not admin, redirect to sales page
+        if (!isAdmin && activePlan === 'free') {
+          router.push('/planos');
+          return;
+        }
+
+        setPlan(activePlan);
         setRole(userRole);
         setExpiryDate(expiration);
         setDaysRemaining(days);
         setLoading(false);
         
         // Protect downloads route for basic plan and non-admin
-        if (pathname === '/planos/dashboard/downloads' && userPlan !== 'premium' && userRole !== 'admin') {
+        if (pathname === '/planos/dashboard/downloads' && activePlan !== 'premium' && !isAdmin) {
           router.push('/planos/dashboard/frp');
         }
       } else {
-        router.push('/login');
+        router.push('/login?redirect=/planos/dashboard/frp');
       }
     }
 
     checkAccess();
   }, [router, pathname]);
 
-  if (loading) return <div className="h-screen flex items-center justify-center text-white"><span className="animate-spin text-4xl text-[#00D2AD]">⚙</span></div>;
-
-  // Render navigation links
-  // Fetch user role if profile is available (we can do a simple client-side check if we had user role state, but since we didn't add userRole state, let's keep it simple or check plan)
-  // Wait, let's check if we can store role in state or check directly. Since we don't have a role state, let's add one or use session/db check.
-  // Wait! Let's add a [role, setRole] state to layout.tsx!
-  // Yes, adding const [role, setRole] = useState<string | null>(null); makes it easy to check in links array.
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center text-white">
+        <span className="animate-spin text-4xl text-[#00D2AD]">⚙</span>
+      </div>
+    );
+  }
 
   type NavLink = {
-  name: string;
-  href: string;
-  icon: string;
-  disabled?: boolean;
-};
+    name: string;
+    href: string;
+    icon: string;
+    disabled?: boolean;
+  };
 
-const links: NavLink[] = [
+  const links: NavLink[] = [
     { name: 'FRP (Desbloqueio)', href: '/planos/dashboard/frp', icon: '📱' },
     { name: 'MDM (Desbloqueio)', href: '/planos/dashboard/mdm', icon: '🔒' },
+    { name: 'Mini Curso', href: '/planos/dashboard/curso', icon: '🎓' },
     { 
       name: 'Downloads Extras', 
       href: '/planos/dashboard/downloads', 
@@ -114,14 +145,14 @@ const links: NavLink[] = [
         <div className="bg-[#1e293b]/60 backdrop-blur-xl border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#00D2AD]/20 to-[#009077]/20 border border-[#00D2AD]/30 flex items-center justify-center text-xl shrink-0">
-              {plan === 'premium' ? '👑' : '⭐'}
+              {role === 'admin' || plan === 'premium' ? '👑' : '⭐'}
             </div>
             <div>
               <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Seu Plano</p>
-              <p className={`text-sm font-black uppercase ${plan === 'premium' ? 'text-[#00D2AD]' : 'text-white'}`}>
-                {plan === 'premium' ? 'Premium' : plan === 'basico' ? 'Básico' : 'Gratuito'}
+              <p className={`text-sm font-black uppercase ${plan === 'premium' || role === 'admin' ? 'text-[#00D2AD]' : 'text-white'}`}>
+                {role === 'admin' ? 'Premium (Admin)' : plan === 'premium' ? 'Premium' : plan === 'basico' ? 'Básico' : 'Gratuito'}
               </p>
-              {expiryDate && plan !== 'free' && (
+              {role !== 'admin' && expiryDate && plan !== 'free' && (
                 <p className="text-[10px] text-gray-500 font-bold mt-0.5">
                   Validade: {new Date(expiryDate).toLocaleDateString('pt-BR')}
                 </p>
@@ -129,7 +160,7 @@ const links: NavLink[] = [
             </div>
           </div>
 
-          {plan !== 'free' && daysRemaining !== null && (
+          {role !== 'admin' && plan !== 'free' && daysRemaining !== null && (
             <div className="pt-2 border-t border-white/5 w-full">
               <div className="flex justify-between items-center text-[9px] text-gray-400 font-bold mb-1">
                 <span>{daysRemaining === 1 ? 'Resta 1 dia' : `Restam ${daysRemaining} dias`}</span>
@@ -151,7 +182,7 @@ const links: NavLink[] = [
         </div>
 
         {/* Warning Banner when close to expiry */}
-        {plan !== 'free' && daysRemaining !== null && daysRemaining <= 5 && (
+        {role !== 'admin' && plan !== 'free' && daysRemaining !== null && daysRemaining <= 5 && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 text-center animate-pulse duration-[3000ms]">
             <p className="text-xs text-red-200 font-bold mb-2 flex items-center justify-center gap-1.5">
               ⚠️ Renovação Próxima
@@ -185,7 +216,7 @@ const links: NavLink[] = [
                     🔒 PREMIUM
                   </span>
                 </button>
-              )
+              );
             }
             return (
               <Link 
@@ -200,11 +231,11 @@ const links: NavLink[] = [
                 <span className="text-lg">{link.icon}</span>
                 {link.name}
               </Link>
-            )
+            );
           })}
         </nav>
 
-        {plan !== 'premium' && (
+        {plan !== 'premium' && role !== 'admin' && (
           <div className="bg-gradient-to-br from-[#00D2AD]/10 to-transparent border border-[#00D2AD]/20 rounded-2xl p-4 text-center mt-auto">
             <p className="text-sm text-gray-300 font-medium mb-3">
               Quer acesso ilimitado aos arquivos de download?
@@ -217,6 +248,15 @@ const links: NavLink[] = [
             </Link>
           </div>
         )}
+
+        <div className="pt-2">
+          <Link
+            href="/planos?ver_planos=true"
+            className="w-full py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/5 text-xs font-bold transition-all text-center flex items-center justify-center gap-2"
+          >
+            📋 Ver Tabela de Planos
+          </Link>
+        </div>
       </div>
 
       {/* Main Content Area */}

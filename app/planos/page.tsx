@@ -1,12 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import { proxy } from '@/lib/supabase-proxy';
 import { fetchAuthSession } from '@/lib/auth';
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function PlanosPage() {
+function PlanosContent() {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; label: string; cost: number } | null>(null);
@@ -19,14 +19,19 @@ export default function PlanosPage() {
   const [loadingServices, setLoadingServices] = useState(true);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const verPlanosOnly = searchParams.get("ver_planos") === "true";
+  const isUpgrade = searchParams.get("upgrade") === "true";
 
   useEffect(() => {
     const init = async () => {
-      const { session: s } = await fetchAuthSession();
+      const { session: s, profile: p } = await fetchAuthSession();
       setSession(s);
       if (s) {
-        fetchProfile(s.user.id);
-        fetchExistingRequest(s.user.id);
+        await Promise.all([
+          fetchProfile(s.user.id),
+          fetchExistingRequest(s.user.id)
+        ]);
       } else {
         setLoadingRequest(false);
       }
@@ -87,16 +92,43 @@ export default function PlanosPage() {
     setLoadingRequest(false);
   }
 
+  // Determine active plan
+  const isAdmin = profile?.role === "admin";
+  const hasApprovedRequest = existingRequest?.status === "approved";
+  const activePlanName = isAdmin 
+    ? "premium" 
+    : (profile?.plan && profile.plan !== "free" ? profile.plan : (hasApprovedRequest ? existingRequest.plan_name : null));
+  const hasActivePlan = isAdmin || !!activePlanName;
+
+  // Auto-redirect subscribers and admins to dashboard unless explicit ?ver_planos=true or ?upgrade=true
+  useEffect(() => {
+    if (!loadingRequest && session && hasActivePlan && !verPlanosOnly && !isUpgrade) {
+      router.push("/planos/dashboard/frp");
+    }
+  }, [loadingRequest, session, hasActivePlan, verPlanosOnly, isUpgrade, router]);
+
   const handleOpenPurchase = (plan: { name: string; label: string; cost: number }) => {
     if (!session) {
-      alert("Você precisa estar logado para adquirir um plano. Redirecionando para a página de login...");
+      alert("Você precisa estar logado para adquirir um plano. Redirecionando para o login...");
       router.push("/login?redirect=/planos");
       return;
     }
 
-    // Check if user already has an active (approved) plan
-    if (existingRequest?.status === "approved") {
-      alert("Você já possui um plano ativo! Aproveite os serviços na página inicial.");
+    // If user clicks their own active plan, navigate directly to dashboard
+    if (hasActivePlan && (activePlanName === plan.name || isAdmin)) {
+      router.push("/planos/dashboard/frp");
+      return;
+    }
+
+    // Check if user already has an active plan and is clicking something else
+    if (hasActivePlan) {
+      if (activePlanName === "basico" && plan.name === "premium") {
+        // Upgrade flow: difference is R$ 70,00
+        setSelectedPlan({ name: "premium", label: "Premium (Upgrade)", cost: 70.00 });
+        setAcceptedTerms(false);
+        return;
+      }
+      alert("Você já possui um plano ativo! Clique no botão verde para acessar seus métodos.");
       return;
     }
 
@@ -120,7 +152,6 @@ export default function PlanosPage() {
     setPurchaseLoading(true);
 
     try {
-      // 1. Fetch user IP address client-side
       let userIp = "unknown";
       try {
         const ipRes = await fetch("https://api.ipify.org?format=json");
@@ -135,13 +166,11 @@ export default function PlanosPage() {
       const termsAcceptedAt = new Date().toISOString();
       const termsAcceptedVersion = "v1.0";
 
-      // 2. Call RPC to create the plan purchase request
-      const result =       await proxy.rpc("create_plan_purchase_request", {
+      await proxy.rpc("create_plan_purchase_request", {
         p_plan_name: selectedPlan.name,
         p_cost: selectedPlan.cost,
       });
 
-      // 3. Save terms acceptance in profiles (fails gracefully if migration not applied)
       const { error: termsError } = await supabase.from("profiles").update({
         terms_accepted_at: termsAcceptedAt,
         terms_accepted_ip: userIp,
@@ -152,7 +181,6 @@ export default function PlanosPage() {
         console.warn("Could not update profiles terms cols:", termsError);
       }
 
-      // 4. Update auth user metadata
       await supabase.auth.updateUser({
         data: {
           terms_accepted_at: termsAcceptedAt,
@@ -174,6 +202,34 @@ export default function PlanosPage() {
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
+      {/* Active Plan Banner for Subscribers */}
+      {hasActivePlan && (
+        <div className="mb-10 bg-gradient-to-r from-[#00D2AD]/20 via-[#00D2AD]/10 to-transparent border-2 border-[#00D2AD] rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_0_30px_rgba(0,210,173,0.2)]">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#00D2AD] text-[#0f172a] flex items-center justify-center text-3xl font-black shrink-0">
+              {isAdmin || activePlanName === "premium" ? "👑" : "⭐"}
+            </div>
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#00D2AD] bg-[#00D2AD]/10 px-2 py-0.5 rounded">
+                Assinatura Ativa
+              </span>
+              <h2 className="text-xl md:text-2xl font-black text-white uppercase italic mt-1">
+                Você possui acesso ao Plano {isAdmin ? "Premium (Admin)" : activePlanName === "premium" ? "Premium" : "Básico"}!
+              </h2>
+              <p className="text-gray-300 text-xs md:text-sm mt-0.5">
+                Todos os métodos de FRP, MDM e tutoriais passo a passo estão liberados para você.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/planos/dashboard/frp"
+            className="w-full md:w-auto shrink-0 bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] font-black px-6 py-4 rounded-xl uppercase tracking-wider text-xs shadow-[0_0_20px_rgba(0,210,173,0.4)] transition-all flex items-center justify-center gap-2"
+          >
+            Acessar Métodos e Passo a Passo ➔
+          </Link>
+        </div>
+      )}
+
       {/* Title */}
       <div className="text-center mb-16 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#00D2AD]/10 blur-[100px] rounded-full"></div>
@@ -181,15 +237,17 @@ export default function PlanosPage() {
           Nossos <span className="text-[#00D2AD] drop-shadow-[0_0_15px_rgba(0,210,173,0.4)]">Planos</span>
         </h1>
         <p className="text-gray-400 font-medium text-lg max-w-xl mx-auto">
-          Tenha acesso aos melhores métodos de desbloqueio FRP e MDM do mercado.
+          Tenha acesso aos melhores métodos de desbloqueio FRP e MDM do mercado com passo a passo ilustrado.
         </p>
       </div>
 
       {/* Plans Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-20">
         {/* Basic Plan */}
-        <div className="bg-[#1e293b] rounded-3xl p-8 shadow-2xl border border-[#334155] flex flex-col justify-between hover:shadow-[0_0_40px_rgba(0,210,173,0.05)] hover:-translate-y-2 hover:border-[#334155]/80 transition-all duration-300 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/2 blur-[50px] rounded-full"></div>
+        <div className={`bg-[#1e293b] rounded-3xl p-8 shadow-2xl border flex flex-col justify-between hover:shadow-[0_0_40px_rgba(0,210,173,0.05)] hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group ${
+          activePlanName === "basico" ? "border-[#00D2AD] ring-2 ring-[#00D2AD]/30" : "border-[#334155]"
+        }`}>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/5 blur-[50px] rounded-full"></div>
           <div>
             <h3 className="text-2xl font-black text-white uppercase italic mb-2 tracking-tighter">Básico</h3>
             <div className="flex items-baseline gap-1.5 mb-6">
@@ -199,44 +257,63 @@ export default function PlanosPage() {
 
             <ul className="space-y-4 mb-8 text-sm font-semibold">
               <li className="flex items-start gap-2 text-gray-200">
-                <span className="text-green-400 shrink-0">✔</span> Acesso aos métodos disponíveis.
+                <span className="text-green-400 shrink-0">✔</span> Acesso aos métodos disponíveis (FRP e MDM).
               </li>
               <li className="flex items-start gap-2 text-gray-200">
-                <span className="text-green-400 shrink-0">✔</span> Atualizações durante a vigência da assinatura.
+                <span className="text-green-400 shrink-0">✔</span> Passo a passo detalhado com fotos ampliáveis.
+              </li>
+              <li className="flex items-start gap-2 text-gray-200">
+                <span className="text-green-400 shrink-0">✔</span> Atualizações constantes dos procedimentos.
               </li>
               <li className="flex items-start gap-2 text-gray-200">
                 <span className="text-green-400 shrink-0">✔</span> Novos métodos adicionados durante a assinatura.
               </li>
               <li className="flex items-start gap-2 text-red-400 opacity-60">
-                <span className="shrink-0">❌</span> Arquivos especiais não inclusos.
+                <span className="shrink-0">✖</span> Download de arquivos extras não incluso.
               </li>
             </ul>
           </div>
-          <button
-            onClick={() => handleOpenPurchase({ name: "basico", label: "Básico", cost: 129.99 })}
-            className={`w-full font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs ${
-              existingRequest?.status === 'approved' && existingRequest?.plan_name === 'basico'
-                ? 'bg-green-500/20 text-green-500 border border-green-500 cursor-default'
-                : existingRequest?.status === 'pending' && existingRequest?.plan_name === 'basico'
-                ? 'bg-amber-500/20 text-amber-500 border border-amber-500 cursor-default animate-pulse'
-                : 'bg-[#1e293b] hover:bg-[#00D2AD] hover:text-[#0f172a] hover:shadow-[0_4px_20px_rgba(0,210,173,0.3)] text-[#00D2AD] border border-[#00D2AD]'
-            }`}
-          >
-            {existingRequest?.status === 'approved' && existingRequest?.plan_name === 'basico' ? 'PLANO ATIVO' : 
-             existingRequest?.status === 'pending' && existingRequest?.plan_name === 'basico' ? 'AGUARDANDO APROVAÇÃO' : 
-             'ACESSAR MEU PLANO'}
-          </button>
+
+          {activePlanName === "basico" ? (
+            <button
+              onClick={() => router.push("/planos/dashboard/frp")}
+              className="w-full font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] shadow-[0_4px_25px_rgba(0,210,173,0.3)] flex items-center justify-center gap-2"
+            >
+              <span>⭐</span> MEU PLANO ATIVO - ACESSAR MÉTODOS ➔
+            </button>
+          ) : activePlanName === "premium" || isAdmin ? (
+            <button
+              onClick={() => router.push("/planos/dashboard/frp")}
+              className="w-full font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10"
+            >
+              Incluso no seu Plano Premium
+            </button>
+          ) : existingRequest?.status === "pending" && existingRequest?.plan_name === "basico" ? (
+            <button
+              disabled
+              className="w-full font-black py-4 rounded-xl uppercase tracking-wider text-xs bg-amber-500/20 text-amber-500 border border-amber-500 cursor-default animate-pulse"
+            >
+              AGUARDANDO APROVAÇÃO
+            </button>
+          ) : (
+            <button
+              onClick={() => handleOpenPurchase({ name: "basico", label: "Básico", cost: 129.99 })}
+              className="w-full font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs bg-[#1e293b] hover:bg-[#00D2AD] hover:text-[#0f172a] hover:shadow-[0_4px_20px_rgba(0,210,173,0.3)] text-[#00D2AD] border border-[#00D2AD]"
+            >
+              ASSINAR PLANO BÁSICO
+            </button>
+          )}
         </div>
 
         {/* Premium Plan */}
-        <div className="bg-[#1e293b] rounded-3xl p-8 shadow-2xl border-2 border-[#00D2AD] flex flex-col justify-between hover:shadow-[0_0_40px_rgba(0,210,173,0.15)] hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/10 blur-[50px] rounded-full"></div>
+        <div className="bg-[#1e293b] rounded-3xl p-8 shadow-2xl border-2 border-[#00D2AD] flex flex-col justify-between hover:shadow-[0_0_40px_rgba(0,210,173,0.2)] hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00D2AD]/15 blur-[50px] rounded-full"></div>
           <div className="absolute top-4 right-4 bg-[#00D2AD] text-[#0f172a] text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
             Mais Vantajoso
           </div>
           <div>
             <h3 className="text-2xl font-black text-white uppercase italic mb-2 tracking-tighter flex items-center gap-2">
-              ⭐ Premium
+              👑 Premium
             </h3>
             <div className="flex items-baseline gap-1.5 mb-6">
               <span className="text-4xl font-black text-[#00D2AD]">R$ 199,99</span>
@@ -245,47 +322,63 @@ export default function PlanosPage() {
 
             <ul className="space-y-4 mb-8 text-sm font-semibold">
               <li className="flex items-start gap-2 text-gray-200">
-                <span className="text-green-400 shrink-0">✔</span> Acesso aos métodos disponíveis.
+                <span className="text-green-400 shrink-0">✔</span> Acesso aos métodos disponíveis (FRP e MDM).
               </li>
               <li className="flex items-start gap-2 text-gray-200">
-                <span className="text-green-400 shrink-0">✔</span> Atualizações durante a vigência da assinatura.
+                <span className="text-green-400 shrink-0">✔</span> Passo a passo detalhado com fotos ampliáveis.
+              </li>
+              <li className="flex items-start gap-2 text-gray-200">
+                <span className="text-green-400 shrink-0">✔</span> Atualizações constantes dos procedimentos.
               </li>
               <li className="flex items-start gap-2 text-gray-200">
                 <span className="text-green-400 shrink-0">✔</span> Novos métodos adicionados durante a assinatura.
               </li>
-              <li className="flex items-start gap-2 text-gray-200">
-                <span className="text-green-400 shrink-0">✔</span> Arquivos compatíveis incluídos.
-              </li>
-              <li className="flex items-start gap-2 text-[#00D2AD]">
-                <span className="shrink-0">✔</span> Download dos arquivos disponibilizados na plataforma.
+              <li className="flex items-start gap-2 text-[#00D2AD] font-bold">
+                <span className="shrink-0">✔</span> Download Ilimitado de Arquivos Extras & Miskidata.
               </li>
             </ul>
           </div>
-          <button
-            onClick={() => handleOpenPurchase({ name: "premium", label: "Premium", cost: 199.99 })}
-            className={`w-full font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs ${
-              existingRequest?.status === 'approved' && existingRequest?.plan_name === 'premium'
-                ? 'bg-green-500/20 text-green-500 border border-green-500 cursor-default'
-                : existingRequest?.status === 'pending' && existingRequest?.plan_name === 'premium'
-                ? 'bg-amber-500/20 text-amber-500 border border-amber-500 cursor-default animate-pulse'
-                : 'bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] shadow-[0_4px_25px_rgba(0,210,173,0.3)] hover:shadow-[0_4px_35px_rgba(0,210,173,0.5)]'
-            }`}
-          >
-            {existingRequest?.status === 'approved' && existingRequest?.plan_name === 'premium' ? 'PLANO ATIVO' : 
-             existingRequest?.status === 'pending' && existingRequest?.plan_name === 'premium' ? 'AGUARDANDO APROVAÇÃO' : 
-             'ACESSAR MEU PLANO'}
-          </button>
+
+          {activePlanName === "premium" || isAdmin ? (
+            <button
+              onClick={() => router.push("/planos/dashboard/frp")}
+              className="w-full font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] shadow-[0_4px_25px_rgba(0,210,173,0.3)] flex items-center justify-center gap-2"
+            >
+              <span>👑</span> MEU PLANO ATIVO - ACESSAR MÉTODOS ➔
+            </button>
+          ) : activePlanName === "basico" ? (
+            <button
+              onClick={() => handleOpenPurchase({ name: "premium", label: "Premium (Upgrade)", cost: 70.00 })}
+              className="w-full font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs bg-gradient-to-r from-[#00D2AD] to-[#009077] hover:from-[#00BDA0] text-[#0f172a] shadow-[0_4px_25px_rgba(0,210,173,0.3)]"
+            >
+              🚀 UPGRADE PARA PREMIUM (R$ 70,00)
+            </button>
+          ) : existingRequest?.status === "pending" && existingRequest?.plan_name === "premium" ? (
+            <button
+              disabled
+              className="w-full font-black py-4 rounded-xl uppercase tracking-wider text-xs bg-amber-500/20 text-amber-500 border border-amber-500 cursor-default animate-pulse"
+            >
+              AGUARDANDO APROVAÇÃO
+            </button>
+          ) : (
+            <button
+              onClick={() => handleOpenPurchase({ name: "premium", label: "Premium", cost: 199.99 })}
+              className="w-full font-black py-4 rounded-xl transition-all uppercase tracking-wider text-xs bg-[#00D2AD] hover:bg-[#00BDA0] text-[#0f172a] shadow-[0_4px_25px_rgba(0,210,173,0.3)] hover:shadow-[0_4px_35px_rgba(0,210,173,0.5)]"
+            >
+              ASSINAR PLANO PREMIUM
+            </button>
+          )}
         </div>
       </div>
 
-      {/* NEW SECTION: Métodos Disponíveis */}
+      {/* SECTION: Métodos Disponíveis */}
       <div className="mb-16">
         <div className="text-center mb-10">
           <h2 className="text-3xl font-black text-white uppercase italic tracking-tight mb-2">
             Métodos e Arquivos <span className="text-[#00D2AD]">Inclusos</span>
           </h2>
           <p className="text-gray-400 font-medium text-sm">
-            Confira os procedimentos que você terá acesso como assinante.
+            Confira os procedimentos que você terá acesso como assinante da Central GSM.
           </p>
         </div>
 
@@ -390,7 +483,7 @@ export default function PlanosPage() {
               <div className="w-px bg-[#334155]"></div>
               <div>
                 <span className="text-[10px] text-gray-500 font-black uppercase tracking-wider block">Horário Noite</span>
-                <span className="text-[#00D2AD] font-bold text-sm">🕗 20:00 às 21:30</span>
+                <span className="text-[#00D2AD] font-bold text-sm">🕘 20:00 às 21:30</span>
               </div>
             </div>
           </div>
@@ -427,10 +520,10 @@ export default function PlanosPage() {
             <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4 mb-4">
               <span className="text-[10px] text-red-400 font-black uppercase tracking-wider block mb-2">É expressamente proibido:</span>
               <ul className="space-y-1.5 text-xs text-gray-300 font-medium">
-                <li>❌ Gravar a tela da plataforma para fins comerciais.</li>
-                <li>❌ Revender métodos, arquivos ou conteúdos.</li>
-                <li>❌ Compartilhar login e senha de acesso.</li>
-                <li>❌ Reproduzir ou distribuir o conteúdo sem autorização.</li>
+                <li>✖ Gravar a tela da plataforma para fins comerciais.</li>
+                <li>✖ Revender métodos, arquivos ou conteúdos.</li>
+                <li>✖ Compartilhar login e senha de acesso.</li>
+                <li>✖ Reproduzir ou distribuir o conteúdo sem autorização.</li>
               </ul>
             </div>
             <div className="bg-[#0f172a] border border-[#334155] rounded-2xl p-4">
@@ -518,19 +611,24 @@ export default function PlanosPage() {
                     : "bg-gray-700 text-gray-500 cursor-not-allowed opacity-50"
                 }`}
               >
-                {purchaseLoading ? (
-                  <>
-                    <div className="w-3.5 h-3.5 border-2 border-[#0f172a]/30 border-t-[#0f172a] rounded-full animate-spin"></div>
-                    <span>Processando...</span>
-                  </>
-                ) : (
-                  "Confirmar Assinatura"
-                )}
+                {purchaseLoading ? "Processando..." : "Confirmar e Prosseguir"}
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+export default function PlanosPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen flex items-center justify-center text-white">
+        <span className="animate-spin text-4xl text-[#00D2AD]">⚙</span>
+      </div>
+    }>
+      <PlanosContent />
+    </Suspense>
   );
 }

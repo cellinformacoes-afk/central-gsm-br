@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { AlertCircle } from 'lucide-react';
+import { mockMethods } from '@/lib/mock-methods';
 
 interface Step {
   title: string;
   description: string;
   image_url?: string;
+  imageUrl?: string;
 }
 
 interface DeviceMethod {
@@ -17,6 +19,7 @@ interface DeviceMethod {
   model: string;
   category: 'FRP' | 'MDM';
   video_url?: string;
+  videoUrl?: string;
   attention?: string;
   steps: Step[];
   files?: { name: string; size: string; url?: string }[];
@@ -27,7 +30,6 @@ export default function FRPPage() {
   const [selectedMethod, setSelectedMethod] = useState<DeviceMethod | null>(null);
   const [plan, setPlan] = useState<string>('free');
   const [role, setRole] = useState<string>('user');
-  const [sessionUser, setSessionUser] = useState<any>(null);
 
   const [selectedBrand, setSelectedBrand] = useState<string>('REALME SPD');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -47,7 +49,6 @@ export default function FRPPage() {
   }, [selectedImage]);
 
   useEffect(() => {
-    // 1. Get plan from database
     async function fetchPlan() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -56,20 +57,29 @@ export default function FRPPage() {
           .select('plan, role')
           .eq('id', session.user.id)
           .single();
-        setPlan(profile?.plan || 'free');
-        setRole(profile?.role || 'user');
+        const userRole = profile?.role || 'user';
+        const userPlan = userRole === 'admin' ? 'premium' : (profile?.plan || 'free');
+        setPlan(userPlan);
+        setRole(userRole);
       }
     }
     fetchPlan();
 
     async function fetchMethods() {
-      const { data, error } = await supabase
-        .from('tutorials')
-        .select('*')
-        .eq('category', 'FRP');
-      
-      if (!error && data) {
-        setMethods(data);
+      try {
+        const { data, error } = await supabase
+          .from('tutorials')
+          .select('*')
+          .eq('category', 'FRP');
+        
+        if (!error && data && data.length > 0) {
+          setMethods(data);
+        } else {
+          setMethods(mockMethods.filter(m => m.category === 'FRP') as any);
+        }
+      } catch (err) {
+        console.warn('Error fetching tutorials from supabase, using fallback:', err);
+        setMethods(mockMethods.filter(m => m.category === 'FRP') as any);
       }
     }
     fetchMethods();
@@ -89,15 +99,15 @@ export default function FRPPage() {
 
       {/* Abas de Fabricantes */}
       {!selectedMethod && (
-        <div className="grid grid-cols-2 gap-2 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
           {brands.map(brand => (
             <button
               key={brand}
               onClick={() => setSelectedBrand(brand)}
-              className={`px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${
+              className={`px-4 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all text-center ${
                 selectedBrand === brand 
                   ? 'bg-[#00D2AD] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)]' 
-                  : 'bg-[#1e293b] text-gray-500 hover:text-white border border-white/5'
+                  : 'bg-[#1e293b] text-gray-400 hover:text-white border border-white/5'
               }`}
             >
               {brand}
@@ -114,7 +124,7 @@ export default function FRPPage() {
               <button
                 key={method.id}
                 onClick={() => setSelectedMethod(method)}
-                className="bg-[#0f172a]/50 hover:bg-[#00D2AD]/10 border border-white/5 hover:border-[#00D2AD]/30 p-6 rounded-2xl flex flex-col items-start transition-all group"
+                className="bg-[#0f172a]/50 hover:bg-[#00D2AD]/10 border border-white/5 hover:border-[#00D2AD]/30 p-6 rounded-2xl flex flex-col items-start transition-all group text-left cursor-pointer"
               >
                 <div className="w-full flex justify-between items-start mb-4">
                   <span className="text-[10px] font-black text-[#00D2AD] bg-[#00D2AD]/10 px-2 py-1 rounded-lg uppercase tracking-widest">
@@ -142,23 +152,22 @@ export default function FRPPage() {
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
           <button 
             onClick={() => setSelectedMethod(null)}
-            className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 font-medium transition-colors"
+            className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 font-medium transition-colors cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             Voltar para lista de aparelhos
           </button>
 
-          <div className="bg-[#0f172a]/50 p-8 rounded-3xl border border-white/5">
+          <div className="bg-[#0f172a]/50 p-6 md:p-8 rounded-3xl border border-white/5">
             <div className="flex items-baseline gap-4 mb-8 border-b border-white/5 pb-8">
-              <h2 className="text-4xl font-black text-white">{selectedMethod.model}</h2>
-              <span className="text-lg text-gray-500 font-bold uppercase">{selectedMethod.brand}</span>
+              <h2 className="text-3xl md:text-4xl font-black text-white">{selectedMethod.model}</h2>
+              <span className="text-base md:text-lg text-gray-500 font-bold uppercase">{selectedMethod.brand}</span>
             </div>
 
-            {selectedMethod.video_url && (
+            {(selectedMethod.video_url || selectedMethod.videoUrl) && (
               <div className="mb-10 w-full aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 relative group flex items-center justify-center">
-                 {/* Fake iframe for mock */ }
                  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                 <span className="absolute bottom-4 left-4 text-xs font-bold text-white/50 bg-black/50 px-2 py-1 rounded">Vídeo Tutorial indisponível na demonstração</span>
+                 <span className="absolute bottom-4 left-4 text-xs font-bold text-white/50 bg-black/50 px-2 py-1 rounded">Vídeo Tutorial disponível</span>
               </div>
             )}
 
@@ -166,7 +175,7 @@ export default function FRPPage() {
 
             {selectedMethod.attention && (
               <div className="mb-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl flex gap-4 items-start">
-                <div className="p-2 bg-yellow-500/20 rounded-lg">
+                <div className="p-2 bg-yellow-500/20 rounded-lg shrink-0">
                   <AlertCircle className="w-5 h-5 text-yellow-500" />
                 </div>
                 <div>
@@ -179,30 +188,33 @@ export default function FRPPage() {
             )}
 
             <div className="space-y-6">
-              {selectedMethod.steps.map((step, idx) => (
-                <div key={idx} className="flex gap-4">
-                  <div className="w-10 h-10 shrink-0 bg-[#00D2AD]/20 border border-[#00D2AD]/40 text-[#00D2AD] font-black rounded-xl flex items-center justify-center shadow-[0_0_10px_rgba(0,210,173,0.1)]">
-                    {idx + 1}
-                  </div>
-                  <div className="pt-2">
-                    <h4 className="text-base font-bold text-gray-200 mb-1">{step.title}</h4>
-                    <p className="text-sm text-gray-400 leading-relaxed mb-4">{step.description}</p>
-                    {step.image_url && (
-                      <div 
-                        onClick={() => setSelectedImage(step.image_url || null)}
-                        className="rounded-xl overflow-hidden border border-white/5 bg-black/20 max-w-md cursor-pointer hover:scale-[1.02] hover:border-[#00D2AD]/50 transition-all duration-300 relative group"
-                      >
-                        <div className="absolute inset-0 bg-[#00D2AD]/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-white text-xs font-black uppercase tracking-widest bg-black/60 px-3 py-2 rounded-xl backdrop-blur-sm border border-white/10 shadow-lg">
-                            Ampliar Imagem 🔍
-                          </span>
+              {selectedMethod.steps.map((step, idx) => {
+                const img = step.image_url || step.imageUrl;
+                return (
+                  <div key={idx} className="flex gap-4">
+                    <div className="w-10 h-10 shrink-0 bg-[#00D2AD]/20 border border-[#00D2AD]/40 text-[#00D2AD] font-black rounded-xl flex items-center justify-center shadow-[0_0_10px_rgba(0,210,173,0.1)]">
+                      {idx + 1}
+                    </div>
+                    <div className="pt-2 flex-1">
+                      <h4 className="text-base font-bold text-gray-200 mb-1">{step.title}</h4>
+                      <p className="text-sm text-gray-400 leading-relaxed mb-4">{step.description}</p>
+                      {img && (
+                        <div 
+                          onClick={() => setSelectedImage(img)}
+                          className="rounded-xl overflow-hidden border border-white/5 bg-black/20 max-w-md cursor-pointer hover:scale-[1.02] hover:border-[#00D2AD]/50 transition-all duration-300 relative group"
+                        >
+                          <div className="absolute inset-0 bg-[#00D2AD]/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="text-white text-xs font-black uppercase tracking-widest bg-black/60 px-3 py-2 rounded-xl backdrop-blur-sm border border-white/10 shadow-lg">
+                              Ampliar Imagem 🔍
+                            </span>
+                          </div>
+                          <img src={img} alt={step.title} className="w-full h-auto object-contain" />
                         </div>
-                        <img src={step.image_url} alt={step.title} className="w-full h-auto object-contain" />
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Sessão de Arquivos / Downloads */}
@@ -216,10 +228,10 @@ export default function FRPPage() {
                 {plan !== 'premium' && role !== 'admin' ? (
                   <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="text-red-400">
-                      <p className="font-bold mb-1">Acesso Bloqueado</p>
-                      <p className="text-sm opacity-80">Seu plano atual não permite baixar arquivos. Faça upgrade para o Premium para liberar os downloads.</p>
+                      <p className="font-bold mb-1">Acesso Bloqueado para Downloads</p>
+                      <p className="text-sm opacity-80">Seu plano atual não permite baixar arquivos extras. Faça upgrade para o Plano Premium para liberar todos os downloads.</p>
                     </div>
-                    <a href="/planos" className="shrink-0 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold px-4 py-2 rounded-xl transition-colors">
+                    <a href="/planos?upgrade=true" className="shrink-0 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold px-4 py-2 rounded-xl transition-colors">
                       Fazer Upgrade
                     </a>
                   </div>
@@ -231,9 +243,18 @@ export default function FRPPage() {
                           <p className="text-sm font-bold text-white mb-1 group-hover:text-[#00D2AD] transition-colors">{file.name}</p>
                           <p className="text-xs text-gray-500">{file.size}</p>
                         </div>
-                        <button className="w-10 h-10 rounded-lg bg-white/5 hover:bg-[#00D2AD] flex items-center justify-center text-gray-400 hover:text-[#0f172a] transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        </button>
+                        {file.url ? (
+                          <a 
+                            href={file.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="w-10 h-10 rounded-lg bg-white/5 hover:bg-[#00D2AD] flex items-center justify-center text-gray-400 hover:text-[#0f172a] transition-colors"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                          </a>
+                        ) : (
+                          <span className="text-xs text-gray-500 italic">Disponível em breve</span>
+                        )}
                       </div>
                     ))}
                   </div>

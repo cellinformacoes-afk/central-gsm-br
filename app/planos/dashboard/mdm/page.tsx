@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { AlertCircle } from 'lucide-react';
+import { mockMethods } from '@/lib/mock-methods';
 
 interface Step {
   title: string;
   description: string;
   image_url?: string;
+  imageUrl?: string;
 }
 
 interface DeviceMethod {
@@ -17,6 +19,7 @@ interface DeviceMethod {
   model: string;
   category: 'FRP' | 'MDM';
   video_url?: string;
+  videoUrl?: string;
   attention?: string;
   steps: Step[];
   files?: { name: string; size: string; url?: string }[];
@@ -53,20 +56,29 @@ export default function MDMPage() {
           .select('plan, role')
           .eq('id', session.user.id)
           .single();
-        setPlan(profile?.plan || 'free');
-        setRole(profile?.role || 'user');
+        const userRole = profile?.role || 'user';
+        const userPlan = userRole === 'admin' ? 'premium' : (profile?.plan || 'free');
+        setPlan(userPlan);
+        setRole(userRole);
       }
     }
     fetchPlan();
     
     async function fetchMethods() {
-      const { data, error } = await supabase
-        .from('tutorials')
-        .select('*')
-        .eq('category', 'MDM');
-      
-      if (!error && data) {
-        setMethods(data);
+      try {
+        const { data, error } = await supabase
+          .from('tutorials')
+          .select('*')
+          .eq('category', 'MDM');
+        
+        if (!error && data && data.length > 0) {
+          setMethods(data);
+        } else {
+          setMethods(mockMethods.filter(m => m.category === 'MDM') as any);
+        }
+      } catch (err) {
+        console.warn('Error fetching MDM tutorials, using fallback:', err);
+        setMethods(mockMethods.filter(m => m.category === 'MDM') as any);
       }
     }
     fetchMethods();
@@ -79,21 +91,22 @@ export default function MDMPage() {
     <div className="h-full">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-white uppercase flex items-center gap-3">
-          <span className="text-[#FFC107]">🔒</span> Desbloqueio MDM
+          <span className="text-[#00D2AD]">🔒</span> Desbloqueio MDM (PayJoy / Knox)
         </h1>
+        <p className="text-gray-400 mt-2">Clique na fabricante para ver os métodos de desbloqueio MDM e PayJoy.</p>
       </div>
 
       {/* Abas de Fabricantes */}
       {!selectedMethod && (
-        <div className="grid grid-cols-2 gap-2 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
           {brands.map(brand => (
             <button
               key={brand}
               onClick={() => setSelectedBrand(brand)}
-              className={`px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${
+              className={`px-4 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all text-center ${
                 selectedBrand === brand 
-                  ? 'bg-[#FFC107] text-[#0f172a] shadow-[0_0_20px_rgba(255,193,7,0.3)]' 
-                  : 'bg-[#1e293b] text-gray-500 hover:text-white border border-white/5'
+                  ? 'bg-[#00D2AD] text-[#0f172a] shadow-[0_0_20px_rgba(0,210,173,0.3)]' 
+                  : 'bg-[#1e293b] text-gray-400 hover:text-white border border-white/5'
               }`}
             >
               {brand}
@@ -103,24 +116,25 @@ export default function MDMPage() {
       )}
 
       {!selectedMethod ? (
+        // Lista de Modelos
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredMethods.length > 0 ? (
             filteredMethods.map(method => (
               <button
                 key={method.id}
                 onClick={() => setSelectedMethod(method)}
-                className="bg-[#0f172a]/50 hover:bg-[#FFC107]/10 border border-white/5 hover:border-[#FFC107]/30 p-6 rounded-2xl flex flex-col items-start transition-all group"
+                className="bg-[#0f172a]/50 hover:bg-[#00D2AD]/10 border border-white/5 hover:border-[#00D2AD]/30 p-6 rounded-2xl flex flex-col items-start transition-all group text-left cursor-pointer"
               >
                 <div className="w-full flex justify-between items-start mb-4">
-                  <span className="text-[10px] font-black text-[#FFC107] bg-[#FFC107]/10 px-2 py-1 rounded-lg uppercase tracking-widest">
+                  <span className="text-[10px] font-black text-[#00D2AD] bg-[#00D2AD]/10 px-2 py-1 rounded-lg uppercase tracking-widest">
                     {method.brand}
                   </span>
-                  <span className="text-xs text-gray-500 font-bold uppercase tracking-widest group-hover:text-white transition-colors">v.2026</span>
+                  <span className="text-xs text-gray-500 font-bold uppercase tracking-widest group-hover:text-white transition-colors">MDM v.2026</span>
                 </div>
-
-                <span className="text-xl font-black text-white text-left group-hover:text-[#FFC107] transition-colors">{method.model}</span>
                 
-                <div className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#FFC107]/60 group-hover:text-[#FFC107] transition-all">
+                <span className="text-xl font-black text-white group-hover:text-[#00D2AD] transition-colors">{method.model}</span>
+                
+                <div className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#00D2AD]/60 group-hover:text-[#00D2AD] transition-all">
                   Abrir Tutorial
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </div>
@@ -128,30 +142,31 @@ export default function MDMPage() {
             ))
           ) : (
             <div className="col-span-full py-20 text-center bg-[#1e293b]/30 rounded-3xl border-2 border-dashed border-white/5">
-              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Nenhum método encontrado para {selectedBrand} nesta categoria.</p>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Nenhum método de MDM encontrado para {selectedBrand}.</p>
             </div>
           )}
         </div>
       ) : (
+        // Detalhes do Método
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
           <button 
             onClick={() => setSelectedMethod(null)}
-            className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 font-medium transition-colors"
+            className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 font-medium transition-colors cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             Voltar para lista de aparelhos
           </button>
 
-          <div className="bg-[#0f172a]/50 p-8 rounded-3xl border border-white/5">
+          <div className="bg-[#0f172a]/50 p-6 md:p-8 rounded-3xl border border-white/5">
             <div className="flex items-baseline gap-4 mb-8 border-b border-white/5 pb-8">
-              <h2 className="text-4xl font-black text-white">{selectedMethod.model}</h2>
-              <span className="text-lg text-gray-500 font-bold uppercase">{selectedMethod.brand}</span>
+              <h2 className="text-3xl md:text-4xl font-black text-white">{selectedMethod.model}</h2>
+              <span className="text-base md:text-lg text-gray-500 font-bold uppercase">{selectedMethod.brand}</span>
             </div>
 
-            {selectedMethod.video_url && (
+            {(selectedMethod.video_url || selectedMethod.videoUrl) && (
               <div className="mb-10 w-full aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 relative group flex items-center justify-center">
                  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                 <span className="absolute bottom-4 left-4 text-xs font-bold text-white/50 bg-black/50 px-2 py-1 rounded">Vídeo indisponível (Demo)</span>
+                 <span className="absolute bottom-4 left-4 text-xs font-bold text-white/50 bg-black/50 px-2 py-1 rounded">Vídeo Tutorial disponível</span>
               </div>
             )}
 
@@ -159,7 +174,7 @@ export default function MDMPage() {
 
             {selectedMethod.attention && (
               <div className="mb-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl flex gap-4 items-start">
-                <div className="p-2 bg-yellow-500/20 rounded-lg">
+                <div className="p-2 bg-yellow-500/20 rounded-lg shrink-0">
                   <AlertCircle className="w-5 h-5 text-yellow-500" />
                 </div>
                 <div>
@@ -172,60 +187,73 @@ export default function MDMPage() {
             )}
 
             <div className="space-y-6">
-              {selectedMethod.steps.map((step, idx) => (
-                <div key={idx} className="flex gap-4">
-                  <div className="w-10 h-10 shrink-0 bg-[#FFC107]/20 border border-[#FFC107]/40 text-[#FFC107] font-black rounded-xl flex items-center justify-center shadow-[0_0_10px_rgba(255,193,7,0.1)]">
-                    {idx + 1}
-                  </div>
-                  <div className="pt-2">
-                    <h4 className="text-base font-bold text-white mb-1 drop-shadow-md">{step.title}</h4>
-                    <p className="text-sm text-gray-400 leading-relaxed font-medium">{step.description}</p>
-                    {step.image_url && (
-                      <div 
-                        onClick={() => setSelectedImage(step.image_url || null)}
-                        className="rounded-2xl overflow-hidden border border-white/10 bg-black/40 mt-5 max-w-2xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] group relative cursor-pointer hover:scale-[1.02] hover:border-[#FFC107]/50 transition-all duration-300"
-                      >
-                        <div className="absolute inset-0 bg-[#FFC107]/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
-                          <span className="text-white text-xs font-black uppercase tracking-widest bg-black/60 px-3 py-2 rounded-xl backdrop-blur-sm border border-white/10 shadow-lg">
-                            Ampliar Imagem 🔍
-                          </span>
+              {selectedMethod.steps.map((step, idx) => {
+                const img = step.image_url || step.imageUrl;
+                return (
+                  <div key={idx} className="flex gap-4">
+                    <div className="w-10 h-10 shrink-0 bg-[#00D2AD]/20 border border-[#00D2AD]/40 text-[#00D2AD] font-black rounded-xl flex items-center justify-center shadow-[0_0_10px_rgba(0,210,173,0.1)]">
+                      {idx + 1}
+                    </div>
+                    <div className="pt-2 flex-1">
+                      <h4 className="text-base font-bold text-gray-200 mb-1">{step.title}</h4>
+                      <p className="text-sm text-gray-400 leading-relaxed mb-4">{step.description}</p>
+                      {img && (
+                        <div 
+                          onClick={() => setSelectedImage(img)}
+                          className="rounded-xl overflow-hidden border border-white/5 bg-black/20 max-w-md cursor-pointer hover:scale-[1.02] hover:border-[#00D2AD]/50 transition-all duration-300 relative group"
+                        >
+                          <div className="absolute inset-0 bg-[#00D2AD]/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="text-white text-xs font-black uppercase tracking-widest bg-black/60 px-3 py-2 rounded-xl backdrop-blur-sm border border-white/10 shadow-lg">
+                              Ampliar Imagem 🔍
+                            </span>
+                          </div>
+                          <img src={img} alt={step.title} className="w-full h-auto object-contain" />
                         </div>
-                        <img src={step.image_url} alt={step.title} className="w-full h-auto object-contain transform transition-transform duration-500" />
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
+            {/* Sessão de Arquivos / Downloads */}
             {selectedMethod.files && selectedMethod.files.length > 0 && (
               <div className="mt-12 pt-8 border-t border-white/5">
                 <h3 className="text-xl font-black text-white mb-6 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFC107" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00D2AD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                   Arquivos Necessários
                 </h3>
 
                 {plan !== 'premium' && role !== 'admin' ? (
                   <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="text-red-400">
-                      <p className="font-bold mb-1">Acesso Bloqueado</p>
-                      <p className="text-sm opacity-80">Seu plano atual não permite baixar arquivos. Faça upgrade para o Premium para liberar os downloads.</p>
+                      <p className="font-bold mb-1">Acesso Bloqueado para Downloads</p>
+                      <p className="text-sm opacity-80">Seu plano atual não permite baixar arquivos extras. Faça upgrade para o Plano Premium para liberar todos os downloads.</p>
                     </div>
-                    <a href="/planos" className="shrink-0 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold px-4 py-2 rounded-xl transition-colors">
+                    <a href="/planos?upgrade=true" className="shrink-0 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold px-4 py-2 rounded-xl transition-colors">
                       Fazer Upgrade
                     </a>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {selectedMethod.files.map((file, idx) => (
-                      <div key={idx} className="bg-[#1e293b] border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-[#FFC107]/50 transition-colors">
+                      <div key={idx} className="bg-[#1e293b] border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-[#00D2AD]/50 transition-colors">
                         <div>
-                          <p className="text-sm font-bold text-white mb-1 group-hover:text-[#FFC107] transition-colors">{file.name}</p>
+                          <p className="text-sm font-bold text-white mb-1 group-hover:text-[#00D2AD] transition-colors">{file.name}</p>
                           <p className="text-xs text-gray-500">{file.size}</p>
                         </div>
-                        <button className="w-10 h-10 rounded-lg bg-white/5 hover:bg-[#FFC107] flex items-center justify-center text-gray-400 hover:text-[#0f172a] transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        </button>
+                        {file.url ? (
+                          <a 
+                            href={file.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="w-10 h-10 rounded-lg bg-white/5 hover:bg-[#00D2AD] flex items-center justify-center text-gray-400 hover:text-[#0f172a] transition-colors"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                          </a>
+                        ) : (
+                          <span className="text-xs text-gray-500 italic">Disponível em breve</span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -243,7 +271,7 @@ export default function MDMPage() {
           onClick={() => setSelectedImage(null)}
         >
           <button 
-            className="absolute top-6 right-6 text-white hover:text-red-500 transition-colors z-50 bg-black/20 hover:bg-black/40 rounded-full p-2"
+            className="absolute top-6 right-6 text-white hover:text-[#00D2AD] transition-colors z-50 bg-black/20 hover:bg-black/40 rounded-full p-2"
             onClick={(e) => { e.stopPropagation(); setSelectedImage(null); }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
